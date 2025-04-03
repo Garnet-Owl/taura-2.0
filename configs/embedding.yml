@@ -1,0 +1,35 @@
+# FastText embedding model configurations
+
+# English model config
+english:
+  dim: 300
+  min_count: 5
+  epoch: 15
+  learning_rate: 0.05
+  word_ngrams: 2
+  min_n: 3
+  max_n: 6
+  bucket: 2000000
+  thread: 4
+  loss: "ns"
+
+# Kikuyu model config
+kikuyu:
+  dim: 300
+  min_count: 3  # Lower min_count for low-resource language
+  epoch: 20     # More epochs for better learning
+  learning_rate: 0.05
+  word_ngrams: 2
+  min_n: 2      # Capture shorter subwords
+  max_n: 6
+  bucket: 2000000
+  thread: 4
+  loss: "ns"
+
+# Shared preprocessing config
+preprocessing:
+  lowercase: true
+  normalize_unicode: true
+  remove_punctuation: true
+  remove_numbers: false
+  remove_stopwords: false  # Usually keep stopwords for translation
