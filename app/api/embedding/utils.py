@@ -8,38 +8,29 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
+def cosine_similarity(first_vector: np.ndarray, second_vector: np.ndarray) -> float:
     """
     Calculate cosine similarity between two vectors.
 
     Args:
-        vec1: First vector
-        vec2: Second vector
+        first_vector
+        second_vector
 
     Returns:
         Cosine similarity (between -1 and 1)
     """
-    norm1 = np.linalg.norm(vec1)
-    norm2 = np.linalg.norm(vec2)
+    norm1 = np.linalg.norm(first_vector)
+    norm2 = np.linalg.norm(second_vector)
 
     if norm1 == 0 or norm2 == 0:
         return 0.0
 
-    return np.dot(vec1, vec2) / (norm1 * norm2)
+    return np.dot(first_vector, second_vector) / (norm1 * norm2)
 
 
-def euclidean_distance(vec1: np.ndarray, vec2: np.ndarray) -> float:
-    """
-    Calculate Euclidean distance between two vectors.
+def euclidean_distance(first_vector: np.ndarray, second_vector: np.ndarray) -> float:
 
-    Args:
-        vec1: First vector
-        vec2: Second vector
-
-    Returns:
-        Euclidean distance
-    """
-    return np.linalg.norm(vec1 - vec2)
+    return np.linalg.norm(first_vector - second_vector)
 
 
 def find_nearest_neighbors(
