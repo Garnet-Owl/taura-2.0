@@ -1,5 +1,7 @@
 # Taura 2.0
 
+Original repo became too messy hit LFS limits, etc; https://github.com/Garnet-Owl/taura
+
 Machine translation model for translating between Kikuyu and English.
 
 The name "taura" is derived from the Kikuyu word "Taũra", which means "Translate".
