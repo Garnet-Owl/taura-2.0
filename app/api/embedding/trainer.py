@@ -43,7 +43,6 @@ class FastTextTrainer:
     def preprocess_data(data: List[str], output_path: Path) -> Path:
         with open(output_path, 'w', encoding='utf-8') as f:
             for sentence in data:
-                # Normalize and clean sentence
                 clean_sentence = ' '.join(sentence.lower().split())
                 if clean_sentence:
                     f.write(f"{clean_sentence}\n")
@@ -62,11 +61,9 @@ class FastTextTrainer:
         if config is None:
             config = EmbeddingConfig()
 
-        # Prepare training data
         temp_file = self.model_directory / f"{language}_temp.txt"
         data_path = self.preprocess_data(train_data, temp_file)
 
-        # Create training parameters
         params = {
             'input': str(data_path),
             'dim': config.dim,
@@ -89,10 +86,8 @@ class FastTextTrainer:
             model.save_model(str(model_path))
             logger.info(f"Model saved to {model_path}")
 
-        # Store model in memory
         self.models[language] = model
 
-        # Clean up temporary file
         data_path.unlink(missing_ok=True)
 
         return model
