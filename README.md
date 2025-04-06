@@ -1,5 +1,7 @@
 # Taura 2.0
 
+Original repo became too messy hit LFS limits, etc; https://github.com/Garnet-Owl/taura
+
 Machine translation model for translating between Kikuyu and English.
 
 The name "taura" is derived from the Kikuyu word "Taũra", which means "Translate".
@@ -20,7 +22,7 @@ The name "taura" is derived from the Kikuyu word "Taũra", which means "Translat
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/taura-2.0.git
+   git clone https://github.com/Garnet-Owl/taura-2.0.git
    cd taura-2.0
    ```
 
@@ -52,40 +54,7 @@ taura-2.0/
 └── scripts/             # Utility scripts
 ```
 
-## Usage
 
-### Training Embedding Models
-
-```bash
-poetry run python scripts/train_embeddings.py --source data/raw/kikuyu_english_pairs.csv
-```
-
-### Translating Text
-
-```bash
-poetry run python -m app.api.serve.cli translate "Nĩndakena gũkuona" --source kikuyu --target english
-```
-
-## Development
-
-### Running Tests
-
-```bash
-poetry run pytest
-```
-
-### Code Formatting
-
-```bash
-poetry run black .
-poetry run isort .
-```
-
-### Type Checking
-
-```bash
-poetry run mypy app
-```
 
 ## Contributing
 
