@@ -6,6 +6,8 @@ Machine translation model for translating between Kikuyu and English.
 
 The name "taura" is derived from the Kikuyu word "Taũra", which means "Translate".
 
+Project Duration - 1st phase Official start On April and end by june 30th 2025
+
 ## Features
 
 - FastText-based word embeddings for Kikuyu and English
