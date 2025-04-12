@@ -61,11 +61,11 @@ jobs:
 
       - name: Basic Lint with Ruff
         run: |
-          poetry run ruff check app --select E,F --ignore E501,E741
+          poetry run ruff check --select E,F --ignore E501,E741 --exclude "notebooks/*" .
 
       - name: Format check with Ruff
         run: |
-          poetry run ruff format --check app
+          poetry run ruff format --check --exclude "notebooks/*" .
 
       - name: Run tests with pytest
         run: |

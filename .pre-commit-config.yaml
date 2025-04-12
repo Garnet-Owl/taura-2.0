@@ -17,10 +17,9 @@ repos:
       # Run the linter with basic rules only
       - id: ruff
         args: [--fix]
-        files: ^app/
-        exclude: ^app/tests/
+        exclude: ^notebooks/
         types: [python]
       # Run the formatter
       - id: ruff-format
-        files: ^app/
+        exclude: ^notebooks/
         types: [python]
