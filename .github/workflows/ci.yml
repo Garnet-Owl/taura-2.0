@@ -69,4 +69,7 @@ jobs:
 
       - name: Run tests with pytest
         run: |
+          # Install the package in development mode to make 'app' importable
+          poetry install --no-interaction
+          # Run pytest from the project root
           poetry run pytest
