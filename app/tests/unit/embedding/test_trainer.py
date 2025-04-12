@@ -70,9 +70,7 @@ class TestFastTextTrainer(unittest.TestCase):
             config = EmbeddingConfig(dim=100, epoch=1)
 
         with when("training a model"):
-            model = trainer.train_model(
-                "english", self.english_data, config, save_model=True
-            )
+            trainer.train_model("english", self.english_data, config, save_model=True)
 
         with then("the model should be trained with correct parameters"):
             mock_train.assert_called_once()
@@ -104,7 +102,7 @@ class TestFastTextTrainer(unittest.TestCase):
             model_path.touch()
 
         with when("loading a model"):
-            model = trainer.load_model("english")
+            trainer.load_model("english")
 
         with then("the model should be loaded from disk"):
             mock_load.assert_called_once_with(str(model_path))
