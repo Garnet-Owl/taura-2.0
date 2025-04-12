@@ -17,7 +17,7 @@ Project Duration - 1st phase Official start On April and end by june 30th 2025
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12 or higher
 - [Poetry](https://python-poetry.org/docs/#installation) for dependency management
 
 ## Installation
@@ -55,8 +55,6 @@ taura-2.0/
 ├── data/                # Data directory
 └── scripts/             # Utility scripts
 ```
-
-
 
 ## Contributing
 
