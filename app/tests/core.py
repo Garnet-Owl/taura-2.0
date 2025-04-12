@@ -1,6 +1,6 @@
 """Core utilities for tests."""
 
-from enum import Enum, auto
+from enum import Enum
 import pytz
 from datetime import datetime, timezone, timedelta
 
@@ -14,7 +14,7 @@ class UTC:
     """UTC timezone for datetime objects."""
 
     @classmethod
-    def now(cls, offset=None):
+    def now(cls, offset=None, timezone=timezone):
         """Get current UTC time with optional offset.
 
         Args:
@@ -34,7 +34,7 @@ class UTC:
         return now
 
     @classmethod
-    def local_to_utc(cls, local_dt, offset):
+    def local_to_utc(cls, local_dt, offset, timezone=timezone):
         """Convert local time to UTC.
 
         Args:
