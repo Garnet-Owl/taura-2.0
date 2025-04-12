@@ -16,6 +16,11 @@ target-version = "py312"
 # Same line length as Black.
 line-length = 88
 
+# Exclude directories from linting
+lint.exclude = [
+    "notebooks/**",
+]
+
 # Ignore `E402` (import violations) in all `__init__.py` files.
 [lint.per-file-ignores]
 "__init__.py" = ["E402", "F401"]
