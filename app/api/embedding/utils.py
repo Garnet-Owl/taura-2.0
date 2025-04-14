@@ -29,15 +29,14 @@ def cosine_similarity(first_vector: np.ndarray, second_vector: np.ndarray) -> fl
 
 
 def euclidean_distance(first_vector: np.ndarray, second_vector: np.ndarray) -> float:
-
     return np.linalg.norm(first_vector - second_vector)
 
 
 def find_nearest_neighbors(
-        query_vector: np.ndarray,
-        vectors: Dict[str, np.ndarray],
-        n: int = 5,
-        metric: str = "cosine"
+    query_vector: np.ndarray,
+    vectors: Dict[str, np.ndarray],
+    n: int = 5,
+    metric: str = "cosine",
 ) -> List[Tuple[str, float]]:
     """
     Find the nearest neighbors to a query vector.
@@ -91,16 +90,17 @@ def create_vocabulary(sentences: List[str], min_count: int = 5) -> Dict[str, int
             word_counts[word] = word_counts.get(word, 0) + 1
 
     # Filter by minimum count
-    vocabulary = {word: count for word, count in word_counts.items()
-                  if count >= min_count}
+    vocabulary = {
+        word: count for word, count in word_counts.items() if count >= min_count
+    }
 
     return vocabulary
 
 
 def save_vectors_to_txt(
-        vectors: Dict[str, np.ndarray],
-        output_path: Union[str, Path],
-        header: bool = True
+    vectors: Dict[str, np.ndarray],
+    output_path: Union[str, Path],
+    header: bool = True,
 ) -> None:
     """
     Save word vectors to a text file in word2vec format.
@@ -113,14 +113,14 @@ def save_vectors_to_txt(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         if header:
             vocab_size = len(vectors)
             vec_dim = next(iter(vectors.values())).shape[0] if vectors else 0
             f.write(f"{vocab_size} {vec_dim}\n")
 
         for word, vector in vectors.items():
-            vector_str = ' '.join(map(str, vector))
+            vector_str = " ".join(map(str, vector))
             f.write(f"{word} {vector_str}\n")
 
     logger.info(f"Saved {len(vectors)} vectors to {output_path}")
@@ -138,7 +138,7 @@ def load_vectors_from_txt(input_path: Union[str, Path]) -> Dict[str, np.ndarray]
     """
     vectors = {}
 
-    with open(input_path, 'r', encoding='utf-8') as f:
+    with open(input_path, encoding="utf-8") as f:
         first_line = f.readline().strip().split()
 
         # Check if first line is a header

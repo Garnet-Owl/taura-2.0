@@ -5,8 +5,8 @@ from unittest import mock
 
 import numpy as np
 
-from app.api.embedding.trainer import FastTextTrainer, EmbeddingConfig
-from app.tests.givenpy import given, when, then
+from app.api.embedding.trainer import EmbeddingConfig, FastTextTrainer
+from app.tests.givenpy import given, then, when
 
 
 class TestFastTextTrainer(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestFastTextTrainer(unittest.TestCase):
         # Create a temporary directory for test models
         self.temp_dir = tempfile.TemporaryDirectory()
         self.model_dir = Path(self.temp_dir.name)
-        
+
         # Sample training data
         self.english_data = [
             "hello world",
@@ -25,7 +25,7 @@ class TestFastTextTrainer(unittest.TestCase):
             "machine learning is fun",
             "natural language processing helps computers understand human language",
         ]
-        
+
         self.kikuyu_data = [
             "nĩ mwega",
             "ndũgĩka ũguo",
@@ -45,15 +45,15 @@ class TestFastTextTrainer(unittest.TestCase):
         """
         with given():
             model_dir = self.model_dir / "test_init"
-            
+
         with when("initializing a FastTextTrainer"):
             trainer = FastTextTrainer(model_dir)
-            
+
         with then("the model directory should be created"):
             assert model_dir.exists()
             assert trainer.models == {}
 
-    @mock.patch('fasttext.train_unsupervised')
+    @mock.patch("fasttext.train_unsupervised")
     def test_train_model(self, mock_train):
         """
         Given a trainer and training data
@@ -64,26 +64,26 @@ class TestFastTextTrainer(unittest.TestCase):
         mock_model = mock.MagicMock()
         mock_model.get_word_vector.return_value = np.zeros(300)
         mock_train.return_value = mock_model
-        
+
         with given():
             trainer = FastTextTrainer(self.model_dir)
             config = EmbeddingConfig(dim=100, epoch=1)
-            
+
         with when("training a model"):
-            model = trainer.train_model("english", self.english_data, config, save_model=True)
-            
+            trainer.train_model("english", self.english_data, config, save_model=True)
+
         with then("the model should be trained with correct parameters"):
             mock_train.assert_called_once()
             # Check training params
             call_kwargs = mock_train.call_args[1]
-            assert call_kwargs['dim'] == 100
-            assert call_kwargs['epoch'] == 1
-            
+            assert call_kwargs["dim"] == 100
+            assert call_kwargs["epoch"] == 1
+
             # Check that the model was saved
             assert "english" in trainer.models
             mock_model.save_model.assert_called_once()
 
-    @mock.patch('fasttext.load_model')
+    @mock.patch("fasttext.load_model")
     def test_load_model(self, mock_load):
         """
         Given a trainer with a saved model
@@ -93,22 +93,22 @@ class TestFastTextTrainer(unittest.TestCase):
         # Mock FastText model
         mock_model = mock.MagicMock()
         mock_load.return_value = mock_model
-        
+
         with given():
             trainer = FastTextTrainer(self.model_dir)
-            
+
             # Create a dummy model file
             model_path = self.model_dir / "english.bin"
             model_path.touch()
-            
+
         with when("loading a model"):
-            model = trainer.load_model("english")
-            
+            trainer.load_model("english")
+
         with then("the model should be loaded from disk"):
             mock_load.assert_called_once_with(str(model_path))
             assert trainer.models["english"] == mock_model
 
-    @mock.patch('fasttext.train_unsupervised')
+    @mock.patch("fasttext.train_unsupervised")
     def test_get_word_vector(self, mock_train):
         """
         Given a trainer with a loaded model
@@ -119,19 +119,19 @@ class TestFastTextTrainer(unittest.TestCase):
         mock_model = mock.MagicMock()
         mock_model.get_word_vector.return_value = np.ones(300)
         mock_train.return_value = mock_model
-        
+
         with given():
             trainer = FastTextTrainer(self.model_dir)
             trainer.train_model("english", self.english_data, save_model=False)
-            
+
         with when("getting a word vector"):
             vector = trainer.get_word_vector("english", "hello")
-            
+
         with then("the correct vector should be returned"):
             mock_model.get_word_vector.assert_called_once_with("hello")
             assert np.array_equal(vector, np.ones(300))
 
-    @mock.patch('fasttext.train_unsupervised')
+    @mock.patch("fasttext.train_unsupervised")
     def test_get_sentence_vector(self, mock_train):
         """
         Given a trainer with a loaded model
@@ -142,14 +142,14 @@ class TestFastTextTrainer(unittest.TestCase):
         mock_model = mock.MagicMock()
         mock_model.get_sentence_vector.return_value = np.ones(300)
         mock_train.return_value = mock_model
-        
+
         with given():
             trainer = FastTextTrainer(self.model_dir)
             trainer.train_model("english", self.english_data, save_model=False)
-            
+
         with when("getting a sentence vector"):
             vector = trainer.get_sentence_vector("english", "hello world")
-            
+
         with then("the correct vector should be returned"):
             mock_model.get_sentence_vector.assert_called_once_with("hello world")
             assert np.array_equal(vector, np.ones(300))
@@ -166,19 +166,19 @@ class TestFastTextTrainer(unittest.TestCase):
                 "  HELLO World  ",
                 "",  # Empty string should be skipped
                 "The quick\nbrown fox",
-                "Multiple    spaces  here"
+                "Multiple    spaces  here",
             ]
             output_path = self.model_dir / "test_output.txt"
-            
+
         with when("preprocessing data"):
             result_path = trainer.preprocess_data(messy_data, output_path)
-            
+
         with then("the data should be properly formatted"):
             assert result_path == output_path
             assert result_path.exists()
-            
+
             # Check the content of the file
-            with open(result_path, 'r', encoding='utf-8') as f:
+            with open(result_path, encoding="utf-8") as f:
                 lines = f.readlines()
                 assert len(lines) == 3  # Empty string should be skipped
                 assert lines[0].strip() == "hello world"
@@ -186,5 +186,5 @@ class TestFastTextTrainer(unittest.TestCase):
                 assert lines[2].strip() == "multiple spaces here"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
