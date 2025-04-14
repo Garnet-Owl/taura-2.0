@@ -1,6 +1,6 @@
 import re
 import unicodedata
-from typing import List, Dict, Set, Optional
+from typing import Optional
 
 
 class TextProcessor:
@@ -8,7 +8,7 @@ class TextProcessor:
     Processes text for FastText embedding models with language-specific handling.
     """
 
-    def __init__(self, stopwords: Optional[Dict[str, Set[str]]] = None):
+    def __init__(self, stopwords: Optional[dict[str, set[str]]] = None):
         self.stopwords = stopwords or {}
 
     @staticmethod
@@ -29,7 +29,7 @@ class TextProcessor:
 
         return text
 
-    def tokenize(self, text: str, language: str = "english") -> List[str]:
+    def tokenize(self, text: str, language: str = "english") -> list[str]:
         text = self.normalize_text(text)
 
         # Simple whitespace tokenization as a baseline
@@ -43,14 +43,15 @@ class TextProcessor:
 
         return tokens
 
-    def remove_stopwords(self, tokens: List[str], language: str) -> List[str]:
+    def remove_stopwords(self, tokens: list[str], language: str) -> list[str]:
         if language in self.stopwords:
             return [token for token in tokens if token not in self.stopwords[language]]
 
         return tokens
 
-    def prepare_for_fasttext(self, texts: List[str], language: str,
-                             remove_stopwords: bool = False) -> List[str]:
+    def prepare_for_fasttext(
+        self, texts: list[str], language: str, remove_stopwords: bool = False
+    ) -> list[str]:
         processed_texts = []
 
         for text in texts:

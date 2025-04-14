@@ -4,7 +4,7 @@ This project uses Poetry for dependency management. Follow these instructions to
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12 or higher
 - Git
 
 ## Installing Poetry
@@ -43,23 +43,22 @@ export PATH="$HOME/.local/bin:$PATH"
    poetry install
    ```
 
-3. Initialize the project structure:
-   ```bash
-   poetry run python scripts/init_project.py
-   ```
-
-4. Activate the virtual environment:
+3. Activate the virtual environment:
    ```bash
    poetry shell
    ```
 
-## Verifying Installation
+## Development Setup
 
-To verify that everything is set up correctly:
+1. Set up pre-commit hooks:
+   ```bash
+   pre-commit install
+   ```
 
-```bash
-poetry run python -c "import fasttext; print('FastText imported successfully')"
-```
+2. Run tests:
+   ```bash
+   poetry run pytest
+   ```
 
 ## Common Poetry Commands
 
@@ -83,16 +82,6 @@ poetry run python -c "import fasttext; print('FastText imported successfully')"
   poetry run python your_script.py
   ```
 
-- Run tests:
-  ```bash
-  poetry run pytest
-  ```
-
-- Export requirements.txt (if needed):
-  ```bash
-  poetry export -f requirements.txt --output requirements.txt
-  ```
-
 ## Troubleshooting
 
 ### FastText Installation Issues
@@ -102,12 +91,3 @@ If you encounter issues installing FastText, you might need to install build too
 - **Windows**: Install Visual C++ Build Tools
 - **Linux**: `sudo apt-get install build-essential`
 - **macOS**: `xcode-select --install`
-
-### Poetry Version Conflicts
-
-If you encounter version conflicts:
-
-```bash
-poetry lock --no-update
-poetry install
-```
