@@ -1,22 +1,21 @@
 import logging
 from pathlib import Path
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 import fasttext
 import numpy as np
 from pydantic import BaseModel
 
-
-
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
 class EmbeddingConfig(BaseModel):
     """Configuration for FastText embedding models."""
+
     dim: int = 300
     min_count: int = 5
     epoch: int = 10
@@ -41,9 +40,9 @@ class FastTextTrainer:
 
     @staticmethod
     def preprocess_data(data: List[str], output_path: Path) -> Path:
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             for sentence in data:
-                clean_sentence = ' '.join(sentence.lower().split())
+                clean_sentence = " ".join(sentence.lower().split())
                 if clean_sentence:
                     f.write(f"{clean_sentence}\n")
 
@@ -51,13 +50,12 @@ class FastTextTrainer:
         return output_path
 
     def train_model(
-            self,
-            language: str,
-            train_data: List[str],
-            config: Optional[EmbeddingConfig] = None,
-            save_model: bool = True
+        self,
+        language: str,
+        train_data: List[str],
+        config: Optional[EmbeddingConfig] = None,
+        save_model: bool = True,
     ) -> fasttext.FastText._FastText:
-
         if config is None:
             config = EmbeddingConfig()
 
@@ -65,17 +63,17 @@ class FastTextTrainer:
         data_path = self.preprocess_data(train_data, temp_file)
 
         params = {
-            'input': str(data_path),
-            'dim': config.dim,
-            'minCount': config.min_count,
-            'epoch': config.epoch,
-            'lr': config.learning_rate,
-            'wordNgrams': config.word_ngrams,
-            'minn': config.min_n,
-            'maxn': config.max_n,
-            'bucket': config.bucket,
-            'thread': config.thread,
-            'loss': config.loss
+            "input": str(data_path),
+            "dim": config.dim,
+            "minCount": config.min_count,
+            "epoch": config.epoch,
+            "lr": config.learning_rate,
+            "wordNgrams": config.word_ngrams,
+            "minn": config.min_n,
+            "maxn": config.max_n,
+            "bucket": config.bucket,
+            "thread": config.thread,
+            "loss": config.loss,
         }
 
         logger.info(f"Training FastText model for {language}")

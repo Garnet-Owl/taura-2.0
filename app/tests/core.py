@@ -1,7 +1,8 @@
-import datetime
-from enum import Enum
+"""Core utilities for tests."""
 
+from enum import Enum
 import pytz
+from datetime import datetime, timezone, timedelta
 
 
 class AutoName(Enum):
@@ -9,63 +10,68 @@ class AutoName(Enum):
         return name
 
 
-class Clock:
-    clock_instance = None
-
-    def get_now(self) -> datetime.datetime:
-        return datetime.datetime.utcnow()
-
-    def now(self) -> datetime.datetime:
-        return datetime.datetime.utcnow()
-
-    def get_local_now(self, timezone: datetime.tzinfo) -> datetime.datetime:
-        now = self.get_now()
-
-        now = pytz.utc.localize(now)
-        loc_dt = now.astimezone(timezone)
-
-        return loc_dt
+class UTC:
+    """UTC timezone for datetime objects."""
 
     @classmethod
-    def set_clock(cls, clock) -> "Clock":
-        cls.clock_instance = clock
+    def now(cls, offset=None, timezone=timezone):
+        """Get current UTC time with optional offset.
+
+        Args:
+            offset: Optional timezone offset in hours
+
+        Returns:
+            datetime: Current time in UTC with optional timezone adjustment
+        """
+        now = datetime.now(timezone.utc)
+
+        if offset:
+            timezone_str = f"Etc/GMT{'+' if offset < 0 else '-'}{abs(offset)}"
+            timezone = pytz.timezone(timezone_str)
+            loc_dt = now.astimezone(timezone)
+
+            return loc_dt
+        return now
 
     @classmethod
-    def retrieve(cls):
-        if cls.clock_instance is None:
-            cls.clock_instance = Clock()
+    def local_to_utc(cls, local_dt, offset, timezone=timezone):
+        """Convert local time to UTC.
 
-        return cls.clock_instance
+        Args:
+            local_dt: Local datetime
+            offset: Timezone offset in hours (can be negative)
 
-    def get_start_of_day_for(self, timezone: datetime.timezone):
-        now = self.get_now()
+        Returns:
+            datetime: UTC time
+        """
+        if local_dt.tzinfo is not None:
+            return local_dt.astimezone(timezone.utc)
 
-        now = pytz.utc.localize(now)
-        loc_dt: datetime.datetime = now.astimezone(timezone)
-        loc_dt = loc_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        timezone_str = f"Etc/GMT{'+' if offset < 0 else '-'}{abs(offset)}"
+        timezone = pytz.timezone(timezone_str)
+
+        loc_dt = timezone.localize(local_dt)
         loc_dt = loc_dt.astimezone(timezone.utc)
 
         return loc_dt
 
 
-class MockClock(Clock):
-    def __init__(self, current_time=None):
-        if current_time is None:
-            self.time = datetime.datetime.utcnow()
-        else:
-            self.time = current_time
+def get_timestamp():
+    """Get current timestamp in ISO format."""
+    return datetime.now(timezone.utc).isoformat()
 
-        self.original_time = self.time
-        Clock.clock_instance = self
 
-    def apply_delta(self, delta: datetime.timedelta):
-        self.time = self.time + delta
+def get_timestamp_offset(offset_hours=0, offset_minutes=0):
+    """Get timestamp with offset.
 
-    def set_time(self, time):
-        self.time = time
+    Args:
+        offset_hours: Hour offset (positive or negative)
+        offset_minutes: Minute offset (positive or negative)
+    """
+    offset = timedelta(hours=offset_hours, minutes=offset_minutes)
+    return (datetime.now(timezone.utc) + offset).isoformat()
 
-    def get_now(self):
-        return self.time
 
-    def now(self):
-        return self.time
+def get_utc_timestamp():
+    """Get UTC timestamp for tests."""
+    return datetime.now(timezone.utc).isoformat()
