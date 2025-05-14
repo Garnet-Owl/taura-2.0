@@ -122,3 +122,6 @@ data/embeddings/*
 
 # PyCharm
 .idea/
+
+#PDF file
+*.pdf
