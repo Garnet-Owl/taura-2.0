@@ -46,10 +46,10 @@ The project follows a clean, feature-based architecture:
 taura-2.0/
 ├── app/                 # Main application code
 │   ├── api/             # API and core functionality
-│   │   ├── embedding/   # FastText embedding generation
-│   │   ├── translation/ # Translation core functionality
+│   │   ├── feature 1, e.g embedd_vectors
+│   │   ├── feature 2, etc
 │   │   ├── preprocessing/ # Data preprocessing
-│   │   └── serve/       # API serving
+│   │   └── serve/       # API serving (Fast API)
 │   └── tests/           # Test suite
 ├── models/              # Saved models directory
 ├── data/                # Data directory
