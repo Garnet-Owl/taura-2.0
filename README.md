@@ -37,6 +37,10 @@ Project Duration - 1st phase Official start On April and end by june 30th 2025
    ```bash
    poetry shell
    ```
+4. Install & remove unused packages
+   ```bash
+   poetry sync
+   ```
 
 ## Project Structure
 
