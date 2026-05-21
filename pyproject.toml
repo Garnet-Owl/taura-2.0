@@ -1,30 +1,31 @@
-[tool.poetry]
+[project]
 name = "taura"
 version = "2.0.0"
 description = "Machine translation model for translating Kikuyu to English"
-authors = ["James Wanjku <james544wanjiku@gmail.com>"]
+authors = [{name = "James Wanjku", email = "james544wanjiku@gmail.com"}]
 readme = "README.md"
-repository = "https://github.com/garnet-owl/taura-2.0"
-license = "MIT"
-packages = [{include = "app"}]
+license = {text = "MIT"}
+requires-python = ">=3.12"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.0.2"
-mypy = "^1.8.0"
-pytest-cov = "^4.1.0"
-pre-commit = "^3.6.2"
-ruff = "0.11.5"
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "^7.2.6"
-sphinx-rtd-theme = "^2.0.0"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.2",
+    "mypy>=1.8.0",
+    "pytest-cov>=4.1.0",
+    "pre-commit>=3.6.2",
+    "ruff==0.11.5",
+]
+docs = [
+    "sphinx>=7.2.6",
+    "sphinx-rtd-theme>=2.0.0",
+]
 
 [build-system]
-requires = ["poetry-core>=1.9.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
 
 [tool.mypy]
 python_version = "3.8"
