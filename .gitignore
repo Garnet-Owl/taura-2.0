@@ -125,3 +125,8 @@ data/embeddings/*
 
 #PDF file
 *.pdf
+
+#AI coding
+AGENTS.md
+/session-details
+MASTER_PLAN.md
