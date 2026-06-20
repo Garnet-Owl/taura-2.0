@@ -10,3 +10,9 @@ All notable changes to this project will be documented in this file.
 - Resolved environment issue by disabling keyring configuration to prevent Poetry commands from hanging on Windows.
 - Installed test dependencies (`givenpy`, `pyhamcrest`) and verified the preprocessing tests.
 - Implemented dataset splitting logic (`app/api/split.py`) with unit tests, achieving 100% test pass rate.
+- Installed `fasttext-wheel`, `numpy`, and `pydantic` in the python virtual environment.
+- Created cross-lingual embeddings alignment and translator module (`app/api/embeddings.py`) supporting sentence-retrieval and word-by-word modes.
+- Implemented embedding training and SVD Procrustes mapping matrix learning pipeline (`scripts/train_embeddings.py`).
+- Implemented translation service API (`app/serve/main.py`) with FastAPI/Uvicorn, achieving 100% pass rate across all 18 unit and integration tests.
+- Updated `README.md` with dataset preparation, training, serving instructions, and curl API examples.
+
