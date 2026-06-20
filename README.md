@@ -6,7 +6,7 @@ Machine translation model for translating between Kikuyu and English.
 
 The name "taura" is derived from the Kikuyu word "Taũra", which means "Translate".
 
-Project Duration - 1st phase Official start On April and end by june 30th 2025
+Project Duration: The project initially started in April 2025, ran for two months, and paused. Resumed in June 2026. A first working version (MVP) is targeted for the end of July 2026, with Phase 1 completion expected by September 2026.
 
 ## Features
 
