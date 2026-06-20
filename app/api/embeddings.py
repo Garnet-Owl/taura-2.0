@@ -1,38 +1,41 @@
 """Cross-lingual word embeddings alignment and translation logic."""
 
+from typing import Any
 import numpy as np
 from app.api.preprocessing import normalize_text, tokenize_text
 
 
-def get_sentence_embedding(model, sentence: str, dim: int = 100) -> np.ndarray:
+def get_sentence_embedding(model: Any, sentence: str, dim: int = 100) -> np.ndarray:
     """
     Computes the average word embedding for a given sentence.
     """
     normalized = normalize_text(sentence)
     tokens = tokenize_text(normalized)
-    
+
     # Filter out empty tokens
     tokens = [t for t in tokens if t]
-    
+
     if not tokens:
         # Check actual model dimension if available
         actual_dim = getattr(model, "get_dimension", lambda: dim)()
         return np.zeros(actual_dim, dtype=np.float32)
-        
+
     embeddings = [model.get_word_vector(token) for token in tokens]
-    return np.mean(embeddings, axis=0).astype(np.float32)
+    return np.mean(embeddings, axis=0).astype(np.float32)  # type: ignore[no-any-return]
 
 
-def learn_alignment_matrix(src_embeddings: np.ndarray, tgt_embeddings: np.ndarray) -> np.ndarray:
+def learn_alignment_matrix(
+    src_embeddings: np.ndarray, tgt_embeddings: np.ndarray
+) -> np.ndarray:
     """
     Learns an orthogonal mapping matrix W that aligns the source embedding space
     to the target embedding space using parallel anchor representations.
     Solves the orthogonal Procrustes problem: W = U V^T where U S V^T = SVD(Y X^T).
-    
+
     Args:
         src_embeddings: Source embeddings of shape (dim, N)
         tgt_embeddings: Target embeddings of shape (dim, N)
-        
+
     Returns:
         W: Orthogonal projection matrix of shape (dim, dim)
     """
@@ -40,31 +43,32 @@ def learn_alignment_matrix(src_embeddings: np.ndarray, tgt_embeddings: np.ndarra
     M = tgt_embeddings @ src_embeddings.T
     U, _, Vt = np.linalg.svd(M)
     W = U @ Vt
-    return W
+    return W  # type: ignore[no-any-return]
 
 
 class CrossLingualTranslator:
     """
     Bidirectional translator using cross-lingual word/sentence embeddings.
     """
+
     def __init__(
         self,
-        src_model,
-        tgt_model,
+        src_model: Any,
+        tgt_model: Any,
         projection_matrix: np.ndarray,
-        tgt_sentences: list[str]
-    ):
+        tgt_sentences: list[str],
+    ) -> None:
         self.src_model = src_model
         self.tgt_model = tgt_model
         self.projection_matrix = projection_matrix
         self.tgt_sentences = tgt_sentences
-        
+
         # Precompute target sentence embeddings
-        self.tgt_embeddings = []
+        tgt_embs = []
         for s in tgt_sentences:
             emb = get_sentence_embedding(tgt_model, s)
-            self.tgt_embeddings.append(emb)
-        self.tgt_embeddings = np.array(self.tgt_embeddings)
+            tgt_embs.append(emb)
+        self.tgt_embeddings: np.ndarray = np.array(tgt_embs)
 
     def translate_sentence_retrieval(self, src_sentence: str) -> str:
         """
@@ -73,19 +77,19 @@ class CrossLingualTranslator:
         """
         if not self.tgt_sentences:
             return ""
-            
+
         src_emb = get_sentence_embedding(self.src_model, src_sentence)
         projected = self.projection_matrix @ src_emb
-        
+
         # Compute cosine similarities
         norm_projected = np.linalg.norm(projected)
         if norm_projected < 1e-8:
             return self.tgt_sentences[0]
-            
+
         norms_tgt = np.linalg.norm(self.tgt_embeddings, axis=1)
         # Avoid division by zero for unaligned/empty target sentences
         norms_tgt[norms_tgt < 1e-8] = 1.0
-        
+
         scores = np.dot(self.tgt_embeddings, projected) / (norms_tgt * norm_projected)
         best_idx = int(np.argmax(scores))
         return self.tgt_sentences[best_idx]
@@ -96,20 +100,23 @@ class CrossLingualTranslator:
         and finding the nearest target vocabulary word.
         """
         from app.api.preprocessing import normalize_text, tokenize_text
+
         normalized = normalize_text(src_sentence)
         tokens = tokenize_text(normalized)
         tokens = [t for t in tokens if t]
-        
+
         if not tokens:
             return ""
-            
+
         # Get target vocabulary words and embeddings if not already cached
         if not hasattr(self, "tgt_vocab_words"):
             self.tgt_vocab_words = self.tgt_model.get_words()
-            self.tgt_vocab_embeddings = np.array([self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words])
+            self.tgt_vocab_embeddings = np.array(
+                [self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words]
+            )
             self.tgt_vocab_norms = np.linalg.norm(self.tgt_vocab_embeddings, axis=1)
             self.tgt_vocab_norms[self.tgt_vocab_norms < 1e-8] = 1.0
-            
+
         translated_words = []
         for token in tokens:
             v_src = self.src_model.get_word_vector(token)
@@ -118,16 +125,17 @@ class CrossLingualTranslator:
                 # If word is unknown/has zero vector, keep it as is
                 translated_words.append(token)
                 continue
-                
+
             projected = self.projection_matrix @ v_src
             norm_proj = np.linalg.norm(projected)
             if norm_proj < 1e-8:
                 translated_words.append(token)
                 continue
-                
-            scores = np.dot(self.tgt_vocab_embeddings, projected) / (self.tgt_vocab_norms * norm_proj)
+
+            scores = np.dot(self.tgt_vocab_embeddings, projected) / (
+                self.tgt_vocab_norms * norm_proj
+            )
             best_idx = int(np.argmax(scores))
             translated_words.append(self.tgt_vocab_words[best_idx])
-            
-        return " ".join(translated_words)
 
+        return " ".join(translated_words)

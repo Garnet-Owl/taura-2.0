@@ -7,13 +7,14 @@ from huggingface_hub import hf_hub_download
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.split import split_data
 
+
 def main():
     print("Downloading dataset from Hugging Face...")
     try:
         path = hf_hub_download(
             repo_id="CGIAR/KikuyuEnglish_translation",
             filename="English - Kikuyu Sentence Pairs Final (1).xlsx",
-            repo_type="dataset"
+            repo_type="dataset",
         )
         print(f"Downloaded to {path}")
     except Exception as e:
@@ -30,7 +31,7 @@ def main():
         if "English" not in df.columns or "Kikuyu" not in df.columns:
             print(f"Skipping sheet {sheet} due to missing columns")
             continue
-        
+
         # Clean rows
         df = df.dropna(subset=["English", "Kikuyu"])
         for _, row in df.iterrows():
@@ -45,7 +46,9 @@ def main():
     os.makedirs("data", exist_ok=True)
 
     # Split dataset
-    train, val, test = split_data(all_pairs, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=42)
+    train, val, test = split_data(
+        all_pairs, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=42
+    )
 
     # Save as TSV files
     for split_name, split_data_list in [("train", train), ("val", val), ("test", test)]:
@@ -68,6 +71,7 @@ def main():
                 sentence = pair[idx].replace("\n", " ").replace("\r", " ")
                 f.write(f"{sentence}\n")
         print(f"Saved raw monolingual sentences to {train_lang_path}")
+
 
 if __name__ == "__main__":
     main()
