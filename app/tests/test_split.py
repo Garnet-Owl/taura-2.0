@@ -24,7 +24,7 @@ class TestSplit(unittest.TestCase):
                 train_ratio=train_ratio,
                 val_ratio=val_ratio,
                 test_ratio=test_ratio,
-                seed=42
+                seed=42,
             )
 
         with then("the lengths of splits match the ratios"):
@@ -41,6 +41,7 @@ class TestSplit(unittest.TestCase):
             test_ratio = 0.2
 
         with when("splitting with invalid ratios"):
+
             def action():
                 split_data(data, train_ratio, val_ratio, test_ratio)
 

@@ -8,6 +8,8 @@ import fasttext
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
+from typing import AsyncGenerator
+
 from app.api.embeddings import CrossLingualTranslator
 
 
@@ -15,7 +17,9 @@ class TranslationRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Source text to translate")
     source_lang: str = Field(..., description="Source language code ('ki' or 'en')")
     target_lang: str = Field(..., description="Target language code ('ki' or 'en')")
-    method: str = Field("retrieval", description="Translation method ('retrieval' or 'word-by-word')")
+    method: str = Field(
+        "retrieval", description="Translation method ('retrieval' or 'word-by-word')"
+    )
 
 
 class TranslationResponse(BaseModel):
@@ -26,7 +30,7 @@ class TranslationResponse(BaseModel):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Paths to model files
     ki_model_path = "models/ki.bin"
     en_model_path = "models/en.bin"

@@ -13,10 +13,10 @@ class TestPreprocessing(unittest.TestCase):
         """Text should be lowercased."""
         with given([]) as _:
             text = "HeLLo WoRLd"
-            
+
         with when("normalizing text"):
             result = normalize_text(text)
-            
+
         with then("the text is completely lowercased"):
             assert_that(result, is_(equal_to("hello world")))
 
@@ -24,10 +24,10 @@ class TestPreprocessing(unittest.TestCase):
         """Punctuation should be removed from text."""
         with given([]) as _:
             text = "Hello, world! This is a test."
-            
+
         with when("normalizing text"):
             result = normalize_text(text)
-            
+
         with then("punctuation is removed and text is lowercased"):
             assert_that(result, is_(equal_to("hello world this is a test")))
 
@@ -35,10 +35,10 @@ class TestPreprocessing(unittest.TestCase):
         """Extra spaces should be stripped and condensed."""
         with given([]) as _:
             text = "  hello   world  "
-            
+
         with when("normalizing text"):
             result = normalize_text(text)
-            
+
         with then("extra spaces are removed"):
             assert_that(result, is_(equal_to("hello world")))
 
@@ -46,20 +46,22 @@ class TestPreprocessing(unittest.TestCase):
         """Text should be tokenized by spaces."""
         with given([]) as _:
             text = "hello world this is a test"
-            
+
         with when("tokenizing text"):
             result = tokenize_text(text)
-            
+
         with then("the text is split into a list of words"):
-            assert_that(result, is_(equal_to(["hello", "world", "this", "is", "a", "test"])))
+            assert_that(
+                result, is_(equal_to(["hello", "world", "this", "is", "a", "test"]))
+            )
 
     def test_tokenize_text_empty(self):
         """Empty text should return an empty list."""
         with given([]) as _:
             text = ""
-            
+
         with when("tokenizing empty text"):
             result = tokenize_text(text)
-            
+
         with then("an empty list is returned"):
             assert_that(result, is_(equal_to([])))

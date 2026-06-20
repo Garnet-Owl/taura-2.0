@@ -40,7 +40,14 @@ class TestTranslationAPI(unittest.TestCase):
 
         with then("a 400 error is returned"):
             assert_that(response.status_code, is_(equal_to(400)))
-            assert_that(response.json()["detail"], is_(equal_to("Supported language codes are 'ki' (Kikuyu) and 'en' (English).")))
+            assert_that(
+                response.json()["detail"],
+                is_(
+                    equal_to(
+                        "Supported language codes are 'ki' (Kikuyu) and 'en' (English)."
+                    )
+                ),
+            )
 
     def test_translate_same_languages(self):
         """Translate endpoint should return 400 if source and target are identical."""
@@ -57,7 +64,10 @@ class TestTranslationAPI(unittest.TestCase):
 
         with then("a 400 error is returned"):
             assert_that(response.status_code, is_(equal_to(400)))
-            assert_that(response.json()["detail"], is_(equal_to("Source and target languages must be different.")))
+            assert_that(
+                response.json()["detail"],
+                is_(equal_to("Source and target languages must be different.")),
+            )
 
     def test_translate_invalid_method(self):
         """Translate endpoint should return 400 for invalid translation methods."""
@@ -74,7 +84,14 @@ class TestTranslationAPI(unittest.TestCase):
 
         with then("a 400 error is returned"):
             assert_that(response.status_code, is_(equal_to(400)))
-            assert_that(response.json()["detail"], is_(equal_to("Supported translation methods are 'retrieval' and 'word-by-word'.")))
+            assert_that(
+                response.json()["detail"],
+                is_(
+                    equal_to(
+                        "Supported translation methods are 'retrieval' and 'word-by-word'."
+                    )
+                ),
+            )
 
     def test_translate_end_to_end(self):
         """Translate endpoint should translate successfully when models are loaded."""
@@ -93,7 +110,14 @@ class TestTranslationAPI(unittest.TestCase):
             # Check if models are loaded; if not, service is 503, which is acceptable if models missing.
             # But they should be loaded since we trained them.
             if response.status_code == 503:
-                assert_that(response.json()["detail"], is_(equal_to("Translation models are not loaded. Please run model training first.")))
+                assert_that(
+                    response.json()["detail"],
+                    is_(
+                        equal_to(
+                            "Translation models are not loaded. Please run model training first."
+                        )
+                    ),
+                )
             else:
                 assert_that(response.status_code, is_(equal_to(200)))
                 data = response.json()

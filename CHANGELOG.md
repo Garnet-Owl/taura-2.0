@@ -15,4 +15,6 @@ All notable changes to this project will be documented in this file.
 - Implemented embedding training and SVD Procrustes mapping matrix learning pipeline (`scripts/train_embeddings.py`).
 - Implemented translation service API (`app/serve/main.py`) with FastAPI/Uvicorn, achieving 100% pass rate across all 18 unit and integration tests.
 - Updated `README.md` with dataset preparation, training, serving instructions, and curl API examples.
-
+- Installed missing development tools (`ruff`, `mypy`) in the `.venv` virtual environment.
+- Configured Mypy for Python 3.12, excluded the tests directory from strict typing, and added complete type hints to `app/api/embeddings.py` and `app/serve/main.py`.
+- Formatted and cleaned up codebase using Ruff format and check.

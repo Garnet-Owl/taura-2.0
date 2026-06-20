@@ -32,18 +32,13 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
     return ki_list, en_list
 
 
-
-def train_monolingual(train_path: str, model_path: str, dim: int = 100) -> fasttext.FastText._FastText:
+def train_monolingual(
+    train_path: str, model_path: str, dim: int = 100
+) -> fasttext.FastText._FastText:
     """Trains a monolingual FastText skipgram model on raw text."""
     print(f"Training FastText model on {train_path}...")
     model = fasttext.train_unsupervised(
-        train_path,
-        model="skipgram",
-        dim=dim,
-        epoch=15,
-        lr=0.1,
-        minCount=1,
-        thread=4
+        train_path, model="skipgram", dim=dim, epoch=15, lr=0.1, minCount=1, thread=4
     )
     model.save_model(model_path)
     print(f"Model saved to {model_path}")
@@ -53,7 +48,7 @@ def train_monolingual(train_path: str, model_path: str, dim: int = 100) -> fastt
 def evaluate_translator(
     translator: CrossLingualTranslator,
     src_sentences: list[str],
-    tgt_sentences: list[str]
+    tgt_sentences: list[str],
 ) -> dict[str, float]:
     """
     Evaluates translation quality via cross-lingual sentence retrieval.
@@ -63,34 +58,34 @@ def evaluate_translator(
     correct_top5 = 0
     mrr_sum = 0.0
     n = len(src_sentences)
-    
+
     # Precompute target embeddings
     tgt_embs = translator.tgt_embeddings
     norms_tgt = np.linalg.norm(tgt_embs, axis=1)
     norms_tgt[norms_tgt < 1e-8] = 1.0
-    
+
     for i, (src_s, true_tgt_s) in enumerate(zip(src_sentences, tgt_sentences)):
         src_emb = get_sentence_embedding(translator.src_model, src_s)
         projected = translator.projection_matrix @ src_emb
-        
+
         norm_projected = np.linalg.norm(projected)
         if norm_projected < 1e-8:
             # Cannot align, rank is worst
             mrr_sum += 1.0 / n
             continue
-            
+
         scores = np.dot(tgt_embs, projected) / (norms_tgt * norm_projected)
-        
+
         # Sort indices by score descending
         sorted_indices = np.argsort(scores)[::-1]
-        
+
         # Find index of true target sentence
         try:
             rank_idx = list(sorted_indices).index(i)
             rank = rank_idx + 1
         except ValueError:
             rank = n
-            
+
         if rank == 1:
             correct_top1 += 1
         if rank <= 5:
@@ -107,43 +102,40 @@ def evaluate_translator(
 def main():
     os.makedirs("models", exist_ok=True)
     dim = 100
-    
+
     # 1. Train Monolingual Models
     ki_model = train_monolingual("data/train.kikuyu", "models/ki.bin", dim=dim)
     en_model = train_monolingual("data/train.english", "models/en.bin", dim=dim)
-    
+
     # 2. Learn Cross-Lingual Alignment
     train_ki, train_en = load_sentences("data/train.tsv")
     print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
-    
+
     X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
     Y = np.array([get_sentence_embedding(en_model, s, dim=dim) for s in train_en]).T
-    
+
     W_ki_en = learn_alignment_matrix(X, Y)
     W_en_ki = learn_alignment_matrix(Y, X)
-    
+
     np.save("models/proj_ki_en.npy", W_ki_en)
     np.save("models/proj_en_ki.npy", W_en_ki)
     print("Alignment projection matrices saved.")
-    
+
     # 3. Evaluate on Validation Set
     val_ki, val_en = load_sentences("data/val.tsv")
     print(f"Evaluating alignment on {len(val_ki)} validation sentences...")
-    
+
     translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en)
     translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki)
-    
+
     metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
     metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
-    
-    metrics = {
-        "kikuyu_to_english": metrics_ki_en,
-        "english_to_kikuyu": metrics_en_ki
-    }
-    
+
+    metrics = {"kikuyu_to_english": metrics_ki_en, "english_to_kikuyu": metrics_en_ki}
+
     print("\nEvaluation Metrics:")
     print(json.dumps(metrics, indent=2))
-    
+
     metrics_path = "models/evaluation_metrics.json"
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
