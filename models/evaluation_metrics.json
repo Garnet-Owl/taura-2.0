@@ -1,20 +1,20 @@
 {
   "kikuyu_to_english": {
-    "accuracy_top1": 0.3922077922077922,
-    "accuracy_top5": 0.6467532467532467,
-    "mrr": 0.5110867048633813,
-    "bleu_retrieval": 5.447979125431202,
-    "chrf_retrieval": 26.405673779500844,
-    "bleu_word_by_word": 0.1951798463682629,
-    "chrf_word_by_word": 22.32627750731791
+    "accuracy_top1": 0.42077922077922075,
+    "accuracy_top5": 0.6519480519480519,
+    "mrr": 0.5286068022256215,
+    "bleu_retrieval": 4.792448762231292,
+    "chrf_retrieval": 26.308544484113067,
+    "bleu_word_by_word": 0.25197609816653477,
+    "chrf_word_by_word": 22.44269675839882
   },
   "english_to_kikuyu": {
-    "accuracy_top1": 0.37142857142857144,
-    "accuracy_top5": 0.6181818181818182,
-    "mrr": 0.484745268843837,
-    "bleu_retrieval": 3.0394352237601012,
-    "chrf_retrieval": 27.785307668030534,
-    "bleu_word_by_word": 0.24572352035114037,
-    "chrf_word_by_word": 24.17353570204631
+    "accuracy_top1": 0.42857142857142855,
+    "accuracy_top5": 0.6545454545454545,
+    "mrr": 0.532013069791016,
+    "bleu_retrieval": 3.2668002144189408,
+    "chrf_retrieval": 28.221116257619,
+    "bleu_word_by_word": 0.28090460643253257,
+    "chrf_word_by_word": 24.85802669495728
   }
 }
