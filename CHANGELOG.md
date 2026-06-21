@@ -18,3 +18,9 @@ All notable changes to this project will be documented in this file.
 - Installed missing development tools (`ruff`, `mypy`) in the `.venv` virtual environment.
 - Configured Mypy for Python 3.12, excluded the tests directory from strict typing, and added complete type hints to `app/api/embeddings.py` and `app/serve/main.py`.
 - Formatted and cleaned up codebase using Ruff format and check.
+- Installed `sacrebleu` dependency using poetry.
+- Implemented offline evaluation pipeline (`scripts/evaluate.py`) calculating corpus-level BLEU and ChrF scores against `data/test.tsv`.
+- Mounted templates and static files inside FastAPI serving architecture and added `/health` and `/feedback` API endpoints.
+- Built a sleek, glassmorphic translation SPA frontend (`index.html`, `style.css`, `main.js`) with interactive translation, word-by-word alignments, and user feedback submission.
+- Fixed return type annotations for script entry points to achieve 100% type check pass rate under MyPy.
+

@@ -3,7 +3,7 @@
 import csv
 import json
 import os
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict
 import numpy as np
 import fasttext
 import sacrebleu
@@ -138,7 +138,9 @@ def main() -> None:
     print("| Direction | Method | BLEU Score | ChrF Score |")
     print("| :--- | :--- | :---: | :---: |")
     for key, metrics in results.items():
-        dir_label = "Kikuyu -> English" if "kikuyu_to_english" in key else "English -> Kikuyu"
+        dir_label = (
+            "Kikuyu -> English" if "kikuyu_to_english" in key else "English -> Kikuyu"
+        )
         method_label = "Retrieval" if "retrieval" in key else "Word-by-Word"
         print(
             f"| {dir_label} | {method_label} | {metrics['bleu']:.2f} | {metrics['chrf']:.2f} |"
@@ -159,19 +161,23 @@ def main() -> None:
     if "english_to_kikuyu" not in metrics_data:
         metrics_data["english_to_kikuyu"] = {}
 
-    metrics_data["kikuyu_to_english"].update({
-        "bleu_retrieval": results["kikuyu_to_english_retrieval"]["bleu"],
-        "chrf_retrieval": results["kikuyu_to_english_retrieval"]["chrf"],
-        "bleu_word_by_word": results["kikuyu_to_english_word_by_word"]["bleu"],
-        "chrf_word_by_word": results["kikuyu_to_english_word_by_word"]["chrf"],
-    })
+    metrics_data["kikuyu_to_english"].update(
+        {
+            "bleu_retrieval": results["kikuyu_to_english_retrieval"]["bleu"],
+            "chrf_retrieval": results["kikuyu_to_english_retrieval"]["chrf"],
+            "bleu_word_by_word": results["kikuyu_to_english_word_by_word"]["bleu"],
+            "chrf_word_by_word": results["kikuyu_to_english_word_by_word"]["chrf"],
+        }
+    )
 
-    metrics_data["english_to_kikuyu"].update({
-        "bleu_retrieval": results["english_to_kikuyu_retrieval"]["bleu"],
-        "chrf_retrieval": results["english_to_kikuyu_retrieval"]["chrf"],
-        "bleu_word_by_word": results["english_to_kikuyu_word_by_word"]["bleu"],
-        "chrf_word_by_word": results["english_to_kikuyu_word_by_word"]["chrf"],
-    })
+    metrics_data["english_to_kikuyu"].update(
+        {
+            "bleu_retrieval": results["english_to_kikuyu_retrieval"]["bleu"],
+            "chrf_retrieval": results["english_to_kikuyu_retrieval"]["chrf"],
+            "bleu_word_by_word": results["english_to_kikuyu_word_by_word"]["bleu"],
+            "chrf_word_by_word": results["english_to_kikuyu_word_by_word"]["chrf"],
+        }
+    )
 
     with open(metrics_json_path, "w", encoding="utf-8") as f:
         json.dump(metrics_data, f, indent=2)
