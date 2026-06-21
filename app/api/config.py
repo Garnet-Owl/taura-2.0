@@ -27,14 +27,14 @@ METRICS_JSON_PATH = os.path.join(LATEST_RUN_DIR, "evaluation_metrics.json")
 SP_MODEL_PATH = os.path.join(LATEST_RUN_DIR, "sentencepiece.model")
 
 # TSV Dataset Paths
-TRAIN_TSV_PATH = os.path.join(DATA_DIR, "train.tsv")
-VAL_TSV_PATH = os.path.join(DATA_DIR, "val.tsv")
-TEST_TSV_PATH = os.path.join(DATA_DIR, "test.tsv")
+TRAIN_TSV_PATH = os.path.join(DATA_DIR, "splits", "train.tsv")
+VAL_TSV_PATH = os.path.join(DATA_DIR, "splits", "val.tsv")
+TEST_TSV_PATH = os.path.join(DATA_DIR, "splits", "test.tsv")
 FEEDBACK_FILE_PATH = os.path.join(DATA_DIR, "feedback.jsonl")
 
 # Monolingual Training Paths
-TRAIN_KI_TXT = os.path.join(DATA_DIR, "train.kikuyu")
-TRAIN_EN_TXT = os.path.join(DATA_DIR, "train.english")
+TRAIN_KI_TXT = os.path.join(DATA_DIR, "monolingual", "train.kikuyu")
+TRAIN_EN_TXT = os.path.join(DATA_DIR, "monolingual", "train.english")
 
 # Hugging Face Repositories
 REPO_CGIAR = "CGIAR/KikuyuEnglish_translation"

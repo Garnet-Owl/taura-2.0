@@ -3,6 +3,7 @@
 import numpy as np
 import fasttext
 from typing import Any, Dict, Tuple
+from app.api import config
 from app.api.embeddings import (
     get_sentence_embedding,
     learn_alignment_matrix,
@@ -74,10 +75,10 @@ def tune_model(
 
 
 def main() -> None:
-    train_ki = "data/train.kikuyu"
-    train_en = "data/train.english"
-    train_tsv = "data/train.tsv"
-    val_tsv = "data/val.tsv"
+    train_ki = config.TRAIN_KI_TXT
+    train_en = config.TRAIN_EN_TXT
+    train_tsv = config.TRAIN_TSV_PATH
+    val_tsv = config.VAL_TSV_PATH
 
     # Hyperparameter Grid
     grid = []
