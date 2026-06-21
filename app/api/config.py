@@ -10,6 +10,7 @@ KI_MODEL_PATH = os.path.join(MODELS_DIR, "ki.bin")
 EN_MODEL_PATH = os.path.join(MODELS_DIR, "en.bin")
 PROJ_KI_EN_PATH = os.path.join(MODELS_DIR, "proj_ki_en.npy")
 PROJ_EN_KI_PATH = os.path.join(MODELS_DIR, "proj_en_ki.npy")
+SP_MODEL_PATH = os.path.join(MODELS_DIR, "sentencepiece.model")
 
 # TSV Dataset Paths
 TRAIN_TSV_PATH = os.path.join(DATA_DIR, "train.tsv")
@@ -34,3 +35,4 @@ FASTTEXT_LR = 0.1
 FASTTEXT_WS = 8
 FASTTEXT_MIN_COUNT = 2
 ALIGNMENT_REFINEMENT_ITERS = 5
+SP_VOCAB_SIZE = 8000
