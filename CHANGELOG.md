@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Added ignores for model files (`models/*.npy`), local wheel files (`*.whl`), and telemetry/feedback data (`data/feedback.jsonl`) to `.gitignore`.
+- Configured `.pre-commit-config.yaml` to enforce a 10MB limit check on all added files.
+- Configured `.gitattributes` to route binaries and package extensions through a declarative `check-size` filter.
+- Tracked and committed the lightweight translation datasets under the `data/` directory.
 - Migrated package and dependency management from Poetry to `uv` and adopted PEP 621 metadata with Hatchling build backend.
 - Replaced Poetry installation and caching in GitHub Actions CI pipeline with official `astral-sh/setup-uv` action and updated all task commands.
 - Updated project documentation (`README.md`, `INSTALL.md`) and developer guidelines (`AGENTS.md`) to align with `uv` command-line utility.
