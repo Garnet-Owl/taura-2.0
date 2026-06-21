@@ -57,3 +57,38 @@ class TestEvaluation(unittest.TestCase):
             assert_that(chrf_score, is_(equal_to(100.0)))
             patched_bleu.assert_called_once_with(translations, [references])
             patched_chrf.assert_called_once_with(translations, [references])
+
+    def test_save_metrics_merges_data(self):
+        """Should merge new metrics with existing metrics without overwriting unrelated keys."""
+        from scripts.train_embeddings import save_metrics
+        import json
+        
+        with given([]) as _:
+            existing_data = {
+                "kikuyu_to_english": {"bleu_retrieval": 15.0},
+                "english_to_kikuyu": {"chrf_word_by_word": 20.0}
+            }
+
+            new_metrics = {
+                "kikuyu_to_english": {"accuracy_top1": 0.5},
+                "english_to_kikuyu": {"accuracy_top1": 0.6}
+            }
+
+        with when("saving new metrics"):
+            with (
+                patch("os.path.exists", return_value=True),
+                patch("builtins.open", MagicMock()),
+                patch("json.load", return_value=existing_data.copy()),
+                patch("json.dump") as mock_dump
+            ):
+                save_metrics(new_metrics, "dummy_metrics.json")
+                
+        with then("it merges both metrics"):
+            mock_dump.assert_called_once()
+            saved_data = mock_dump.call_args[0][0]
+            
+            assert_that(saved_data["kikuyu_to_english"]["bleu_retrieval"], is_(equal_to(15.0)))
+            assert_that(saved_data["kikuyu_to_english"]["accuracy_top1"], is_(equal_to(0.5)))
+            assert_that(saved_data["english_to_kikuyu"]["chrf_word_by_word"], is_(equal_to(20.0)))
+            assert_that(saved_data["english_to_kikuyu"]["accuracy_top1"], is_(equal_to(0.6)))
+
