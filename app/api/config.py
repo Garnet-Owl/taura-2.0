@@ -6,17 +6,28 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # Model Paths
-KI_MODEL_PATH = os.path.join(MODELS_DIR, "ki.bin")
-EN_MODEL_PATH = os.path.join(MODELS_DIR, "en.bin")
-PROJ_KI_EN_PATH = os.path.join(MODELS_DIR, "proj_ki_en.npy")
-PROJ_EN_KI_PATH = os.path.join(MODELS_DIR, "proj_en_ki.npy")
+def get_latest_run_dir() -> str:
+    if not os.path.exists(MODELS_DIR):
+        return MODELS_DIR
+    runs = [d for d in os.listdir(MODELS_DIR) if d.startswith("run_") and os.path.isdir(os.path.join(MODELS_DIR, d))]
+    if not runs:
+        return MODELS_DIR
+    runs.sort(reverse=True)
+    return os.path.join(MODELS_DIR, runs[0])
+
+LATEST_RUN_DIR = get_latest_run_dir()
+
+KI_MODEL_PATH = os.path.join(LATEST_RUN_DIR, "ki.bin")
+EN_MODEL_PATH = os.path.join(LATEST_RUN_DIR, "en.bin")
+PROJ_KI_EN_PATH = os.path.join(LATEST_RUN_DIR, "proj_ki_en.npy")
+PROJ_EN_KI_PATH = os.path.join(LATEST_RUN_DIR, "proj_en_ki.npy")
+METRICS_JSON_PATH = os.path.join(LATEST_RUN_DIR, "evaluation_metrics.json")
 SP_MODEL_PATH = os.path.join(MODELS_DIR, "sentencepiece.model")
 
 # TSV Dataset Paths
 TRAIN_TSV_PATH = os.path.join(DATA_DIR, "train.tsv")
 VAL_TSV_PATH = os.path.join(DATA_DIR, "val.tsv")
 TEST_TSV_PATH = os.path.join(DATA_DIR, "test.tsv")
-METRICS_JSON_PATH = os.path.join(MODELS_DIR, "evaluation_metrics.json")
 FEEDBACK_FILE_PATH = os.path.join(DATA_DIR, "feedback.jsonl")
 
 # Monolingual Training Paths
