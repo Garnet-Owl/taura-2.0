@@ -65,12 +65,16 @@ Evaluates trained models on the test split and saves BLEU/ChrF scores:
 uv run python -m scripts.evaluate
 ```
 
-### Step 4: Start the FastAPI API Service
-Run the development server:
+### Step 4: Start the Translation Service
+Run the development server to launch both the API and the Web UI:
 
 ```bash
 uv run uvicorn app.serve.main:app --reload
 ```
+
+Once the server is running, you can access:
+- **Web UI:** Open your browser and navigate to [http://localhost:8000](http://localhost:8000) to use the interactive translation frontend.
+- **API Documentation:** Navigate to [http://localhost:8000/docs](http://localhost:8000/docs) to explore the interactive Swagger API documentation.
 
 ---
 
