@@ -135,13 +135,41 @@ def main() -> None:
     os.makedirs(config.MODELS_DIR, exist_ok=True)
     dim = config.EMBEDDING_DIM
 
+    train_ki_path = config.TRAIN_KI_TXT
+    train_en_path = config.TRAIN_EN_TXT
+
+    tokenizer = None
+    if os.path.exists(config.SP_MODEL_PATH):
+        print("SentencePiece model found. Tokenizing training corpora...")
+        from app.api.preprocessing import SubwordTokenizer
+        tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
+        
+        sp_ki_path = train_ki_path + ".sp"
+        sp_en_path = train_en_path + ".sp"
+        
+        for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
+            print(f"Applying SentencePiece to {in_path} -> {out_path}")
+            with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
+                for line in fin:
+                    pieces = tokenizer.encode(line.strip())
+                    fout.write(" ".join(pieces) + "\n")
+                    
+        train_ki_path = sp_ki_path
+        train_en_path = sp_en_path
+    else:
+        print("WARNING: SentencePiece model not found. Falling back to raw text for FastText training.")
+
     # 1. Train Monolingual Models
-    ki_model = train_monolingual(config.TRAIN_KI_TXT, config.KI_MODEL_PATH, dim=dim)
-    en_model = train_monolingual(config.TRAIN_EN_TXT, config.EN_MODEL_PATH, dim=dim)
+    ki_model = train_monolingual(train_ki_path, config.KI_MODEL_PATH, dim=dim)
+    en_model = train_monolingual(train_en_path, config.EN_MODEL_PATH, dim=dim)
 
     # 2. Learn Cross-Lingual Alignment (SVD + iterative Procrustes refinement)
     train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
     print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
+
+    if tokenizer:
+        train_ki = [" ".join(tokenizer.encode(s)) for s in train_ki]
+        train_en = [" ".join(tokenizer.encode(s)) for s in train_en]
 
     X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
     Y = np.array([get_sentence_embedding(en_model, s, dim=dim) for s in train_en]).T
@@ -167,11 +195,18 @@ def main() -> None:
     val_en = val_en[:1000]
     print(f"Evaluating alignment on {len(val_ki)} validation sentences...")
 
-    translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en)
-    translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki)
-
-    metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
-    metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
+    if tokenizer:
+        val_ki_sp = [" ".join(tokenizer.encode(s)) for s in val_ki]
+        val_en_sp = [" ".join(tokenizer.encode(s)) for s in val_en]
+        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en_sp)
+        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki_sp)
+        metrics_ki_en = evaluate_translator(translator_ki_en, val_ki_sp, val_en_sp)
+        metrics_en_ki = evaluate_translator(translator_en_ki, val_en_sp, val_ki_sp)
+    else:
+        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en)
+        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki)
+        metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
+        metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
 
     metrics = {"kikuyu_to_english": metrics_ki_en, "english_to_kikuyu": metrics_en_ki}
 
