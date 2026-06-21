@@ -1,9 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Taura 2.0 - Kikuyu-English Translation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taura 2.0 — Kikuyu-English Machine Translation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Taura 2.0</h1>
+    <div class="background-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-language brand-icon"></i>
+                <h1>Taura <span>2.0</span></h1>
+            </div>
+            <p class="subtitle">Bidirectional Kikuyu-English Machine Translation</p>
+        </header>
+
+        <!-- Main Translation Component -->
+        <main class="translation-card">
+            <!-- Settings Bar -->
+            <div class="settings-bar">
+                <div class="lang-selector">
+                    <select id="source-lang" aria-label="Source Language">
+                        <option value="en" selected>English</option>
+                        <option value="ki">Kikuyu (Gĩkũyũ)</option>
+                    </select>
+                </div>
+
+                <button id="swap-langs" class="icon-btn" title="Swap languages" aria-label="Swap Languages">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </button>
+
+                <div class="lang-selector">
+                    <select id="target-lang" aria-label="Target Language">
+                        <option value="en">English</option>
+                        <option value="ki" selected>Kikuyu (Gĩkũyũ)</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="method-selector">
+                    <span class="label">Method:</span>
+                    <div class="segmented-control">
+                        <input type="radio" id="method-retrieval" name="method" value="retrieval" checked>
+                        <label for="method-retrieval">Retrieval</label>
+                        
+                        <input type="radio" id="method-wbw" name="method" value="word-by-word">
+                        <label for="method-wbw">Word-by-Word</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Container -->
+            <div class="editor-container">
+                <!-- Source Input -->
+                <div class="editor-pane">
+                    <textarea id="source-text" placeholder="Type or paste text to translate..." maxlength="500"></textarea>
+                    <div class="pane-footer">
+                        <span id="char-count">0 / 500</span>
+                        <button id="clear-text" class="icon-btn" title="Clear text" aria-label="Clear Text">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Divider / Controls -->
+                <div class="editor-divider">
+                    <button id="translate-btn" class="action-btn">
+                        <span>Translate</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Target Output -->
+                <div class="editor-pane readonly">
+                    <div class="output-wrapper">
+                        <div id="target-text-placeholder" class="placeholder-text">Translation will appear here...</div>
+                        <div id="target-text" class="output-text hidden"></div>
+                        <div id="loading-spinner" class="spinner hidden">
+                            <div class="double-bounce1"></div>
+                            <div class="double-bounce2"></div>
+                        </div>
+                    </div>
+                    <div class="pane-footer">
+                        <button id="copy-btn" class="icon-btn" title="Copy translation" aria-label="Copy Translation" disabled>
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Information & Alignment Panel -->
+        <section id="details-card" class="details-card hidden">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-circle-info"></i> Translation Details</h3>
+            </div>
+            <div class="card-body">
+                <div id="alignment-info" class="alignment-info">
+                    <!-- Dynamic alignment mapping will go here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Feedback Panel -->
+        <section id="feedback-card" class="feedback-card hidden">
+            <div class="card-header">
+                <h3>Was this translation helpful?</h3>
+                <p>Help us improve Taura 2.0 translation accuracy by submitting feedback.</p>
+            </div>
+            <div class="feedback-body">
+                <div class="rating-buttons">
+                    <button class="rating-btn positive" data-rating="1" aria-label="Thumbs Up">
+                        <i class="fa-regular fa-thumbs-up"></i>
+                        <span>Helpful</span>
+                    </button>
+                    <button class="rating-btn negative" data-rating="-1" aria-label="Thumbs Down">
+                        <i class="fa-regular fa-thumbs-down"></i>
+                        <span>Unhelpful</span>
+                    </button>
+                </div>
+                
+                <div class="feedback-details hidden" id="feedback-details">
+                    <textarea id="feedback-comment" placeholder="Optional comments, corrections, or suggestions..."></textarea>
+                    <button id="submit-feedback-btn" class="submit-btn">
+                        <span>Submit Feedback</span>
+                    </button>
+                </div>
+                <div id="feedback-success-msg" class="success-message hidden">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Thank you for your feedback!</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Taura 2.0 — An Open-Source Kikuyu-English Machine Translation Initiative</p>
+        </footer>
+    </div>
+
+    <!-- Controller Scripts -->
+    <script src="/static/main.js"></script>
 </body>
 </html>

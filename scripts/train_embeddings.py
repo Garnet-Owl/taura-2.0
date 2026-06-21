@@ -99,7 +99,7 @@ def evaluate_translator(
     }
 
 
-def main():
+def main() -> None:
     os.makedirs("models", exist_ok=True)
     dim = 100
 
