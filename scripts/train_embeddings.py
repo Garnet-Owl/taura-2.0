@@ -16,30 +16,17 @@ from app.api.embeddings import (
     learn_alignment_matrix,
     iterative_procrustes,
     CrossLingualTranslator,
+    extract_identical_string_dictionary,
 )
 from app.api import config
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+import argparse
 
-def build_subword_vocabulary(
-    corpus_paths: list[str], model_path: str, vocab_size: int
-) -> None:
-    joined = ",".join(corpus_paths)
-    model_prefix = model_path.removesuffix(".model")
-    sentencepiece.SentencePieceTrainer.train(
-        input=joined,
-        model_prefix=model_prefix,
-        vocab_size=vocab_size,
-        model_type="bpe",
-        character_coverage=0.9999,
-        pad_id=0,
-        unk_id=1,
-        bos_id=2,
-        eos_id=3,
-    )
-    logger.info("SentencePiece model saved to %s", model_path)
+
+
 
 
 def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
@@ -211,6 +198,10 @@ def save_state(state_file: str, state: dict) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--quick-test", action="store_true", help="Run a quick test on a subset of data")
+    args = parser.parse_args()
+
     os.makedirs(config.MODELS_DIR, exist_ok=True)
     state, state_file = setup_and_get_state()
     
@@ -218,43 +209,20 @@ def main() -> None:
 
     train_ki_path = config.TRAIN_KI_TXT
     train_en_path = config.TRAIN_EN_TXT
-
+    
+    if args.quick_test:
+        logger.info("Running in QUICK TEST mode using validation TSV as training data")
+        train_ki_path = config.VAL_TSV_PATH.replace("val.tsv", "test_ki.txt")
+        train_en_path = config.VAL_TSV_PATH.replace("val.tsv", "test_en.txt")
+        val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
+        # write out to txt for fasttext
+        with open(train_ki_path, "w", encoding="utf-8") as f:
+            for line in val_ki: f.write(line + "\n")
+        with open(train_en_path, "w", encoding="utf-8") as f:
+            for line in val_en: f.write(line + "\n")
+        config.FASTTEXT_EPOCH = 5
+        
     tokenizer = None
-    if not os.path.exists(config.SP_MODEL_PATH):
-        logger.info("Training SentencePiece model for this run...")
-        build_subword_vocabulary(
-            [train_ki_path, train_en_path],
-            config.SP_MODEL_PATH,
-            config.SP_VOCAB_SIZE,
-        )
-
-    if "tokenize_corpora" not in state["steps"]:
-        logger.info("SentencePiece model found. Tokenizing training corpora...")
-        from app.api.preprocessing import SubwordTokenizer
-        tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
-        
-        sp_ki_path = train_ki_path + ".sp"
-        sp_en_path = train_en_path + ".sp"
-        
-        # Use os.path.exists to only tokenize if not already there
-        if not os.path.exists(sp_ki_path) or not os.path.exists(sp_en_path):
-            for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
-                logger.info("Applying SentencePiece to %s -> %s", in_path, out_path)
-                with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
-                    for line in fin:
-                        pieces = tokenizer.encode(line.strip())
-                        fout.write(" ".join(pieces) + "\n")
-                        
-        state["steps"].append("tokenize_corpora")
-        save_state(state_file, state)
-        train_ki_path = sp_ki_path
-        train_en_path = sp_en_path
-    else:
-        logger.info("Corpora already tokenized (resuming).")
-        train_ki_path += ".sp"
-        train_en_path += ".sp"
-        from app.api.preprocessing import SubwordTokenizer
-        tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
 
     # 1. Train Monolingual Models
     ki_model = train_monolingual(train_ki_path, config.KI_MODEL_PATH, dim=dim)
@@ -273,45 +241,42 @@ def main() -> None:
         W_ki_en = np.load(config.PROJ_KI_EN_PATH)
         W_en_ki = np.load(config.PROJ_EN_KI_PATH)
     else:
-        train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
-        logger.info(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
-
-        if tokenizer:
-            train_ki = [" ".join(tokenizer.encode(s)) for s in train_ki]
-            train_en = [" ".join(tokenizer.encode(s)) for s in train_en]
-
-        logger.info("Computing Kikuyu anchor embeddings (parallel)...")
-        X = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, train_ki, dim=dim).T
-        logger.info("Computing English anchor embeddings (parallel)...")
-        Y = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, train_en, dim=dim).T
+        ki_words = ki_model.get_words()
+        en_words = en_model.get_words()
+        seed_words = extract_identical_string_dictionary(ki_words, en_words)
+        
+        logger.info(f"Extracted {len(seed_words)} identical strings to use as anchor dictionary.")
+        
+        X = np.array([ki_model.get_word_vector(w) for w in seed_words]).T
+        Y = np.array([en_model.get_word_vector(w) for w in seed_words]).T
 
         if "precompute_embeddings" not in state["steps"]:
-            logger.info("Saving precomputed target embeddings for server startup...")
-            # X and Y contain the embeddings for the entire training set (transposed)
-            np.save(config.TGT_EMBS_KI_PATH, X.T)
-            np.save(config.TGT_EMBS_EN_PATH, Y.T)
+            # We skip precomputing huge corpus embeddings for serving right here since we aren't using parallel sentences
             state["steps"].append("precompute_embeddings")
             save_state(state_file, state)
-
-        # Free text lists from memory
-        del train_ki
-        del train_en
-        gc.collect()
 
         logger.info("Learning initial alignment matrices...")
         W_ki_en_init = learn_alignment_matrix(X, Y)
         W_en_ki_init = learn_alignment_matrix(Y, X)
 
-        logger.info("Refining matrices via iterative Procrustes...")
+        logger.info("Refining matrices via iterative Procrustes with CSLS...")
+        # Get top 20,000 words for mutual nearest neighbor iterative alignment
+        ki_top_words = ki_words[:20000]
+        en_top_words = en_words[:20000]
+        X_all = np.array([ki_model.get_word_vector(w) for w in ki_top_words]).T
+        Y_all = np.array([en_model.get_word_vector(w) for w in en_top_words]).T
+
         W_ki_en = iterative_procrustes(
-            X, Y, W_ki_en_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
+            X_all, Y_all, W_ki_en_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
         )
         W_en_ki = iterative_procrustes(
-            Y, X, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
+            Y_all, X_all, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
         )
         
         del X
         del Y
+        del X_all
+        del Y_all
         del W_ki_en_init
         del W_en_ki_init
         gc.collect()
@@ -330,25 +295,13 @@ def main() -> None:
     val_en = val_en[:1000]
     logger.info(f"Evaluating alignment on {len(val_ki)} validation sentences...")
 
-    if tokenizer:
-        val_ki_sp = [" ".join(tokenizer.encode(s)) for s in val_ki]
-        val_en_sp = [" ".join(tokenizer.encode(s)) for s in val_en]
-        
-        val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en_sp, dim=dim)
-        val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki_sp, dim=dim)
-        
-        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en_sp, precomputed_tgt_embeddings=val_tgt_en)
-        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki_sp, precomputed_tgt_embeddings=val_tgt_ki)
-        metrics_ki_en = evaluate_translator(translator_ki_en, val_ki_sp, val_en_sp)
-        metrics_en_ki = evaluate_translator(translator_en_ki, val_en_sp, val_ki_sp)
-    else:
-        val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
-        val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
-        
-        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en)
-        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki)
-        metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
-        metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
+    val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
+    val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
+    
+    translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en)
+    translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki)
+    metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
+    metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
 
     metrics = {"kikuyu_to_english": metrics_ki_en, "english_to_kikuyu": metrics_en_ki}
 

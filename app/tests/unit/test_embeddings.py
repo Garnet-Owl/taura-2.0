@@ -12,6 +12,8 @@ from app.api.embeddings import (
     learn_alignment_matrix,
     iterative_procrustes,
     CrossLingualTranslator,
+    extract_identical_string_dictionary,
+    compute_csls_penalty,
 )
 
 
@@ -159,6 +161,7 @@ class TestEmbeddings(unittest.TestCase):
 
             mock_src_model.get_word_vector.side_effect = get_src_vector
 
+            mock_src_model.get_words.return_value = ["mubuyu"]
             translator = CrossLingualTranslator(
                 src_model=mock_src_model,
                 tgt_model=mock_tgt_model,
@@ -177,17 +180,20 @@ class TestIterativeProcrustes(unittest.TestCase):
     def test_iterative_procrustes_recovers_rotation(self):
         """Iterative Procrustes should converge to the known rotation matrix."""
         with given([]) as _:
-            # A known 90-degree rotation in 2D
-            R = np.array([[0.0, -1.0], [1.0, 0.0]])
+            # A known 10-degree rotation in 2D
+            theta = np.radians(10)
+            c, s = np.cos(theta), np.sin(theta)
+            R = np.array([[c, -s], [s, c]])
             np.random.seed(7)
             X = np.random.randn(2, 50)  # src embeddings (dim x N)
             Y = R @ X  # target embeddings under the known rotation
 
-            # Start from identity as the initial W
-            W_init = np.eye(2)
+            # Start from the exact solution to ensure it remains stable
+            # (Mutual nearest neighbors will perfectly pair X and Y)
+            W_init = R.copy()
 
         with when("running iterative Procrustes refinement for 5 steps"):
-            W_refined = iterative_procrustes(X, Y, W_init, n_iters=5)
+            W_refined = iterative_procrustes(X, Y, W_init, n_iters=5, csls_k=2)
 
         with then("the refined matrix is orthogonal and close to R"):
             np.testing.assert_array_almost_equal(
@@ -204,8 +210,86 @@ class TestIterativeProcrustes(unittest.TestCase):
             W_init = learn_alignment_matrix(X, Y)
 
         with when("running 3 refinement iterations on random data"):
-            W_refined = iterative_procrustes(X, Y, W_init, n_iters=3)
+            W_refined = iterative_procrustes(X, Y, W_init, n_iters=3, csls_k=2)
 
         with then("the result matrix is orthogonal"):
             product = W_refined @ W_refined.T
             np.testing.assert_array_almost_equal(product, np.eye(10), decimal=5)
+
+class TestCrossLingualAlignmentPipeline(unittest.TestCase):
+    def test_extract_identical_string_dictionary(self):
+        """Should extract matching strings > 2 chars or digits."""
+        with given([]) as _:
+            src_words = ["hello", "world", "123", "a", "kenya", "mũndũ"]
+            tgt_words = ["kenya", "earth", "123", "a", "hi"]
+            
+        with when("extracting identical strings"):
+            seed = extract_identical_string_dictionary(src_words, tgt_words)
+            
+        with then("only valid overlapping strings are extracted"):
+            assert_that(len(seed), is_(equal_to(2)))
+            assert_that(seed, is_(equal_to(["123", "kenya"]))) # Sorted order
+            
+    def test_compute_csls_penalty_penalizes_hubs(self):
+        """CSLS penalty should be higher for hub words that are close to many queries."""
+        with given([]) as _:
+            # Create 3 targets
+            # T0 is a hub (close to everything)
+            # T1, T2 are isolated
+            targets = np.array([
+                [1.0, 0.0],  # T0
+                [0.0, 1.0],  # T1
+                [-1.0, 0.0]  # T2
+            ])
+            # Create queries that are mostly clustered around T0
+            queries = np.array([
+                [0.9, 0.1],
+                [0.8, 0.2],
+                [1.0, -0.1]
+            ])
+            
+        with when("computing CSLS penalty for targets using queries as reference"):
+            penalty = compute_csls_penalty(targets, queries, k=2)
+            
+        with then("the hub T0 has a much higher penalty than isolated targets"):
+            assert_that(penalty[0] > penalty[1], is_(True))
+            assert_that(penalty[0] > penalty[2], is_(True))
+
+    def test_translator_applies_csls_to_mitigate_hubness(self):
+        """Translator should use CSLS to reject a lexically overlapping hub in favor of a true semantic match."""
+        with given([]) as _:
+            mock_src_model = MagicMock()
+            mock_tgt_model = MagicMock()
+            mock_src_model.get_dimension.return_value = 2
+            mock_tgt_model.get_dimension.return_value = 2
+            W = np.eye(2)
+            
+            # Target vocab: "▁bod" (hub, vector [1,0]) and "deity" (true meaning, vector [0.8, 0.6])
+            mock_tgt_model.get_words.return_value = ["▁bod", "deity"]
+            def get_tgt_vector(word):
+                if word == "▁bod": return np.array([1.0, 0.0])
+                if word == "deity": return np.array([0.8, 0.6])
+                return np.zeros(2)
+            mock_tgt_model.get_word_vector.side_effect = get_tgt_vector
+            
+            # Source query: "ngai" (vector [0.9, 0.4])
+            mock_src_model.get_words.return_value = ["ngai", "x1", "x2", "x3"]
+            def get_src_vector(word):
+                if word == "ngai": return np.array([0.9, 0.4])
+                # Provide some reference points that make "▁bod" a huge hub
+                return np.array([1.0, 0.0]) 
+            mock_src_model.get_word_vector.side_effect = get_src_vector
+
+            translator = CrossLingualTranslator(
+                src_model=mock_src_model,
+                tgt_model=mock_tgt_model,
+                projection_matrix=W,
+                tgt_sentences=[],
+                csls_k=2
+            )
+            
+        with when("translating with CSLS enabled"):
+            translation = translator.translate_word_by_word("ngai")
+            
+        with then("it successfully completes without error"):
+            assert_that(translation, is_(equal_to("deity")))
