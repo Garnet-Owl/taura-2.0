@@ -61,3 +61,11 @@ All notable changes to this project will be documented in this file.
 - Added 2 TDD tests in `test_embeddings.py` for `iterative_procrustes`: rotation recovery and orthogonality guarantee (31/31 suite passing).
 - Ruff format + lint clean across all new/modified files.
 
+## [Session 2026-06-21 late]
+- Added `sentencepiece==0.2.1` dependency via `uv add sentencepiece`.
+- Added `SubwordTokenizer` class to `app/api/preprocessing.py` — BPE encode/decode backed by a SentencePiece model; permanent tokenization strategy for morphologically rich Kikuyu.
+- Added `build_subword_vocabulary` step to `scripts/prepare_dataset.py` — trains a shared BPE model over Kikuyu+English monolingual corpora as the final step of corpus preparation.
+- Added `SP_MODEL_PATH` and `SP_VOCAB_SIZE=8000` to `app/api/config.py`.
+- Added 3 TDD tests for `SubwordTokenizer` (encode, type safety, decode); 34/34 suite passes.
+
+

@@ -1,5 +1,6 @@
 import os
 import sys
+import sentencepiece
 import pandas as pd
 from huggingface_hub import hf_hub_download
 
@@ -7,6 +8,34 @@ from huggingface_hub import hf_hub_download
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.split import split_data
 from app.api import config
+
+
+def build_subword_vocabulary(
+    corpus_paths: list[str], model_path: str, vocab_size: int
+) -> None:
+    """
+    Trains a shared SentencePiece BPE model over all supplied corpora.
+
+    A single shared vocabulary covers both Kikuyu and English so that
+    morphological subwords transfer across the alignment boundary.
+    The trained model is written to *model_path* (without extension —
+    SentencePiece appends `.model` and `.vocab` automatically).
+    """
+    joined = ",".join(corpus_paths)
+    # model_prefix must be the path without extension
+    model_prefix = model_path.removesuffix(".model")
+    sentencepiece.SentencePieceTrainer.train(
+        input=joined,
+        model_prefix=model_prefix,
+        vocab_size=vocab_size,
+        model_type="bpe",
+        character_coverage=0.9999,
+        pad_id=0,
+        unk_id=1,
+        bos_id=2,
+        eos_id=3,
+    )
+    print(f"SentencePiece model saved to {model_path}")
 
 
 def main() -> None:
@@ -97,6 +126,15 @@ def main() -> None:
                 if normalized:
                     f.write(f"{normalized}\n")
         print(f"Saved raw normalized monolingual sentences to {train_lang_path}")
+
+    # Build shared BPE vocabulary from both monolingual corpora
+    ki_corpus = os.path.join(config.DATA_DIR, "train.kikuyu")
+    en_corpus = os.path.join(config.DATA_DIR, "train.english")
+    build_subword_vocabulary(
+        corpus_paths=[ki_corpus, en_corpus],
+        model_path=config.SP_MODEL_PATH,
+        vocab_size=config.SP_VOCAB_SIZE,
+    )
 
 
 if __name__ == "__main__":
