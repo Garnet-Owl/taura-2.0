@@ -18,8 +18,8 @@ logger = setup_logger(__name__)
 
 is_cuda_available = False
 try:
-    import cupy as cp
-    if cp.cuda.runtime.getDeviceCount() > 0:
+    import torch
+    if torch.cuda.is_available():
         is_cuda_available = True
 except Exception:
     pass
@@ -81,15 +81,17 @@ def learn_alignment_matrix(
         W: Orthogonal projection matrix of shape (dim, dim)
     """
     if is_cuda_available:
+        import torch
         try:
-            cp_src = cp.asarray(src_embeddings)
-            cp_tgt = cp.asarray(tgt_embeddings)
-            M = cp_tgt @ cp_src.T
-            U, _, Vt = cp.linalg.svd(M)
+            device = torch.device("cuda")
+            t_src = torch.tensor(src_embeddings, device=device)
+            t_tgt = torch.tensor(tgt_embeddings, device=device)
+            M = t_tgt @ t_src.T
+            U, _, Vt = torch.linalg.svd(M)
             W = U @ Vt
-            return cp.asnumpy(W)
+            return W.cpu().numpy()
         except Exception as e:
-            logger.warning("CuPy failed during learn_alignment_matrix SVD: %s. Falling back to NumPy.", e)
+            logger.warning("PyTorch failed during learn_alignment_matrix SVD: %s. Falling back to NumPy.", e)
 
     M = tgt_embeddings @ src_embeddings.T
     U, _, Vt = np.linalg.svd(M)
@@ -120,18 +122,20 @@ def iterative_procrustes(
         W: Refined orthogonal projection matrix of shape (dim, dim).
     """
     if is_cuda_available:
+        import torch
         try:
-            cp_src = cp.asarray(src_embeddings)
-            cp_tgt = cp.asarray(tgt_embeddings)
-            W = cp.asarray(W_init.copy())
+            device = torch.device("cuda")
+            t_src = torch.tensor(src_embeddings, device=device)
+            t_tgt = torch.tensor(tgt_embeddings, device=device)
+            W = torch.tensor(W_init.copy(), device=device)
             for _ in range(n_iters):
-                projected = W @ cp_src
-                M = cp_tgt @ projected.T
-                U, _, Vt = cp.linalg.svd(M)
+                projected = W @ t_src
+                M = t_tgt @ projected.T
+                U, _, Vt = torch.linalg.svd(M)
                 W = U @ Vt
-            return cp.asnumpy(W)
+            return W.cpu().numpy()
         except Exception as e:
-            logger.warning("CuPy failed during iterative_procrustes: %s. Falling back to NumPy.", e)
+            logger.warning("PyTorch failed during iterative_procrustes: %s. Falling back to NumPy.", e)
 
     W = W_init.copy()
     for _ in range(n_iters):
