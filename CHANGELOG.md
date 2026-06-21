@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Normalized unsupervised monolingual corpora for Kikuyu and English during dataset preparation, improving cleaning and preprocessing.
+- Implemented a FastText hyperparameter grid search script `scripts/tune_hyperparameters.py` evaluated on validation set retrieval accuracy.
+- Discovered and updated training pipeline in `scripts/train_embeddings.py` to use optimal hyperparameters (`skipgram`, `dim=150`, `epoch=25`, `ws=8`, `minn=3`, `maxn=6`).
+- Retrained model embeddings, boosting Kikuyu-to-English Top-1 accuracy to 39.22% (from 25.45%) and English-to-Kikuyu Top-1 accuracy to 37.14% (from 22.08%).
+- Executed offline evaluation pipeline and verified 100% pass rate across the full pytest suite.
 - Added ignores for model files (`models/*.npy`), local wheel files (`*.whl`), and telemetry/feedback data (`data/feedback.jsonl`) to `.gitignore`.
 - Configured `.pre-commit-config.yaml` to enforce a 10MB limit check on all added files.
 - Configured `.gitattributes` to route binaries and package extensions through a declarative `check-size` filter.
