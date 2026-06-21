@@ -107,18 +107,20 @@ def evaluate_translator(
     }
 
 
-def save_metrics(metrics: dict[str, dict[str, float]], metrics_path: str = config.METRICS_JSON_PATH) -> None:
+def save_metrics(
+    metrics: dict[str, dict[str, float]], metrics_path: str = config.METRICS_JSON_PATH
+) -> None:
     """Saves metrics, merging with existing data to preserve offline evaluation scores."""
     if os.path.exists(metrics_path):
         try:
             with open(metrics_path, "r", encoding="utf-8") as f:
                 existing_metrics = json.load(f)
-            
+
             for lang_pair in ["kikuyu_to_english", "english_to_kikuyu"]:
                 if lang_pair not in existing_metrics:
                     existing_metrics[lang_pair] = {}
                 existing_metrics[lang_pair].update(metrics.get(lang_pair, {}))
-                
+
             metrics = existing_metrics
         except (json.JSONDecodeError, OSError):
             pass
@@ -152,6 +154,9 @@ def main() -> None:
 
     # 3. Evaluate on Validation Set
     val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
+    # Limit evaluation to 1000 sentences to avoid O(N^2) hang
+    val_ki = val_ki[:1000]
+    val_en = val_en[:1000]
     print(f"Evaluating alignment on {len(val_ki)} validation sentences...")
 
     translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en)
