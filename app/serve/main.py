@@ -129,7 +129,6 @@ def submit_feedback(request: FeedbackRequest) -> dict[str, str]:
     return {"status": "success", "message": "Feedback submitted successfully."}
 
 
-
 @app.post("/translate", response_model=TranslationResponse)
 def translate(request: TranslationRequest) -> TranslationResponse:
     """Performs bidirectional translation (Kikuyu <-> English)."""

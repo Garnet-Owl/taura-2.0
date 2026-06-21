@@ -136,7 +136,10 @@ class TestTranslationAPI(unittest.TestCase):
 
         with then("it returns 200 and HTML content"):
             assert_that(response.status_code, is_(equal_to(200)))
-            assert_that(response.headers["content-type"], is_(equal_to("text/html; charset=utf-8")))
+            assert_that(
+                response.headers["content-type"],
+                is_(equal_to("text/html; charset=utf-8")),
+            )
             assert_that("Taura 2.0" in response.text, is_(True))
 
     def test_feedback_endpoint(self):
@@ -159,4 +162,6 @@ class TestTranslationAPI(unittest.TestCase):
             assert_that(response.status_code, is_(equal_to(200)))
             data = response.json()
             assert_that(data["status"], is_(equal_to("success")))
-            assert_that(data["message"], is_(equal_to("Feedback submitted successfully.")))
+            assert_that(
+                data["message"], is_(equal_to("Feedback submitted successfully."))
+            )

@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from givenpy import given, then, when
-from hamcrest import assert_that, equal_to, has_key, is_
+from hamcrest import assert_that, equal_to, is_
 
 # We will import the evaluation functions from scripts.evaluate
 # Since scripts.evaluate does not exist yet, this test will fail on import
@@ -17,11 +17,15 @@ class TestEvaluation(unittest.TestCase):
             # Mock file content
             mock_tsv_content = "kikuyu\tenglish\nmarigū\tBananas\nKūrīma\tPloughing\n"
             mock_open = MagicMock()
-            mock_open.return_value.__enter__.return_value = mock_tsv_content.splitlines()
+            mock_open.return_value.__enter__.return_value = (
+                mock_tsv_content.splitlines()
+            )
 
         with when("loading the test data"):
-            with patch("builtins.open", mock_open), \
-                 patch("os.path.exists", return_value=True):
+            with (
+                patch("builtins.open", mock_open),
+                patch("os.path.exists", return_value=True),
+            ):
                 ki_sentences, en_sentences = load_test_data("dummy_path.tsv")
 
         with then("it parses into two aligned lists of sentences"):
@@ -40,9 +44,13 @@ class TestEvaluation(unittest.TestCase):
             mock_chrf.score = 100.0
 
         with when("calculating translation scores"):
-            with patch("sacrebleu.corpus_bleu", return_value=mock_bleu) as patched_bleu, \
-                 patch("sacrebleu.corpus_chrf", return_value=mock_chrf) as patched_chrf:
-                bleu_score, chrf_score = calculate_translation_scores(translations, references)
+            with (
+                patch("sacrebleu.corpus_bleu", return_value=mock_bleu) as patched_bleu,
+                patch("sacrebleu.corpus_chrf", return_value=mock_chrf) as patched_chrf,
+            ):
+                bleu_score, chrf_score = calculate_translation_scores(
+                    translations, references
+                )
 
         with then("it returns the scores from sacrebleu"):
             assert_that(bleu_score, is_(equal_to(100.0)))
