@@ -1,8 +1,53 @@
 """Cross-lingual word embeddings alignment and translation logic."""
 
+import io
+import os
+import sys
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 from typing import Any
+
+import fasttext
 import numpy as np
+
 from app.api.preprocessing import normalize_text, tokenize_text
+from app.shared.logger import setup_logger
+
+logger = setup_logger(__name__)
+
+is_cuda_available = False
+try:
+    import cupy as cp
+    if cp.cuda.runtime.getDeviceCount() > 0:
+        is_cuda_available = True
+except Exception:
+    pass
+
+# Global variables for worker processes
+_worker_model = None
+
+def _init_worker(model_path: str) -> None:
+    global _worker_model
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    _worker_model = fasttext.load_model(model_path)
+    sys.stdout = old_stdout
+
+def _get_embedding_worker(sentence: str, dim: int) -> np.ndarray:
+    return get_sentence_embedding(_worker_model, sentence, dim=dim)
+
+def get_sentence_embeddings_parallel(model_path: str, sentences: list[str], dim: int = 100) -> np.ndarray:
+    """Extracts sentence embeddings using all available CPU cores without hoarding memory."""
+    cpu_count = max(1, multiprocessing.cpu_count())
+    # Cap workers at 12 to prevent OOM with 32GB RAM (each fastText model is ~800MB)
+    workers = min(cpu_count, 12) 
+    
+    with ProcessPoolExecutor(max_workers=workers, initializer=_init_worker, initargs=(model_path,)) as executor:
+        func = partial(_get_embedding_worker, dim=dim)
+        results = list(executor.map(func, sentences, chunksize=1000))
+        
+    return np.array(results)
 
 
 def get_sentence_embedding(model: Any, sentence: str, dim: int = 100) -> np.ndarray:
@@ -10,13 +55,9 @@ def get_sentence_embedding(model: Any, sentence: str, dim: int = 100) -> np.ndar
     Computes the average word embedding for a given sentence.
     """
     normalized = normalize_text(sentence)
-    tokens = tokenize_text(normalized)
-
-    # Filter out empty tokens
-    tokens = [t for t in tokens if t]
+    tokens = [t for t in tokenize_text(normalized) if t]
 
     if not tokens:
-        # Check actual model dimension if available
         actual_dim = getattr(model, "get_dimension", lambda: dim)()
         return np.zeros(actual_dim, dtype=np.float32)
 
@@ -39,7 +80,17 @@ def learn_alignment_matrix(
     Returns:
         W: Orthogonal projection matrix of shape (dim, dim)
     """
-    # Y @ X.T where Y is target, X is source
+    if is_cuda_available:
+        try:
+            cp_src = cp.asarray(src_embeddings)
+            cp_tgt = cp.asarray(tgt_embeddings)
+            M = cp_tgt @ cp_src.T
+            U, _, Vt = cp.linalg.svd(M)
+            W = U @ Vt
+            return cp.asnumpy(W)
+        except Exception as e:
+            logger.warning("CuPy failed during learn_alignment_matrix SVD: %s. Falling back to NumPy.", e)
+
     M = tgt_embeddings @ src_embeddings.T
     U, _, Vt = np.linalg.svd(M)
     W = U @ Vt
@@ -68,11 +119,23 @@ def iterative_procrustes(
     Returns:
         W: Refined orthogonal projection matrix of shape (dim, dim).
     """
+    if is_cuda_available:
+        try:
+            cp_src = cp.asarray(src_embeddings)
+            cp_tgt = cp.asarray(tgt_embeddings)
+            W = cp.asarray(W_init.copy())
+            for _ in range(n_iters):
+                projected = W @ cp_src
+                M = cp_tgt @ projected.T
+                U, _, Vt = cp.linalg.svd(M)
+                W = U @ Vt
+            return cp.asnumpy(W)
+        except Exception as e:
+            logger.warning("CuPy failed during iterative_procrustes: %s. Falling back to NumPy.", e)
+
     W = W_init.copy()
     for _ in range(n_iters):
-        # Project source into (current) target-aligned space
-        projected = W @ src_embeddings  # (dim, N)
-        # Re-solve Procrustes: find W such that W @ projected ≈ tgt_embeddings
+        projected = W @ src_embeddings
         M = tgt_embeddings @ projected.T
         U, _, Vt = np.linalg.svd(M)
         W = U @ Vt
@@ -90,18 +153,22 @@ class CrossLingualTranslator:
         tgt_model: Any,
         projection_matrix: np.ndarray,
         tgt_sentences: list[str],
+        precomputed_tgt_embeddings: np.ndarray | None = None,
     ) -> None:
         self.src_model = src_model
         self.tgt_model = tgt_model
         self.projection_matrix = projection_matrix
         self.tgt_sentences = tgt_sentences
 
-        # Precompute target sentence embeddings
-        tgt_embs = []
-        for s in tgt_sentences:
-            emb = get_sentence_embedding(tgt_model, s)
-            tgt_embs.append(emb)
-        self.tgt_embeddings: np.ndarray = np.array(tgt_embs)
+        if precomputed_tgt_embeddings is not None:
+            self.tgt_embeddings = precomputed_tgt_embeddings
+        else:
+            # Precompute target sentence embeddings
+            tgt_embs = []
+            for s in tgt_sentences:
+                emb = get_sentence_embedding(tgt_model, s)
+                tgt_embs.append(emb)
+            self.tgt_embeddings = np.array(tgt_embs)
 
     def translate_sentence_retrieval(self, src_sentence: str) -> str:
         """

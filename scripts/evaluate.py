@@ -10,6 +10,9 @@ import sacrebleu
 
 from app.api.embeddings import CrossLingualTranslator
 from app.api import config
+from app.shared.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def load_test_data(tsv_path: str) -> Tuple[List[str], List[str]]:
@@ -59,11 +62,11 @@ def main() -> None:
         test_tsv_path,
     ]:
         if not os.path.exists(path):
-            print(f"Error: Required file {path} is missing. Train models first.")
+            logger.error("Required file %s is missing. Train models first.", path)
             return
 
     # Load FastText models
-    print("Loading models...")
+    logger.info("Loading models...")
     ki_model = fasttext.load_model(ki_model_path)
     en_model = fasttext.load_model(en_model_path)
 
@@ -96,7 +99,7 @@ def main() -> None:
     )
 
     # Load test split (limit to 1000 to prevent O(N^2) hangs)
-    print("Loading test dataset...")
+    logger.info("Loading test dataset...")
     test_ki, test_en = load_test_data(test_tsv_path)
     test_ki = test_ki[:1000]
     test_en = test_en[:1000]
@@ -109,7 +112,7 @@ def main() -> None:
     }
 
     # 1. Kikuyu to English - Retrieval
-    print("Evaluating Kikuyu to English (Retrieval)...")
+    logger.info("Evaluating Kikuyu to English (Retrieval)...")
     ki_en_ret_translations = [
         translator_ki_en.translate_sentence_retrieval(s) for s in test_ki
     ]
@@ -117,7 +120,7 @@ def main() -> None:
     results["kikuyu_to_english_retrieval"] = {"bleu": b, "chrf": c}
 
     # 2. Kikuyu to English - Word-by-word
-    print("Evaluating Kikuyu to English (Word-by-word)...")
+    logger.info("Evaluating Kikuyu to English (Word-by-word)...")
     ki_en_wbw_translations = [
         translator_ki_en.translate_word_by_word(s) for s in test_ki
     ]
@@ -125,7 +128,7 @@ def main() -> None:
     results["kikuyu_to_english_word_by_word"] = {"bleu": b, "chrf": c}
 
     # 3. English to Kikuyu - Retrieval
-    print("Evaluating English to Kikuyu (Retrieval)...")
+    logger.info("Evaluating English to Kikuyu (Retrieval)...")
     en_ki_ret_translations = [
         translator_en_ki.translate_sentence_retrieval(s) for s in test_en
     ]
@@ -133,7 +136,7 @@ def main() -> None:
     results["english_to_kikuyu_retrieval"] = {"bleu": b, "chrf": c}
 
     # 4. English to Kikuyu - Word-by-word
-    print("Evaluating English to Kikuyu (Word-by-word)...")
+    logger.info("Evaluating English to Kikuyu (Word-by-word)...")
     en_ki_wbw_translations = [
         translator_en_ki.translate_word_by_word(s) for s in test_en
     ]
@@ -141,16 +144,16 @@ def main() -> None:
     results["english_to_kikuyu_word_by_word"] = {"bleu": b, "chrf": c}
 
     # Print results summary table
-    print("\n### Translation Quality Summary")
-    print("| Direction | Method | BLEU Score | ChrF Score |")
-    print("| :--- | :--- | :---: | :---: |")
+    logger.info("\n### Translation Quality Summary")
+    logger.info("| Direction | Method | BLEU Score | ChrF Score |")
+    logger.info("| :--- | :--- | :---: | :---: |")
     for key, metrics in results.items():
         dir_label = (
             "Kikuyu -> English" if "kikuyu_to_english" in key else "English -> Kikuyu"
         )
         method_label = "Retrieval" if "retrieval" in key else "Word-by-Word"
-        print(
-            f"| {dir_label} | {method_label} | {metrics['bleu']:.2f} | {metrics['chrf']:.2f} |"
+        logger.info(
+            "| %s | %s | %.2f | %.2f |", dir_label, method_label, metrics["bleu"], metrics["chrf"]
         )
 
     # Save to models/evaluation_metrics.json
@@ -188,7 +191,7 @@ def main() -> None:
 
     with open(metrics_json_path, "w", encoding="utf-8") as f:
         json.dump(metrics_data, f, indent=2)
-    print(f"\nSaved metrics to {metrics_json_path}")
+    logger.info("Saved metrics to %s", metrics_json_path)
 
 
 if __name__ == "__main__":

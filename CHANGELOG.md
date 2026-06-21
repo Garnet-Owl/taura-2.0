@@ -73,3 +73,8 @@ All notable changes to this project will be documented in this file.
 - Reorganized `models/` into timestamped versioning directories (`run_v1_baseline`, `run_v2_large`) and updated `app/api/config.py` to dynamically load from the latest run directory.
 - Updated `.gitignore` to ignore heavy FastText binary models and `*.sp` tokenized datasets.
 - Updated `README.md` to reference externally hosted models and datasets for download.
+
+## [Unreleased] - Performance and Memory Optimization
+- Refactored app/api/embeddings.py to extract embeddings in parallel using ProcessPoolExecutor.
+- Replaced single-threaded loop in app/serve/main.py with precomputed tgt_embs_ki.npy and tgt_embs_en.npy for fast startup.
+- Implemented CUDA fallback logic in alignment math using CuPy.

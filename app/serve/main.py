@@ -72,6 +72,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     proj_en_ki_path = config.PROJ_EN_KI_PATH
     train_tsv_path = config.TRAIN_TSV_PATH
 
+    tgt_embs_ki_path = config.TGT_EMBS_KI_PATH
+    tgt_embs_en_path = config.TGT_EMBS_EN_PATH
+
     # Check if models exist
     if not (
         os.path.exists(ki_model_path)
@@ -102,10 +105,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                         ki_sentences.append(str(ki).strip())
                         en_sentences.append(str(en).strip())
 
+        # Load precomputed target embeddings
+        tgt_embs_ki = np.load(tgt_embs_ki_path) if os.path.exists(tgt_embs_ki_path) else None
+        tgt_embs_en = np.load(tgt_embs_en_path) if os.path.exists(tgt_embs_en_path) else None
+
         # Initialize translators
         app.state.translators = {
-            "ki_en": CrossLingualTranslator(ki_model, en_model, W_ki_en, en_sentences),
-            "en_ki": CrossLingualTranslator(en_model, ki_model, W_en_ki, ki_sentences),
+            "ki_en": CrossLingualTranslator(ki_model, en_model, W_ki_en, en_sentences, precomputed_tgt_embeddings=tgt_embs_en),
+            "en_ki": CrossLingualTranslator(en_model, ki_model, W_en_ki, ki_sentences, precomputed_tgt_embeddings=tgt_embs_ki),
         }
 
     yield

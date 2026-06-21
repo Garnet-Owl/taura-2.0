@@ -8,6 +8,9 @@ from huggingface_hub import hf_hub_download
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.split import split_data
 from app.api import config
+from app.shared.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def build_subword_vocabulary(
@@ -35,11 +38,11 @@ def build_subword_vocabulary(
         bos_id=2,
         eos_id=3,
     )
-    print(f"SentencePiece model saved to {model_path}")
+    logger.info("SentencePiece model saved to %s", model_path)
 
 
 def main() -> None:
-    print("Downloading CGIAR dataset from Hugging Face...")
+    logger.info("Downloading CGIAR dataset from Hugging Face...")
     all_pairs = []
     try:
         cgiar_path = hf_hub_download(
@@ -47,8 +50,8 @@ def main() -> None:
             filename="English - Kikuyu Sentence Pairs Final (1).xlsx",
             repo_type="dataset",
         )
-        print(f"Downloaded CGIAR dataset to {cgiar_path}")
-        print("Parsing CGIAR Excel file...")
+        logger.info("Downloaded CGIAR dataset to %s", cgiar_path)
+        logger.info("Parsing CGIAR Excel file...")
         xls = pd.ExcelFile(cgiar_path)
 
         for sheet in xls.sheet_names:
@@ -62,20 +65,20 @@ def main() -> None:
                 ki = str(row["Kikuyu"]).strip()
                 if en and ki:
                     all_pairs.append((ki, en))
-        print(f"Extracted {len(all_pairs)} pairs from CGIAR.")
+        logger.info("Extracted %s pairs from CGIAR.", len(all_pairs))
     except Exception as e:
-        print(f"Error downloading or parsing CGIAR dataset: {e}")
+        logger.error("Error downloading or parsing CGIAR dataset: %s", e)
         sys.exit(1)
 
-    print("Downloading Mich dataset from Hugging Face...")
+    logger.info("Downloading Mich dataset from Hugging Face...")
     try:
         mich_path = hf_hub_download(
             repo_id=config.REPO_MICH,
             filename="English-Kikuyu_Sentence-Pairs.csv",
             repo_type="dataset",
         )
-        print(f"Downloaded Mich dataset to {mich_path}")
-        print("Parsing Mich CSV file...")
+        logger.info("Downloaded Mich dataset to %s", mich_path)
+        logger.info("Parsing Mich CSV file...")
         mich_df = pd.read_csv(mich_path)
         if "English" in mich_df.columns and "Kikuyu" in mich_df.columns:
             mich_df = mich_df.dropna(subset=["English", "Kikuyu"])
@@ -86,12 +89,12 @@ def main() -> None:
                 if en and ki:
                     all_pairs.append((ki, en))
                     count_mich += 1
-            print(f"Extracted {count_mich} pairs from Mich dataset.")
+            logger.info("Extracted %s pairs from Mich dataset.", count_mich)
     except Exception as e:
-        print(f"Error downloading or parsing Mich dataset: {e}")
+        logger.error("Error downloading or parsing Mich dataset: %s", e)
         sys.exit(1)
 
-    print(f"Extracted a total of {len(all_pairs)} valid sentence pairs.")
+    logger.info("Extracted a total of %s valid sentence pairs.", len(all_pairs))
 
     # Create data/ directory if it doesn't exist
     os.makedirs(config.DATA_DIR, exist_ok=True)
@@ -111,7 +114,7 @@ def main() -> None:
                 ki_clean = ki.replace("\t", " ").replace("\n", " ").replace("\r", " ")
                 en_clean = en.replace("\t", " ").replace("\n", " ").replace("\r", " ")
                 f.write(f"{ki_clean}\t{en_clean}\n")
-        print(f"Saved {len(split_data_list)} pairs to {file_path}")
+        logger.info("Saved %s pairs to %s", len(split_data_list), file_path)
 
     # Also save raw monolingual text files for training FastText embeddings
     # (one sentence per line)
@@ -125,7 +128,7 @@ def main() -> None:
                 normalized = normalize_text(sentence)
                 if normalized:
                     f.write(f"{normalized}\n")
-        print(f"Saved raw normalized monolingual sentences to {train_lang_path}")
+        logger.info("Saved raw normalized monolingual sentences to %s", train_lang_path)
 
     # Build shared BPE vocabulary from both monolingual corpora
     ki_corpus = os.path.join(config.DATA_DIR, "train.kikuyu")

@@ -6,14 +6,20 @@ import csv
 import numpy as np
 import fasttext
 import datetime
+import gc
+import multiprocessing
 
 from app.api.embeddings import (
     get_sentence_embedding,
+    get_sentence_embeddings_parallel,
     learn_alignment_matrix,
     iterative_procrustes,
     CrossLingualTranslator,
 )
 from app.api import config
+from app.shared.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
@@ -40,10 +46,10 @@ def train_monolingual(
 ) -> fasttext.FastText._FastText:
     """Trains a monolingual FastText skipgram model on raw text."""
     if os.path.exists(model_path):
-        print(f"Model already exists at {model_path}. Resuming and loading it.")
+        logger.info(f"Model already exists at {model_path}. Resuming and loading it.")
         return fasttext.load_model(model_path)
         
-    print(f"Training FastText model on {train_path}...")
+    logger.info(f"Training FastText model on {train_path}...")
     model = fasttext.train_unsupervised(
         train_path,
         model=config.FASTTEXT_MODEL_TYPE,
@@ -52,10 +58,10 @@ def train_monolingual(
         lr=config.FASTTEXT_LR,
         ws=config.FASTTEXT_WS,
         minCount=config.FASTTEXT_MIN_COUNT,
-        thread=4,
+        thread=max(1, multiprocessing.cpu_count()),
     )
     model.save_model(model_path)
-    print(f"Model saved to {model_path}")
+    logger.info(f"Model saved to {model_path}")
     return model
 
 
@@ -133,7 +139,7 @@ def save_metrics(
 
     with open(metrics_path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
-    print(f"Saved evaluation metrics to {metrics_path}")
+    logger.info(f"Saved evaluation metrics to {metrics_path}")
 
 
 def setup_and_get_state() -> tuple[dict, str]:
@@ -159,15 +165,17 @@ def setup_and_get_state() -> tuple[dict, str]:
         config.EN_MODEL_PATH = os.path.join(new_run, "en.bin")
         config.PROJ_KI_EN_PATH = os.path.join(new_run, "proj_ki_en.npy")
         config.PROJ_EN_KI_PATH = os.path.join(new_run, "proj_en_ki.npy")
+        config.TGT_EMBS_KI_PATH = os.path.join(new_run, "tgt_embs_ki.npy")
+        config.TGT_EMBS_EN_PATH = os.path.join(new_run, "tgt_embs_en.npy")
         config.METRICS_JSON_PATH = os.path.join(new_run, "evaluation_metrics.json")
         state_file = os.path.join(new_run, "training_state.json")
         state = {"status": "in_progress", "steps": []}
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(state, f)
-        print(f"Created new training run directory: {new_run}")
+        logger.info(f"Created new training run directory: {new_run}")
         return state, state_file
 
-    print(f"Resuming training run directory: {latest_run}")
+    logger.info(f"Resuming training run directory: {latest_run}")
     if os.path.exists(state_file):
         with open(state_file, "r", encoding="utf-8") as f:
             state = json.load(f)
@@ -193,7 +201,7 @@ def main() -> None:
     tokenizer = None
     if os.path.exists(config.SP_MODEL_PATH):
         if "tokenize_corpora" not in state["steps"]:
-            print("SentencePiece model found. Tokenizing training corpora...")
+            logger.info("SentencePiece model found. Tokenizing training corpora...")
             from app.api.preprocessing import SubwordTokenizer
             tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
             
@@ -203,7 +211,7 @@ def main() -> None:
             # Use os.path.exists to only tokenize if not already there
             if not os.path.exists(sp_ki_path) or not os.path.exists(sp_en_path):
                 for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
-                    print(f"Applying SentencePiece to {in_path} -> {out_path}")
+                    logger.info(f"Applying SentencePiece to {in_path} -> {out_path}")
                     with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
                         for line in fin:
                             pieces = tokenizer.encode(line.strip())
@@ -214,13 +222,13 @@ def main() -> None:
             train_ki_path = sp_ki_path
             train_en_path = sp_en_path
         else:
-            print("Corpora already tokenized (resuming).")
+            logger.info("Corpora already tokenized (resuming).")
             train_ki_path += ".sp"
             train_en_path += ".sp"
             from app.api.preprocessing import SubwordTokenizer
             tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
     else:
-        print("WARNING: SentencePiece model not found. Falling back to raw text for FastText training.")
+        logger.info("WARNING: SentencePiece model not found. Falling back to raw text for FastText training.")
 
     # 1. Train Monolingual Models
     ki_model = train_monolingual(train_ki_path, config.KI_MODEL_PATH, dim=dim)
@@ -235,33 +243,56 @@ def main() -> None:
 
     # 2. Learn Cross-Lingual Alignment (SVD + iterative Procrustes refinement)
     if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(config.PROJ_EN_KI_PATH):
-        print("Projection matrices already exist. Resuming and loading them.")
+        logger.info("Projection matrices already exist. Resuming and loading them.")
         W_ki_en = np.load(config.PROJ_KI_EN_PATH)
         W_en_ki = np.load(config.PROJ_EN_KI_PATH)
     else:
         train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
-        print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
+        logger.info(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
 
         if tokenizer:
             train_ki = [" ".join(tokenizer.encode(s)) for s in train_ki]
             train_en = [" ".join(tokenizer.encode(s)) for s in train_en]
 
-        X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
-        Y = np.array([get_sentence_embedding(en_model, s, dim=dim) for s in train_en]).T
+        logger.info("Computing Kikuyu anchor embeddings (parallel)...")
+        X = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, train_ki, dim=dim).T
+        logger.info("Computing English anchor embeddings (parallel)...")
+        Y = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, train_en, dim=dim).T
 
+        if "precompute_embeddings" not in state["steps"]:
+            logger.info("Saving precomputed target embeddings for server startup...")
+            # X and Y contain the embeddings for the entire training set (transposed)
+            np.save(config.TGT_EMBS_KI_PATH, X.T)
+            np.save(config.TGT_EMBS_EN_PATH, Y.T)
+            state["steps"].append("precompute_embeddings")
+            save_state(state_file, state)
+
+        # Free text lists from memory
+        del train_ki
+        del train_en
+        gc.collect()
+
+        logger.info("Learning initial alignment matrices...")
         W_ki_en_init = learn_alignment_matrix(X, Y)
         W_en_ki_init = learn_alignment_matrix(Y, X)
 
+        logger.info("Refining matrices via iterative Procrustes...")
         W_ki_en = iterative_procrustes(
             X, Y, W_ki_en_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
         )
         W_en_ki = iterative_procrustes(
             Y, X, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
         )
+        
+        del X
+        del Y
+        del W_ki_en_init
+        del W_en_ki_init
+        gc.collect()
 
         np.save(config.PROJ_KI_EN_PATH, W_ki_en)
         np.save(config.PROJ_EN_KI_PATH, W_en_ki)
-        print("Alignment projection matrices saved.")
+        logger.info("Alignment projection matrices saved.")
         if "align_models" not in state["steps"]:
             state["steps"].append("align_models")
             save_state(state_file, state)
@@ -271,31 +302,38 @@ def main() -> None:
     # Limit evaluation to 1000 sentences to avoid O(N^2) hang
     val_ki = val_ki[:1000]
     val_en = val_en[:1000]
-    print(f"Evaluating alignment on {len(val_ki)} validation sentences...")
+    logger.info(f"Evaluating alignment on {len(val_ki)} validation sentences...")
 
     if tokenizer:
         val_ki_sp = [" ".join(tokenizer.encode(s)) for s in val_ki]
         val_en_sp = [" ".join(tokenizer.encode(s)) for s in val_en]
-        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en_sp)
-        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki_sp)
+        
+        val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en_sp, dim=dim)
+        val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki_sp, dim=dim)
+        
+        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en_sp, precomputed_tgt_embeddings=val_tgt_en)
+        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki_sp, precomputed_tgt_embeddings=val_tgt_ki)
         metrics_ki_en = evaluate_translator(translator_ki_en, val_ki_sp, val_en_sp)
         metrics_en_ki = evaluate_translator(translator_en_ki, val_en_sp, val_ki_sp)
     else:
-        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en)
-        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki)
+        val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
+        val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
+        
+        translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en)
+        translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki)
         metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
         metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
 
     metrics = {"kikuyu_to_english": metrics_ki_en, "english_to_kikuyu": metrics_en_ki}
 
-    print("\nEvaluation Metrics:")
-    print(json.dumps(metrics, indent=2))
+    logger.info("\nEvaluation Metrics:")
+    logger.info(json.dumps(metrics, indent=2))
 
     save_metrics(metrics)
     
     state["status"] = "completed"
     save_state(state_file, state)
-    print("Training run completed successfully.")
+    logger.info("Training run completed successfully.")
 
 
 if __name__ == "__main__":
