@@ -24,7 +24,7 @@ PROJ_EN_KI_PATH = os.path.join(LATEST_RUN_DIR, "proj_en_ki.npy")
 TGT_EMBS_KI_PATH = os.path.join(LATEST_RUN_DIR, "tgt_embs_ki.npy")
 TGT_EMBS_EN_PATH = os.path.join(LATEST_RUN_DIR, "tgt_embs_en.npy")
 METRICS_JSON_PATH = os.path.join(LATEST_RUN_DIR, "evaluation_metrics.json")
-SP_MODEL_PATH = os.path.join(MODELS_DIR, "sentencepiece.model")
+SP_MODEL_PATH = os.path.join(LATEST_RUN_DIR, "sentencepiece.model")
 
 # TSV Dataset Paths
 TRAIN_TSV_PATH = os.path.join(DATA_DIR, "train.tsv")

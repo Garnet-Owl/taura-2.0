@@ -78,3 +78,7 @@ All notable changes to this project will be documented in this file.
 - Refactored app/api/embeddings.py to extract embeddings in parallel using ProcessPoolExecutor.
 - Replaced single-threaded loop in app/serve/main.py with precomputed tgt_embs_ki.npy and tgt_embs_en.npy for fast startup.
 - Implemented CUDA fallback logic in alignment math using CuPy.
+
+- Integrated SentencePiece tokenizer generation directly into the embedding training loop (	rain_embeddings.py) to align with run versions.
+- Updated config.py so that SP_MODEL_PATH evaluates dynamically based on the current run directory, ensuring tokenizers are versioned directly beside their corresponding models.
+- Removed outdated and flaky test assertions related to model info metrics during fresh runs.
