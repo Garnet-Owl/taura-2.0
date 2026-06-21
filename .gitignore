@@ -130,3 +130,13 @@ data/embeddings/*
 AGENTS.md
 /session-details
 MASTER_PLAN.md
+
+# Local wheel packages
+*.whl
+
+# Model files
+models/*.npy
+
+# User telemetry & feedback
+data/feedback.jsonl
+

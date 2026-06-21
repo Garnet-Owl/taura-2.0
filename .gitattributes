@@ -1,0 +1,15 @@
+# Git Attributes configuration for Taura 2.0
+
+# Prevent tracking of large model and package files by binding them to check-size filter
+*.bin filter=check-size
+*.vec filter=check-size
+*.npy filter=check-size
+*.whl filter=check-size
+
+# Ensure code and text files have consistent LF line endings
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.tsv text eol=lf
