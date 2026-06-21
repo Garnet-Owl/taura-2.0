@@ -5,6 +5,7 @@ import json
 import csv
 import numpy as np
 import fasttext
+import datetime
 
 from app.api.embeddings import (
     get_sentence_embedding,
@@ -38,6 +39,10 @@ def train_monolingual(
     train_path: str, model_path: str, dim: int = 150
 ) -> fasttext.FastText._FastText:
     """Trains a monolingual FastText skipgram model on raw text."""
+    if os.path.exists(model_path):
+        print(f"Model already exists at {model_path}. Resuming and loading it.")
+        return fasttext.load_model(model_path)
+        
     print(f"Training FastText model on {train_path}...")
     model = fasttext.train_unsupervised(
         train_path,
@@ -131,8 +136,55 @@ def save_metrics(
     print(f"Saved evaluation metrics to {metrics_path}")
 
 
+def setup_and_get_state() -> tuple[dict, str]:
+    latest_run = config.LATEST_RUN_DIR
+    state_file = os.path.join(latest_run, "training_state.json")
+    
+    is_completed = False
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                state = json.load(f)
+                if state.get("status") == "completed":
+                    is_completed = True
+        except Exception:
+            pass
+            
+    if is_completed or latest_run == config.MODELS_DIR:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        new_run = os.path.join(config.MODELS_DIR, f"run_{timestamp}")
+        os.makedirs(new_run, exist_ok=True)
+        config.LATEST_RUN_DIR = new_run
+        config.KI_MODEL_PATH = os.path.join(new_run, "ki.bin")
+        config.EN_MODEL_PATH = os.path.join(new_run, "en.bin")
+        config.PROJ_KI_EN_PATH = os.path.join(new_run, "proj_ki_en.npy")
+        config.PROJ_EN_KI_PATH = os.path.join(new_run, "proj_en_ki.npy")
+        config.METRICS_JSON_PATH = os.path.join(new_run, "evaluation_metrics.json")
+        state_file = os.path.join(new_run, "training_state.json")
+        state = {"status": "in_progress", "steps": []}
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(state, f)
+        print(f"Created new training run directory: {new_run}")
+        return state, state_file
+
+    print(f"Resuming training run directory: {latest_run}")
+    if os.path.exists(state_file):
+        with open(state_file, "r", encoding="utf-8") as f:
+            state = json.load(f)
+    else:
+        state = {"status": "in_progress", "steps": []}
+    return state, state_file
+
+
+def save_state(state_file: str, state: dict) -> None:
+    with open(state_file, "w", encoding="utf-8") as f:
+        json.dump(state, f, indent=2)
+
+
 def main() -> None:
     os.makedirs(config.MODELS_DIR, exist_ok=True)
+    state, state_file = setup_and_get_state()
+    
     dim = config.EMBEDDING_DIM
 
     train_ki_path = config.TRAIN_KI_TXT
@@ -140,53 +192,79 @@ def main() -> None:
 
     tokenizer = None
     if os.path.exists(config.SP_MODEL_PATH):
-        print("SentencePiece model found. Tokenizing training corpora...")
-        from app.api.preprocessing import SubwordTokenizer
-        tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
-        
-        sp_ki_path = train_ki_path + ".sp"
-        sp_en_path = train_en_path + ".sp"
-        
-        for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
-            print(f"Applying SentencePiece to {in_path} -> {out_path}")
-            with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
-                for line in fin:
-                    pieces = tokenizer.encode(line.strip())
-                    fout.write(" ".join(pieces) + "\n")
-                    
-        train_ki_path = sp_ki_path
-        train_en_path = sp_en_path
+        if "tokenize_corpora" not in state["steps"]:
+            print("SentencePiece model found. Tokenizing training corpora...")
+            from app.api.preprocessing import SubwordTokenizer
+            tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
+            
+            sp_ki_path = train_ki_path + ".sp"
+            sp_en_path = train_en_path + ".sp"
+            
+            # Use os.path.exists to only tokenize if not already there
+            if not os.path.exists(sp_ki_path) or not os.path.exists(sp_en_path):
+                for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
+                    print(f"Applying SentencePiece to {in_path} -> {out_path}")
+                    with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
+                        for line in fin:
+                            pieces = tokenizer.encode(line.strip())
+                            fout.write(" ".join(pieces) + "\n")
+                            
+            state["steps"].append("tokenize_corpora")
+            save_state(state_file, state)
+            train_ki_path = sp_ki_path
+            train_en_path = sp_en_path
+        else:
+            print("Corpora already tokenized (resuming).")
+            train_ki_path += ".sp"
+            train_en_path += ".sp"
+            from app.api.preprocessing import SubwordTokenizer
+            tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
     else:
         print("WARNING: SentencePiece model not found. Falling back to raw text for FastText training.")
 
     # 1. Train Monolingual Models
     ki_model = train_monolingual(train_ki_path, config.KI_MODEL_PATH, dim=dim)
+    if "train_kikuyu" not in state["steps"]:
+        state["steps"].append("train_kikuyu")
+        save_state(state_file, state)
+        
     en_model = train_monolingual(train_en_path, config.EN_MODEL_PATH, dim=dim)
+    if "train_english" not in state["steps"]:
+        state["steps"].append("train_english")
+        save_state(state_file, state)
 
     # 2. Learn Cross-Lingual Alignment (SVD + iterative Procrustes refinement)
-    train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
-    print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
+    if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(config.PROJ_EN_KI_PATH):
+        print("Projection matrices already exist. Resuming and loading them.")
+        W_ki_en = np.load(config.PROJ_KI_EN_PATH)
+        W_en_ki = np.load(config.PROJ_EN_KI_PATH)
+    else:
+        train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
+        print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
 
-    if tokenizer:
-        train_ki = [" ".join(tokenizer.encode(s)) for s in train_ki]
-        train_en = [" ".join(tokenizer.encode(s)) for s in train_en]
+        if tokenizer:
+            train_ki = [" ".join(tokenizer.encode(s)) for s in train_ki]
+            train_en = [" ".join(tokenizer.encode(s)) for s in train_en]
 
-    X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
-    Y = np.array([get_sentence_embedding(en_model, s, dim=dim) for s in train_en]).T
+        X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
+        Y = np.array([get_sentence_embedding(en_model, s, dim=dim) for s in train_en]).T
 
-    W_ki_en_init = learn_alignment_matrix(X, Y)
-    W_en_ki_init = learn_alignment_matrix(Y, X)
+        W_ki_en_init = learn_alignment_matrix(X, Y)
+        W_en_ki_init = learn_alignment_matrix(Y, X)
 
-    W_ki_en = iterative_procrustes(
-        X, Y, W_ki_en_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
-    )
-    W_en_ki = iterative_procrustes(
-        Y, X, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
-    )
+        W_ki_en = iterative_procrustes(
+            X, Y, W_ki_en_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
+        )
+        W_en_ki = iterative_procrustes(
+            Y, X, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
+        )
 
-    np.save(config.PROJ_KI_EN_PATH, W_ki_en)
-    np.save(config.PROJ_EN_KI_PATH, W_en_ki)
-    print("Alignment projection matrices saved.")
+        np.save(config.PROJ_KI_EN_PATH, W_ki_en)
+        np.save(config.PROJ_EN_KI_PATH, W_en_ki)
+        print("Alignment projection matrices saved.")
+        if "align_models" not in state["steps"]:
+            state["steps"].append("align_models")
+            save_state(state_file, state)
 
     # 3. Evaluate on Validation Set
     val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
@@ -214,6 +292,10 @@ def main() -> None:
     print(json.dumps(metrics, indent=2))
 
     save_metrics(metrics)
+    
+    state["status"] = "completed"
+    save_state(state_file, state)
+    print("Training run completed successfully.")
 
 
 if __name__ == "__main__":

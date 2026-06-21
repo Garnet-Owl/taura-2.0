@@ -140,3 +140,8 @@ models/*.npy
 # User telemetry & feedback
 data/feedback.jsonl
 
+models/run_*
+data/*.tsv
+data/*.kikuyu*
+data/*.english*
+data/*.sp
