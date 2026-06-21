@@ -16,7 +16,7 @@
 - Modify: `scripts/prepare_dataset.py`
 - Test: Run dataset preparation and check files
 
-- [ ] **Step 1: Apply normalization to monolingual export in `scripts/prepare_dataset.py`**
+- [x] **Step 1: Apply normalization to monolingual export in `scripts/prepare_dataset.py`**
   Modify the export block at lines 67-73 of `scripts/prepare_dataset.py` to import `normalize_text` and clean sentences before writing them to `train.kikuyu` and `train.english`.
 
   Expected change in `scripts/prepare_dataset.py`:
@@ -35,7 +35,7 @@
           print(f"Saved raw normalized monolingual sentences to {train_lang_path}")
   ```
 
-- [ ] **Step 2: Run the dataset preparation script to regenerate monolingual files**
+- [x] **Step 2: Run the dataset preparation script to regenerate monolingual files**
   Run: `uv run python -m scripts.prepare_dataset`
   Expected output:
   ```
@@ -45,11 +45,11 @@
   Saved raw normalized monolingual sentences to data/train.english
   ```
 
-- [ ] **Step 3: Run the tests to make sure everything is green**
+- [x] **Step 3: Run the tests to make sure everything is green**
   Run: `uv run pytest`
   Expected: 22 passed.
 
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
   ```bash
   git add scripts/prepare_dataset.py
   git commit -m "feat: normalize monolingual corpora during dataset preparation"
@@ -63,7 +63,7 @@
 - Create: `scripts/tune_hyperparameters.py`
 - Test: Run the script for a single configuration first
 
-- [ ] **Step 1: Implement `scripts/tune_hyperparameters.py`**
+- [x] **Step 1: Implement `scripts/tune_hyperparameters.py`**
   Create a grid search script that runs over specified FastText unsupervised training parameters and evaluates the learned projection mapping on validation set retrieval accuracy.
 
   Write the file content:
@@ -197,7 +197,7 @@
       main()
   ```
 
-- [ ] **Step 2: Commit tuning script**
+- [x] **Step 2: Commit tuning script**
   ```bash
   git add scripts/tune_hyperparameters.py
   git commit -m "feat: add hyperparameter tuning script for FastText model optimization"
@@ -211,19 +211,19 @@
 - Run: `scripts/tune_hyperparameters.py`
 - Modify: `scripts/train_embeddings.py`
 
-- [ ] **Step 1: Run hyperparameter search**
+- [x] **Step 1: Run hyperparameter search**
   Run: `uv run python -m scripts.tune_hyperparameters`
   Expected output: Grid search logs showing validation accuracy improvement. Keep track of the best config.
 
-- [ ] **Step 2: Update `scripts/train_embeddings.py` with best parameters**
+- [x] **Step 2: Update `scripts/train_embeddings.py` with best parameters**
   Update the main hyperparameters in `scripts/train_embeddings.py` to match the best configuration discovered by the grid search.
   For example, if `cbow` with `dim=150`, `epoch=25`, `lr=0.1`, `ws=8` is best, update lines 35-45 and 107-108 in `scripts/train_embeddings.py`.
 
-- [ ] **Step 3: Run the training script**
+- [x] **Step 3: Run the training script**
   Run: `uv run python -m scripts.train_embeddings`
   Expected output: Training completes successfully with the new hyperparameter configurations, and saves models and metrics.
 
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
   ```bash
   git add scripts/train_embeddings.py
   git commit -m "feat: update train_embeddings with optimal search hyperparameters"
@@ -237,18 +237,18 @@
 - Run: `scripts/evaluate.py`
 - Test: `app/tests/test_api.py`
 
-- [ ] **Step 1: Run the evaluation script**
+- [x] **Step 1: Run the evaluation script**
   Run: `uv run python -m scripts.evaluate`
   Expected output: Score summary showing new BLEU and ChrF scores, saved to `models/evaluation_metrics.json`.
 
-- [ ] **Step 2: Run pytest to check unit & integration tests**
+- [x] **Step 2: Run pytest to check unit & integration tests**
   Run: `uv run pytest`
   Expected output: 22 passed.
 
-- [ ] **Step 3: Update `CHANGELOG.md`**
+- [x] **Step 3: Update `CHANGELOG.md`**
   Append 3-5 bullet points under `[Unreleased]` for the model scaling and optimization tasks completed.
 
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
   ```bash
   git add models/evaluation_metrics.json CHANGELOG.md
   git commit -m "chore: evaluate optimized models on test set and document changes"
