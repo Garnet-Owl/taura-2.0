@@ -23,7 +23,7 @@ The name "taura" is derived from the Kikuyu word "Taũra", which means "Translat
 ### 1. Prerequisites
 
 - Python 3.12+
-- Poetry (for dependency management)
+- uv (for dependency and virtual environment management)
 
 ### 2. Installation & Setup
 
@@ -32,12 +32,7 @@ Clone the repository and install the project dependencies:
 ```bash
 git clone https://github.com/Garnet-Owl/taura-2.0.git
 cd taura-2.0
-poetry install
-```
-
-*Note on Windows:* If the poetry installation hangs due to C++ compilation of `fasttext`, verify you are running Python 3.12 and install dependencies via the precompiled wheel:
-```bash
-poetry run pip install fasttext-wheel numpy pydantic fastapi uvicorn httpx
+uv sync
 ```
 
 ---
@@ -48,14 +43,14 @@ poetry run pip install fasttext-wheel numpy pydantic fastapi uvicorn httpx
 Downloads the parallel Kikuyu-English corpus from Hugging Face, cleans the text, and splits it into `train`, `val`, and `test` datasets:
 
 ```bash
-poetry run python -m scripts.prepare_dataset
+uv run python -m scripts.prepare_dataset
 ```
 
 ### Step 2: Train Embeddings and Alignment Matrices
 Trains monolingual FastText models and solves the orthogonal Procrustes problem to generate projection matrices:
 
 ```bash
-poetry run python -m scripts.train_embeddings
+uv run python -m scripts.train_embeddings
 ```
 Training metrics (e.g., top-1/top-5 accuracy and MRR) will be printed and saved to `models/evaluation_metrics.json`.
 
@@ -63,7 +58,7 @@ Training metrics (e.g., top-1/top-5 accuracy and MRR) will be printed and saved 
 Run the development server:
 
 ```bash
-poetry run uvicorn app.serve.main:app --reload
+uv run uvicorn app.serve.main:app --reload
 ```
 
 ---
@@ -106,7 +101,7 @@ curl -X POST http://localhost:8000/translate \
 Execute the automated test suite containing 18 unit and integration tests:
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 ---
