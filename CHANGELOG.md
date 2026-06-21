@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Created `app/api/config.py` to centralize project configuration, file paths, and hyperparameters, and refactored scripts to import from it.
+- Fixed shallow merge bug in `scripts/train_embeddings.py` by extracting metric preservation logic into `save_metrics` to retain offline evaluation scores.
+- Added `test_save_metrics_merges_data` unit test to `app/tests/unit/test_evaluation.py` to guarantee metrics merge logic correctness.
 - Removed unused imports and formatted hyperparameter tuning scripts using Ruff.
 - Fully checked the implementation plan checkboxes for model scaling and optimization.
 - Optimized FastText training parameters to use `epoch=35` and `ws=8` in `scripts/train_embeddings.py`.
