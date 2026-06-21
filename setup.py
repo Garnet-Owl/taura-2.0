@@ -1,6 +1,6 @@
 """
 A minimal setup.py file to make the package installable with pip.
-Not needed when using Poetry, but included for compatibility.
+Not needed when using Hatchling/uv, but included for compatibility.
 """
 
 from setuptools import setup
