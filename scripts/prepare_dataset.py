@@ -64,13 +64,17 @@ def main() -> None:
 
     # Also save raw monolingual text files for training FastText embeddings
     # (one sentence per line)
+    from app.api.preprocessing import normalize_text
+
     for lang, idx in [("kikuyu", 0), ("english", 1)]:
         train_lang_path = os.path.join("data", f"train.{lang}")
         with open(train_lang_path, "w", encoding="utf-8") as f:
             for pair in train:
-                sentence = pair[idx].replace("\n", " ").replace("\r", " ")
-                f.write(f"{sentence}\n")
-        print(f"Saved raw monolingual sentences to {train_lang_path}")
+                sentence = pair[idx]
+                normalized = normalize_text(sentence)
+                if normalized:
+                    f.write(f"{normalized}\n")
+        print(f"Saved raw normalized monolingual sentences to {train_lang_path}")
 
 
 if __name__ == "__main__":
