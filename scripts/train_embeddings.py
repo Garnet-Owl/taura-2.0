@@ -9,6 +9,7 @@ import fasttext
 from app.api.embeddings import (
     get_sentence_embedding,
     learn_alignment_matrix,
+    iterative_procrustes,
     CrossLingualTranslator,
 )
 from app.api import config
@@ -138,15 +139,22 @@ def main() -> None:
     ki_model = train_monolingual(config.TRAIN_KI_TXT, config.KI_MODEL_PATH, dim=dim)
     en_model = train_monolingual(config.TRAIN_EN_TXT, config.EN_MODEL_PATH, dim=dim)
 
-    # 2. Learn Cross-Lingual Alignment
+    # 2. Learn Cross-Lingual Alignment (SVD + iterative Procrustes refinement)
     train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
     print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
 
     X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
     Y = np.array([get_sentence_embedding(en_model, s, dim=dim) for s in train_en]).T
 
-    W_ki_en = learn_alignment_matrix(X, Y)
-    W_en_ki = learn_alignment_matrix(Y, X)
+    W_ki_en_init = learn_alignment_matrix(X, Y)
+    W_en_ki_init = learn_alignment_matrix(Y, X)
+
+    W_ki_en = iterative_procrustes(
+        X, Y, W_ki_en_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
+    )
+    W_en_ki = iterative_procrustes(
+        Y, X, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
+    )
 
     np.save(config.PROJ_KI_EN_PATH, W_ki_en)
     np.save(config.PROJ_EN_KI_PATH, W_en_ki)
