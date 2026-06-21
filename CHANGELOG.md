@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Removed unused imports and formatted hyperparameter tuning scripts using Ruff.
+- Fully checked the implementation plan checkboxes for model scaling and optimization.
 - Optimized FastText training parameters to use `epoch=35` and `ws=8` in `scripts/train_embeddings.py`.
 - Retrained model embeddings, boosting Kikuyu-to-English Top-1 accuracy to 42.08% (from 39.22%) and English-to-Kikuyu Top-1 accuracy to 42.86% (from 37.14%).
 - Evaluated optimized translation models on the test set, improving retrieval BLEU scores to 4.79 (Kikuyu->English) and 3.27 (English->Kikuyu).
