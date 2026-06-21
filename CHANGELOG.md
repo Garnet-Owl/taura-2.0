@@ -54,3 +54,10 @@ All notable changes to this project will be documented in this file.
 - Added `GET /model/info` endpoint exposing version, hyperparameters, and live evaluation metrics.
 - Created `app/tests/test_candidates_endpoint.py` with 6 TDD tests for the new endpoints (all passing).
 - Updated `README.md` with current model performance metrics table, new API examples, and corrected test count to 29.
+
+## [Session 2026-06-21 evening]
+- Implemented `iterative_procrustes` in `app/api/embeddings.py` — refines orthogonal W over N SVD steps for better alignment convergence.
+- Created `scripts/refine_alignment.py` — loads existing models/matrices, runs 5-iteration Procrustes refinement, saves improved matrices, re-evaluates retrieval metrics.
+- Added 2 TDD tests in `test_embeddings.py` for `iterative_procrustes`: rotation recovery and orthogonality guarantee (31/31 suite passing).
+- Ruff format + lint clean across all new/modified files.
+
