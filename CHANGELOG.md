@@ -69,3 +69,7 @@ All notable changes to this project will be documented in this file.
 - Added 3 TDD tests for `SubwordTokenizer` (encode, type safety, decode); 34/34 suite passes.
 - Updated `scripts/train_embeddings.py` to optionally tokenize corpora using the `SubwordTokenizer` before training FastText models.
 - Re-ran dataset preparation and embedding training pipelines, increasing Kikuyu-to-English Top-1 accuracy to 44.3% and English-to-Kikuyu Top-1 accuracy to 44.4%.
+- Implemented resume capability in `scripts/train_embeddings.py` using `training_state.json` to prevent re-running expensive monolingual model training steps.
+- Reorganized `models/` into timestamped versioning directories (`run_v1_baseline`, `run_v2_large`) and updated `app/api/config.py` to dynamically load from the latest run directory.
+- Updated `.gitignore` to ignore heavy FastText binary models and `*.sp` tokenized datasets.
+- Updated `README.md` to reference externally hosted models and datasets for download.
