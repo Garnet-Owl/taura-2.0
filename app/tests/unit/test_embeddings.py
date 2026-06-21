@@ -10,6 +10,7 @@ from hamcrest import assert_that, equal_to, is_
 from app.api.embeddings import (
     get_sentence_embedding,
     learn_alignment_matrix,
+    iterative_procrustes,
     CrossLingualTranslator,
 )
 
@@ -170,3 +171,41 @@ class TestEmbeddings(unittest.TestCase):
 
         with then("each word is translated to its closest vocabulary target"):
             assert_that(translation, is_(equal_to("apple")))
+
+
+class TestIterativeProcrustes(unittest.TestCase):
+    def test_iterative_procrustes_recovers_rotation(self):
+        """Iterative Procrustes should converge to the known rotation matrix."""
+        with given([]) as _:
+            # A known 90-degree rotation in 2D
+            R = np.array([[0.0, -1.0], [1.0, 0.0]])
+            np.random.seed(7)
+            X = np.random.randn(2, 50)  # src embeddings (dim x N)
+            Y = R @ X  # target embeddings under the known rotation
+
+            # Start from identity as the initial W
+            W_init = np.eye(2)
+
+        with when("running iterative Procrustes refinement for 5 steps"):
+            W_refined = iterative_procrustes(X, Y, W_init, n_iters=5)
+
+        with then("the refined matrix is orthogonal and close to R"):
+            np.testing.assert_array_almost_equal(
+                W_refined @ W_refined.T, np.eye(2), decimal=5
+            )
+            np.testing.assert_array_almost_equal(W_refined, R, decimal=4)
+
+    def test_iterative_procrustes_returns_orthogonal_matrix(self):
+        """Iterative Procrustes output must always be orthogonal regardless of data."""
+        with given([]) as _:
+            np.random.seed(21)
+            X = np.random.randn(10, 100)
+            Y = np.random.randn(10, 100)
+            W_init = learn_alignment_matrix(X, Y)
+
+        with when("running 3 refinement iterations on random data"):
+            W_refined = iterative_procrustes(X, Y, W_init, n_iters=3)
+
+        with then("the result matrix is orthogonal"):
+            product = W_refined @ W_refined.T
+            np.testing.assert_array_almost_equal(product, np.eye(10), decimal=5)
