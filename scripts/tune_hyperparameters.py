@@ -1,21 +1,16 @@
 """Script to search for optimal FastText hyperparameters on validation set."""
 
 import os
-import sys
-from typing import Any, Dict, Tuple
-
-import fasttext
+import csv
 import numpy as np
-
-# Ensure root directory is in sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+import fasttext
+from typing import Any, Dict, Tuple
 from app.api.embeddings import (
-    CrossLingualTranslator,
     get_sentence_embedding,
     learn_alignment_matrix,
+    CrossLingualTranslator,
 )
-from scripts.train_embeddings import evaluate_translator, load_sentences
+from scripts.train_embeddings import load_sentences, evaluate_translator
 
 
 def tune_model(
@@ -26,14 +21,14 @@ def tune_model(
     params: Dict[str, Any],
 ) -> Tuple[float, float]:
     """Trains FastText and returns Kikuyu->English and English->Kikuyu validation Top-1 accuracy."""
-    dim: int = params.get("dim", 100)
-    epoch: int = params.get("epoch", 15)
-    lr: float = params.get("lr", 0.1)
-    ws: int = params.get("ws", 5)
-    min_count: int = params.get("minCount", 1)
-    model_type: str = params.get("model", "skipgram")
-    minn: int = params.get("minn", 3)
-    maxn: int = params.get("maxn", 6)
+    dim = params.get("dim", 100)
+    epoch = params.get("epoch", 15)
+    lr = params.get("lr", 0.1)
+    ws = params.get("ws", 5)
+    minCount = params.get("minCount", 1)
+    model_type = params.get("model", "skipgram")
+    minn = params.get("minn", 3)
+    maxn = params.get("maxn", 6)
 
     # Train temporary models
     ki_model = fasttext.train_unsupervised(
@@ -43,7 +38,7 @@ def tune_model(
         epoch=epoch,
         lr=lr,
         ws=ws,
-        minCount=min_count,
+        minCount=minCount,
         minn=minn,
         maxn=maxn,
         thread=4,
@@ -55,7 +50,7 @@ def tune_model(
         epoch=epoch,
         lr=lr,
         ws=ws,
-        minCount=min_count,
+        minCount=minCount,
         minn=minn,
         maxn=maxn,
         thread=4,
@@ -109,10 +104,10 @@ def main() -> None:
     print(f"Starting grid search over {len(grid)} configurations...")
     best_ki_en = 0.0
     best_en_ki = 0.0
-    best_params: Dict[str, Any] = {}
+    best_params = {}
 
     for idx, params in enumerate(grid):
-        print(f"\n[{idx + 1}/{len(grid)}] Evaluating params: {params}")
+        print(f"\n[{idx+1}/{len(grid)}] Evaluating params: {params}")
         try:
             ki_en_acc, en_ki_acc = tune_model(
                 train_ki, train_en, train_tsv, val_tsv, params
