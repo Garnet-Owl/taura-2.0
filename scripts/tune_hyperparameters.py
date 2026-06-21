@@ -1,7 +1,5 @@
 """Script to search for optimal FastText hyperparameters on validation set."""
 
-import os
-import csv
 import numpy as np
 import fasttext
 from typing import Any, Dict, Tuple
@@ -107,7 +105,7 @@ def main() -> None:
     best_params = {}
 
     for idx, params in enumerate(grid):
-        print(f"\n[{idx+1}/{len(grid)}] Evaluating params: {params}")
+        print(f"\n[{idx + 1}/{len(grid)}] Evaluating params: {params}")
         try:
             ki_en_acc, en_ki_acc = tune_model(
                 train_ki, train_en, train_tsv, val_tsv, params
