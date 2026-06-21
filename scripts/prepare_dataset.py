@@ -79,8 +79,11 @@ def main() -> None:
     )
 
     # Save as TSV files
-    for split_name, split_data_list in [("train", train), ("val", val), ("test", test)]:
-        file_path = os.path.join(config.DATA_DIR, f"{split_name}.tsv")
+    for split_name, split_data_list, file_path in [
+        ("train", train, config.TRAIN_TSV_PATH), 
+        ("val", val, config.VAL_TSV_PATH), 
+        ("test", test, config.TEST_TSV_PATH)
+    ]:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("kikuyu\tenglish\n")
             for ki, en in split_data_list:
@@ -94,8 +97,10 @@ def main() -> None:
     # (one sentence per line)
     from app.api.preprocessing import normalize_text
 
-    for lang, idx in [("kikuyu", 0), ("english", 1)]:
-        train_lang_path = os.path.join(config.DATA_DIR, f"train.{lang}")
+    for lang, idx, train_lang_path in [
+        ("kikuyu", 0, config.TRAIN_KI_TXT), 
+        ("english", 1, config.TRAIN_EN_TXT)
+    ]:
         with open(train_lang_path, "w", encoding="utf-8") as f:
             for pair in train:
                 sentence = pair[idx]
