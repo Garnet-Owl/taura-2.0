@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Migrated package and dependency management from Poetry to `uv` and adopted PEP 621 metadata with Hatchling build backend.
+- Replaced Poetry installation and caching in GitHub Actions CI pipeline with official `astral-sh/setup-uv` action and updated all task commands.
+- Updated project documentation (`README.md`, `INSTALL.md`) and developer guidelines (`AGENTS.md`) to align with `uv` command-line utility.
 - Initialized `CHANGELOG.md` and `session-details/progress_update_2026-06-20.md`.
 - Completed directory scaffolding for `app/serve` and `models`.
 - Added `CONTRIBUTING.md` and verified CI pipeline presence.
