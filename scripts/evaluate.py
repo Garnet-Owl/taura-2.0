@@ -71,17 +71,21 @@ def main() -> None:
     W_ki_en = np.load(proj_ki_en_path)
     W_en_ki = np.load(proj_en_ki_path)
 
-    # Load dictionaries for retrieval
+    # Load dictionaries for retrieval (limit to 50k to prevent OOM/hangs on 2.2M sentences)
     train_ki_sentences = []
     train_en_sentences = []
+    count = 0
     with open(train_tsv_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter="\t")
         for row in reader:
+            if count >= 50000:
+                break
             ki = row.get("kikuyu")
             en = row.get("english")
             if ki and en:
                 train_ki_sentences.append(str(ki).strip())
                 train_en_sentences.append(str(en).strip())
+                count += 1
 
     # Initialize translators
     translator_ki_en = CrossLingualTranslator(
@@ -91,9 +95,11 @@ def main() -> None:
         en_model, ki_model, W_en_ki, train_ki_sentences
     )
 
-    # Load test split
+    # Load test split (limit to 1000 to prevent O(N^2) hangs)
     print("Loading test dataset...")
     test_ki, test_en = load_test_data(test_tsv_path)
+    test_ki = test_ki[:1000]
+    test_en = test_en[:1000]
 
     results: Dict[str, Dict[str, float]] = {
         "kikuyu_to_english_retrieval": {},

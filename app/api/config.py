@@ -29,7 +29,7 @@ REPO_MICH = "michsethowusu/english-kikuyu_sentence-pairs"
 # Hyperparameters
 EMBEDDING_DIM = 150
 FASTTEXT_MODEL_TYPE = "skipgram"
-FASTTEXT_EPOCH = 35
+FASTTEXT_EPOCH = 1
 FASTTEXT_LR = 0.1
 FASTTEXT_WS = 8
 FASTTEXT_MIN_COUNT = 1

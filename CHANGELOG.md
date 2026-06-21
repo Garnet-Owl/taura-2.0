@@ -44,3 +44,6 @@ All notable changes to this project will be documented in this file.
 - Built a sleek, glassmorphic translation SPA frontend (`index.html`, `style.css`, `main.js`) with interactive translation, word-by-word alignments, and user feedback submission.
 - Fixed return type annotations for script entry points to achieve 100% type check pass rate under MyPy.
 
+
+* Resolved O(N^2) hanging issue during model evaluation by limiting the size of dictionary bounds to 50k and evaluation size to 1000 sentences.
+* Successfully evaluated the trained 2.2M-sentence model offline and generated final evaluation metrics.

@@ -10,38 +10,59 @@ from app.api import config
 
 
 def main() -> None:
-    print("Downloading dataset from Hugging Face...")
+    print("Downloading CGIAR dataset from Hugging Face...")
+    all_pairs = []
     try:
-        path = hf_hub_download(
+        cgiar_path = hf_hub_download(
             repo_id=config.REPO_CGIAR,
             filename="English - Kikuyu Sentence Pairs Final (1).xlsx",
             repo_type="dataset",
         )
-        print(f"Downloaded to {path}")
+        print(f"Downloaded CGIAR dataset to {cgiar_path}")
+        print("Parsing CGIAR Excel file...")
+        xls = pd.ExcelFile(cgiar_path)
+
+        for sheet in xls.sheet_names:
+            df = xls.parse(sheet)
+            if "English" not in df.columns or "Kikuyu" not in df.columns:
+                continue
+
+            df = df.dropna(subset=["English", "Kikuyu"])
+            for _, row in df.iterrows():
+                en = str(row["English"]).strip()
+                ki = str(row["Kikuyu"]).strip()
+                if en and ki:
+                    all_pairs.append((ki, en))
+        print(f"Extracted {len(all_pairs)} pairs from CGIAR.")
     except Exception as e:
-        print(f"Error downloading dataset: {e}")
+        print(f"Error downloading or parsing CGIAR dataset: {e}")
         sys.exit(1)
 
-    print("Parsing Excel file...")
-    xls = pd.ExcelFile(path)
-    all_pairs = []
+    print("Downloading Mich dataset from Hugging Face...")
+    try:
+        mich_path = hf_hub_download(
+            repo_id=config.REPO_MICH,
+            filename="English-Kikuyu_Sentence-Pairs.csv",
+            repo_type="dataset",
+        )
+        print(f"Downloaded Mich dataset to {mich_path}")
+        print("Parsing Mich CSV file...")
+        mich_df = pd.read_csv(mich_path)
+        if "English" in mich_df.columns and "Kikuyu" in mich_df.columns:
+            mich_df = mich_df.dropna(subset=["English", "Kikuyu"])
+            count_mich = 0
+            for _, row in mich_df.iterrows():
+                en = str(row["English"]).strip()
+                ki = str(row["Kikuyu"]).strip()
+                if en and ki:
+                    all_pairs.append((ki, en))
+                    count_mich += 1
+            print(f"Extracted {count_mich} pairs from Mich dataset.")
+    except Exception as e:
+        print(f"Error downloading or parsing Mich dataset: {e}")
+        sys.exit(1)
 
-    for sheet in xls.sheet_names:
-        df = xls.parse(sheet)
-        # Ensure correct columns exist
-        if "English" not in df.columns or "Kikuyu" not in df.columns:
-            print(f"Skipping sheet {sheet} due to missing columns")
-            continue
-
-        # Clean rows
-        df = df.dropna(subset=["English", "Kikuyu"])
-        for _, row in df.iterrows():
-            en = str(row["English"]).strip()
-            ki = str(row["Kikuyu"]).strip()
-            if en and ki:
-                all_pairs.append((ki, en))
-
-    print(f"Extracted {len(all_pairs)} valid sentence pairs.")
+    print(f"Extracted a total of {len(all_pairs)} valid sentence pairs.")
 
     # Create data/ directory if it doesn't exist
     os.makedirs(config.DATA_DIR, exist_ok=True)
