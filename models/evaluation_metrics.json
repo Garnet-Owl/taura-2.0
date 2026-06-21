@@ -1,20 +1,12 @@
 {
   "kikuyu_to_english": {
-    "accuracy_top1": 0.42077922077922075,
+    "accuracy_top1": 0.412987012987013,
     "accuracy_top5": 0.6519480519480519,
-    "mrr": 0.5286068022256215,
-    "bleu_retrieval": 4.792448762231292,
-    "chrf_retrieval": 26.308544484113067,
-    "bleu_word_by_word": 0.25197609816653477,
-    "chrf_word_by_word": 22.44269675839882
+    "mrr": 0.5289034350103783
   },
   "english_to_kikuyu": {
-    "accuracy_top1": 0.42857142857142855,
-    "accuracy_top5": 0.6545454545454545,
-    "mrr": 0.532013069791016,
-    "bleu_retrieval": 3.2668002144189408,
-    "chrf_retrieval": 28.221116257619,
-    "bleu_word_by_word": 0.28090460643253257,
-    "chrf_word_by_word": 24.85802669495728
+    "accuracy_top1": 0.43896103896103894,
+    "accuracy_top5": 0.6363636363636364,
+    "mrr": 0.5352267595291533
   }
 }

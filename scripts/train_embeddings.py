@@ -106,6 +106,27 @@ def evaluate_translator(
     }
 
 
+def save_metrics(metrics: dict[str, dict[str, float]], metrics_path: str = "models/evaluation_metrics.json") -> None:
+    """Saves metrics, merging with existing data to preserve offline evaluation scores."""
+    if os.path.exists(metrics_path):
+        try:
+            with open(metrics_path, "r", encoding="utf-8") as f:
+                existing_metrics = json.load(f)
+            
+            for lang_pair in ["kikuyu_to_english", "english_to_kikuyu"]:
+                if lang_pair not in existing_metrics:
+                    existing_metrics[lang_pair] = {}
+                existing_metrics[lang_pair].update(metrics.get(lang_pair, {}))
+                
+            metrics = existing_metrics
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2)
+    print(f"Saved evaluation metrics to {metrics_path}")
+
+
 def main() -> None:
     os.makedirs("models", exist_ok=True)
     dim = 150
@@ -143,10 +164,7 @@ def main() -> None:
     print("\nEvaluation Metrics:")
     print(json.dumps(metrics, indent=2))
 
-    metrics_path = "models/evaluation_metrics.json"
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
-    print(f"Saved evaluation metrics to {metrics_path}")
+    save_metrics(metrics)
 
 
 if __name__ == "__main__":
