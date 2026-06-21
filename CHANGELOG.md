@@ -67,5 +67,5 @@ All notable changes to this project will be documented in this file.
 - Added `build_subword_vocabulary` step to `scripts/prepare_dataset.py` — trains a shared BPE model over Kikuyu+English monolingual corpora as the final step of corpus preparation.
 - Added `SP_MODEL_PATH` and `SP_VOCAB_SIZE=8000` to `app/api/config.py`.
 - Added 3 TDD tests for `SubwordTokenizer` (encode, type safety, decode); 34/34 suite passes.
-
-
+- Updated `scripts/train_embeddings.py` to optionally tokenize corpora using the `SubwordTokenizer` before training FastText models.
+- Re-ran dataset preparation and embedding training pipelines, increasing Kikuyu-to-English Top-1 accuracy to 44.3% and English-to-Kikuyu Top-1 accuracy to 44.4%.
