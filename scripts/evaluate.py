@@ -9,6 +9,7 @@ import fasttext
 import sacrebleu
 
 from app.api.embeddings import CrossLingualTranslator
+from app.api import config
 
 
 def load_test_data(tsv_path: str) -> Tuple[List[str], List[str]]:
@@ -40,13 +41,13 @@ def calculate_translation_scores(
 
 def main() -> None:
     # Model and data paths
-    ki_model_path = "models/ki.bin"
-    en_model_path = "models/en.bin"
-    proj_ki_en_path = "models/proj_ki_en.npy"
-    proj_en_ki_path = "models/proj_en_ki.npy"
-    train_tsv_path = "data/train.tsv"
-    test_tsv_path = "data/test.tsv"
-    metrics_json_path = "models/evaluation_metrics.json"
+    ki_model_path = config.KI_MODEL_PATH
+    en_model_path = config.EN_MODEL_PATH
+    proj_ki_en_path = config.PROJ_KI_EN_PATH
+    proj_en_ki_path = config.PROJ_EN_KI_PATH
+    train_tsv_path = config.TRAIN_TSV_PATH
+    test_tsv_path = config.TEST_TSV_PATH
+    metrics_json_path = config.METRICS_JSON_PATH
 
     # Verify everything exists
     for path in [

@@ -11,6 +11,7 @@ from app.api.embeddings import (
     learn_alignment_matrix,
     CrossLingualTranslator,
 )
+from app.api import config
 
 
 def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
@@ -39,12 +40,12 @@ def train_monolingual(
     print(f"Training FastText model on {train_path}...")
     model = fasttext.train_unsupervised(
         train_path,
-        model="skipgram",
+        model=config.FASTTEXT_MODEL_TYPE,
         dim=dim,
-        epoch=35,
-        lr=0.1,
-        ws=8,
-        minCount=1,
+        epoch=config.FASTTEXT_EPOCH,
+        lr=config.FASTTEXT_LR,
+        ws=config.FASTTEXT_WS,
+        minCount=config.FASTTEXT_MIN_COUNT,
         thread=4,
     )
     model.save_model(model_path)
@@ -106,7 +107,7 @@ def evaluate_translator(
     }
 
 
-def save_metrics(metrics: dict[str, dict[str, float]], metrics_path: str = "models/evaluation_metrics.json") -> None:
+def save_metrics(metrics: dict[str, dict[str, float]], metrics_path: str = config.METRICS_JSON_PATH) -> None:
     """Saves metrics, merging with existing data to preserve offline evaluation scores."""
     if os.path.exists(metrics_path):
         try:
@@ -128,15 +129,15 @@ def save_metrics(metrics: dict[str, dict[str, float]], metrics_path: str = "mode
 
 
 def main() -> None:
-    os.makedirs("models", exist_ok=True)
-    dim = 150
+    os.makedirs(config.MODELS_DIR, exist_ok=True)
+    dim = config.EMBEDDING_DIM
 
     # 1. Train Monolingual Models
-    ki_model = train_monolingual("data/train.kikuyu", "models/ki.bin", dim=dim)
-    en_model = train_monolingual("data/train.english", "models/en.bin", dim=dim)
+    ki_model = train_monolingual(config.TRAIN_KI_TXT, config.KI_MODEL_PATH, dim=dim)
+    en_model = train_monolingual(config.TRAIN_EN_TXT, config.EN_MODEL_PATH, dim=dim)
 
     # 2. Learn Cross-Lingual Alignment
-    train_ki, train_en = load_sentences("data/train.tsv")
+    train_ki, train_en = load_sentences(config.TRAIN_TSV_PATH)
     print(f"Aligning spaces using {len(train_ki)} parallel sentences as anchors...")
 
     X = np.array([get_sentence_embedding(ki_model, s, dim=dim) for s in train_ki]).T
@@ -145,12 +146,12 @@ def main() -> None:
     W_ki_en = learn_alignment_matrix(X, Y)
     W_en_ki = learn_alignment_matrix(Y, X)
 
-    np.save("models/proj_ki_en.npy", W_ki_en)
-    np.save("models/proj_en_ki.npy", W_en_ki)
+    np.save(config.PROJ_KI_EN_PATH, W_ki_en)
+    np.save(config.PROJ_EN_KI_PATH, W_en_ki)
     print("Alignment projection matrices saved.")
 
     # 3. Evaluate on Validation Set
-    val_ki, val_en = load_sentences("data/val.tsv")
+    val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
     print(f"Evaluating alignment on {len(val_ki)} validation sentences...")
 
     translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en)

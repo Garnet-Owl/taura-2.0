@@ -6,13 +6,14 @@ from huggingface_hub import hf_hub_download
 # Add root directory to sys.path to import app.api.split
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.split import split_data
+from app.api import config
 
 
 def main() -> None:
     print("Downloading dataset from Hugging Face...")
     try:
         path = hf_hub_download(
-            repo_id="CGIAR/KikuyuEnglish_translation",
+            repo_id=config.REPO_CGIAR,
             filename="English - Kikuyu Sentence Pairs Final (1).xlsx",
             repo_type="dataset",
         )
@@ -43,7 +44,7 @@ def main() -> None:
     print(f"Extracted {len(all_pairs)} valid sentence pairs.")
 
     # Create data/ directory if it doesn't exist
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(config.DATA_DIR, exist_ok=True)
 
     # Split dataset
     train, val, test = split_data(
@@ -52,7 +53,7 @@ def main() -> None:
 
     # Save as TSV files
     for split_name, split_data_list in [("train", train), ("val", val), ("test", test)]:
-        file_path = os.path.join("data", f"{split_name}.tsv")
+        file_path = os.path.join(config.DATA_DIR, f"{split_name}.tsv")
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("kikuyu\tenglish\n")
             for ki, en in split_data_list:
@@ -67,7 +68,7 @@ def main() -> None:
     from app.api.preprocessing import normalize_text
 
     for lang, idx in [("kikuyu", 0), ("english", 1)]:
-        train_lang_path = os.path.join("data", f"train.{lang}")
+        train_lang_path = os.path.join(config.DATA_DIR, f"train.{lang}")
         with open(train_lang_path, "w", encoding="utf-8") as f:
             for pair in train:
                 sentence = pair[idx]

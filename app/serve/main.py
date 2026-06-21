@@ -14,6 +14,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from app.api.embeddings import CrossLingualTranslator
+from app.api import config
 
 
 class TranslationRequest(BaseModel):
@@ -35,11 +36,11 @@ class TranslationResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Paths to model files
-    ki_model_path = "models/ki.bin"
-    en_model_path = "models/en.bin"
-    proj_ki_en_path = "models/proj_ki_en.npy"
-    proj_en_ki_path = "models/proj_en_ki.npy"
-    train_tsv_path = "data/train.tsv"
+    ki_model_path = config.KI_MODEL_PATH
+    en_model_path = config.EN_MODEL_PATH
+    proj_ki_en_path = config.PROJ_KI_EN_PATH
+    proj_en_ki_path = config.PROJ_EN_KI_PATH
+    train_tsv_path = config.TRAIN_TSV_PATH
 
     # Check if models exist
     if not (
@@ -118,9 +119,9 @@ def read_health() -> dict[str, str]:
 @app.post("/feedback")
 def submit_feedback(request: FeedbackRequest) -> dict[str, str]:
     """Appends user translation feedback to data/feedback.jsonl."""
-    feedback_dir = "data"
+    feedback_dir = os.path.dirname(config.FEEDBACK_FILE_PATH)
     os.makedirs(feedback_dir, exist_ok=True)
-    feedback_file = os.path.join(feedback_dir, "feedback.jsonl")
+    feedback_file = config.FEEDBACK_FILE_PATH
 
     feedback_entry = request.model_dump()
     with open(feedback_file, "a", encoding="utf-8") as f:
