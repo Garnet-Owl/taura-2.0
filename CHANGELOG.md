@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Aligned `CONTRIBUTING.md` developer setup guide to refer to `uv` syntax instead of Poetry.
+- Updated path triggers in GitHub Actions workflow `.github/workflows/ci.yml` to target `uv.lock` instead of `poetry.lock`.
+- Updated setup docstring in `setup.py` to reference Hatchling/uv instead of Poetry.
 - Normalized unsupervised monolingual corpora for Kikuyu and English during dataset preparation, improving cleaning and preprocessing.
 - Implemented a FastText hyperparameter grid search script `scripts/tune_hyperparameters.py` evaluated on validation set retrieval accuracy.
 - Discovered and updated training pipeline in `scripts/train_embeddings.py` to use optimal hyperparameters (`skipgram`, `dim=150`, `epoch=25`, `ws=8`, `minn=3`, `maxn=6`).

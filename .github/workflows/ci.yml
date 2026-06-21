@@ -7,7 +7,7 @@ on:
       - 'app/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/**'
       - 'ruff.toml'
   pull_request:
