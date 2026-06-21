@@ -211,9 +211,11 @@ def main() -> None:
     train_en_path = config.TRAIN_EN_TXT
     
     if args.quick_test:
+        import tempfile
         logger.info("Running in QUICK TEST mode using validation TSV as training data")
-        train_ki_path = config.VAL_TSV_PATH.replace("val.tsv", "test_ki.txt")
-        train_en_path = config.VAL_TSV_PATH.replace("val.tsv", "test_en.txt")
+        temp_dir = tempfile.mkdtemp()
+        train_ki_path = os.path.join(temp_dir, "test_ki.txt")
+        train_en_path = os.path.join(temp_dir, "test_en.txt")
         val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
         # write out to txt for fasttext
         with open(train_ki_path, "w", encoding="utf-8") as f:
