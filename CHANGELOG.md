@@ -47,3 +47,10 @@ All notable changes to this project will be documented in this file.
 
 * Resolved O(N^2) hanging issue during model evaluation by limiting the size of dictionary bounds to 50k and evaluation size to 1000 sentences.
 * Successfully evaluated the trained 2.2M-sentence model offline and generated final evaluation metrics.
+
+## [Session 2026-06-21 afternoon]
+- Fixed `FASTTEXT_EPOCH` config bug from `1` → `35` and `FASTTEXT_MIN_COUNT` from `1` → `2` to match optimized hyperparameters.
+- Added `POST /translate/candidates` endpoint returning top-K translation hypotheses with cosine similarity scores.
+- Added `GET /model/info` endpoint exposing version, hyperparameters, and live evaluation metrics.
+- Created `app/tests/test_candidates_endpoint.py` with 6 TDD tests for the new endpoints (all passing).
+- Updated `README.md` with current model performance metrics table, new API examples, and corrected test count to 29.

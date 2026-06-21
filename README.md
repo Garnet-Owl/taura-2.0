@@ -13,6 +13,8 @@ The name "taura" is derived from the Kikuyu word "Taũra", which means "Translat
 - **Dual Translation Modes:**
   - `retrieval`: Finds the closest aligned candidate sentence from a target text corpus using cosine similarity (best for semantic phrase matching).
   - `word-by-word`: Projects each source word to the target space and retrieves the closest target vocabulary item (best for lexical translation).
+- **Top-K Candidates:** Returns N-best translation hypotheses ranked by cosine similarity for downstream re-ranking.
+- **Model Info Endpoint:** Exposes model version, hyperparameters, and live evaluation metrics via API.
 - **FastAPI Web Service:** Endpoints for real-time bidirectional translation with validation.
 - **Robust Verification:** Complete suite of unit and integration tests using BDD-style assertions.
 
@@ -54,7 +56,14 @@ uv run python -m scripts.train_embeddings
 ```
 Training metrics (e.g., top-1/top-5 accuracy and MRR) will be printed and saved to `models/evaluation_metrics.json`.
 
-### Step 3: Start the FastAPI API Service
+### Step 3: Run Offline Evaluation (Optional)
+Evaluates trained models on the test split and saves BLEU/ChrF scores:
+
+```bash
+uv run python -m scripts.evaluate
+```
+
+### Step 4: Start the FastAPI API Service
 Run the development server:
 
 ```bash
@@ -63,12 +72,27 @@ uv run uvicorn app.serve.main:app --reload
 
 ---
 
+## Current Model Performance
+
+| Direction | Metric | Score |
+| :--- | :--- | :---: |
+| Kikuyu → English | Top-1 Accuracy | 41.3% |
+| Kikuyu → English | Top-5 Accuracy | 65.2% |
+| Kikuyu → English | MRR | 0.529 |
+| English → Kikuyu | Top-1 Accuracy | 43.9% |
+| English → Kikuyu | Top-5 Accuracy | 63.6% |
+| English → Kikuyu | MRR | 0.535 |
+
+*Trained on ~2.2M parallel sentence pairs from the CGIAR Kikuyu-English dataset.*
+
+---
+
 ## API Usage Examples
 
 ### Health Check
 Check the API server health status:
 ```bash
-curl http://localhost:8000/
+curl http://localhost:8000/health
 ```
 Response:
 ```json
@@ -94,11 +118,25 @@ curl -X POST http://localhost:8000/translate \
   -d '{"text": "the man is reading a book", "source_lang": "en", "target_lang": "ki", "method": "word-by-word"}'
 ```
 
+### Get Top-K Translation Candidates
+Retrieve the 5 most similar translation candidates with cosine similarity scores:
+```bash
+curl -X POST http://localhost:8000/translate/candidates \
+  -H "Content-Type: application/json" \
+  -d '{"text": "the man is reading", "source_lang": "en", "target_lang": "ki", "k": 5}'
+```
+
+### Get Model Information
+Retrieve model version, hyperparameters, and evaluation metrics:
+```bash
+curl http://localhost:8000/model/info
+```
+
 ---
 
 ## Running Tests
 
-Execute the automated test suite containing 18 unit and integration tests:
+Execute the automated test suite containing 29 unit and integration tests:
 
 ```bash
 uv run pytest
