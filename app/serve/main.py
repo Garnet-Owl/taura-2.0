@@ -2,13 +2,16 @@
 
 import os
 import csv
+import json
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator, Optional
 import numpy as np
 import fasttext
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-
-from typing import AsyncGenerator
 
 from app.api.embeddings import CrossLingualTranslator
 
@@ -85,10 +88,46 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-def read_root() -> dict[str, str]:
-    """Root health-check endpoint."""
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="app/serve/static"), name="static")
+templates = Jinja2Templates(directory="app/serve/templates")
+
+
+class FeedbackRequest(BaseModel):
+    source_text: str = Field(..., min_length=1)
+    target_text: str = Field(..., min_length=1)
+    source_lang: str = Field(..., min_length=2, max_length=2)
+    target_lang: str = Field(..., min_length=2, max_length=2)
+    method: str = Field(...)
+    rating: int = Field(..., description="1 for helpful, -1 for unhelpful")
+    comment: Optional[str] = None
+
+
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request) -> HTMLResponse:
+    """Serves the translation web UI."""
+    return templates.TemplateResponse(request=request, name="index.html")  # type: ignore[return-value]
+
+
+@app.get("/health")
+def read_health() -> dict[str, str]:
+    """Health-check endpoint."""
     return {"status": "healthy", "service": "Taura Kikuyu-English Translation Service"}
+
+
+@app.post("/feedback")
+def submit_feedback(request: FeedbackRequest) -> dict[str, str]:
+    """Appends user translation feedback to data/feedback.jsonl."""
+    feedback_dir = "data"
+    os.makedirs(feedback_dir, exist_ok=True)
+    feedback_file = os.path.join(feedback_dir, "feedback.jsonl")
+
+    feedback_entry = request.model_dump()
+    with open(feedback_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(feedback_entry, ensure_ascii=False) + "\n")
+
+    return {"status": "success", "message": "Feedback submitted successfully."}
+
 
 
 @app.post("/translate", response_model=TranslationResponse)

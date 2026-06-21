@@ -13,12 +13,12 @@ class TestTranslationAPI(unittest.TestCase):
         self.client = TestClient(app)
 
     def test_health_check_endpoint(self):
-        """Root endpoint should return a healthy status."""
+        """Health endpoint should return a healthy status."""
         with given([]) as _:
             pass
 
-        with when("sending GET request to root"):
-            response = self.client.get("/")
+        with when("sending GET request to health"):
+            response = self.client.get("/health")
 
         with then("the status is 200 and healthy"):
             assert_that(response.status_code, is_(equal_to(200)))
@@ -125,3 +125,38 @@ class TestTranslationAPI(unittest.TestCase):
                 assert_that(data["source_lang"], is_(equal_to("en")))
                 assert_that(data["target_lang"], is_(equal_to("ki")))
                 assert_that(data["method"], is_(equal_to("retrieval")))
+
+    def test_web_ui_root(self):
+        """Root endpoint should return the HTML web UI page."""
+        with given([]) as _:
+            pass
+
+        with when("sending GET request to root"):
+            response = self.client.get("/")
+
+        with then("it returns 200 and HTML content"):
+            assert_that(response.status_code, is_(equal_to(200)))
+            assert_that(response.headers["content-type"], is_(equal_to("text/html; charset=utf-8")))
+            assert_that("Taura 2.0" in response.text, is_(True))
+
+    def test_feedback_endpoint(self):
+        """Feedback endpoint should accept rating and comment, and return success."""
+        with given([]) as _:
+            payload = {
+                "source_text": "marigū",
+                "target_text": "Bananas",
+                "source_lang": "ki",
+                "target_lang": "en",
+                "method": "retrieval",
+                "rating": 1,
+                "comment": "Accurate retrieval!",
+            }
+
+        with when("sending POST request to feedback"):
+            response = self.client.post("/feedback", json=payload)
+
+        with then("it returns 200 and success status"):
+            assert_that(response.status_code, is_(equal_to(200)))
+            data = response.json()
+            assert_that(data["status"], is_(equal_to("success")))
+            assert_that(data["message"], is_(equal_to("Feedback submitted successfully.")))
