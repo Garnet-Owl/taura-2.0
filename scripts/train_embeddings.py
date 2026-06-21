@@ -33,26 +33,12 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
 
 
 def train_monolingual(
-    train_path: str,
-    model_path: str,
-    dim: int = 150,
-    epoch: int = 25,
-    lr: float = 0.1,
-    ws: int = 8,
+    train_path: str, model_path: str, dim: int = 150
 ) -> fasttext.FastText._FastText:
     """Trains a monolingual FastText skipgram model on raw text."""
     print(f"Training FastText model on {train_path}...")
     model = fasttext.train_unsupervised(
-        train_path,
-        model="skipgram",
-        dim=dim,
-        epoch=epoch,
-        lr=lr,
-        ws=ws,
-        minCount=1,
-        minn=3,
-        maxn=6,
-        thread=4,
+        train_path, model="skipgram", dim=dim, epoch=35, lr=0.1, ws=8, minCount=1, thread=4
     )
     model.save_model(model_path)
     print(f"Model saved to {model_path}")
