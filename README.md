@@ -37,6 +37,8 @@ cd taura-2.0
 uv sync
 ```
 
+> **Note on Data and Models:** The large training corpora and `.bin` FastText model files are excluded from this repository to respect size limits. They will be uploaded to a Google Drive account, and you can download them from there and place them in the `data/` and `models/` directories respectively before running the pipeline.
+
 ---
 
 ## Running the Pipeline
