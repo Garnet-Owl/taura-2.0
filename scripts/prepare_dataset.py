@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.split import split_data
 
 
-def main():
+def main() -> None:
     print("Downloading dataset from Hugging Face...")
     try:
         path = hf_hub_download(
