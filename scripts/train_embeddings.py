@@ -8,6 +8,7 @@ import fasttext
 import datetime
 import gc
 import multiprocessing
+import sentencepiece
 
 from app.api.embeddings import (
     get_sentence_embedding,
@@ -20,6 +21,25 @@ from app.api import config
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+
+def build_subword_vocabulary(
+    corpus_paths: list[str], model_path: str, vocab_size: int
+) -> None:
+    joined = ",".join(corpus_paths)
+    model_prefix = model_path.removesuffix(".model")
+    sentencepiece.SentencePieceTrainer.train(
+        input=joined,
+        model_prefix=model_prefix,
+        vocab_size=vocab_size,
+        model_type="bpe",
+        character_coverage=0.9999,
+        pad_id=0,
+        unk_id=1,
+        bos_id=2,
+        eos_id=3,
+    )
+    logger.info("SentencePiece model saved to %s", model_path)
 
 
 def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
@@ -168,6 +188,7 @@ def setup_and_get_state() -> tuple[dict, str]:
         config.TGT_EMBS_KI_PATH = os.path.join(new_run, "tgt_embs_ki.npy")
         config.TGT_EMBS_EN_PATH = os.path.join(new_run, "tgt_embs_en.npy")
         config.METRICS_JSON_PATH = os.path.join(new_run, "evaluation_metrics.json")
+        config.SP_MODEL_PATH = os.path.join(new_run, "sentencepiece.model")
         state_file = os.path.join(new_run, "training_state.json")
         state = {"status": "in_progress", "steps": []}
         with open(state_file, "w", encoding="utf-8") as f:
@@ -199,36 +220,41 @@ def main() -> None:
     train_en_path = config.TRAIN_EN_TXT
 
     tokenizer = None
-    if os.path.exists(config.SP_MODEL_PATH):
-        if "tokenize_corpora" not in state["steps"]:
-            logger.info("SentencePiece model found. Tokenizing training corpora...")
-            from app.api.preprocessing import SubwordTokenizer
-            tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
-            
-            sp_ki_path = train_ki_path + ".sp"
-            sp_en_path = train_en_path + ".sp"
-            
-            # Use os.path.exists to only tokenize if not already there
-            if not os.path.exists(sp_ki_path) or not os.path.exists(sp_en_path):
-                for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
-                    logger.info(f"Applying SentencePiece to {in_path} -> {out_path}")
-                    with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
-                        for line in fin:
-                            pieces = tokenizer.encode(line.strip())
-                            fout.write(" ".join(pieces) + "\n")
-                            
-            state["steps"].append("tokenize_corpora")
-            save_state(state_file, state)
-            train_ki_path = sp_ki_path
-            train_en_path = sp_en_path
-        else:
-            logger.info("Corpora already tokenized (resuming).")
-            train_ki_path += ".sp"
-            train_en_path += ".sp"
-            from app.api.preprocessing import SubwordTokenizer
-            tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
+    if not os.path.exists(config.SP_MODEL_PATH):
+        logger.info("Training SentencePiece model for this run...")
+        build_subword_vocabulary(
+            [train_ki_path, train_en_path],
+            config.SP_MODEL_PATH,
+            config.SP_VOCAB_SIZE,
+        )
+
+    if "tokenize_corpora" not in state["steps"]:
+        logger.info("SentencePiece model found. Tokenizing training corpora...")
+        from app.api.preprocessing import SubwordTokenizer
+        tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
+        
+        sp_ki_path = train_ki_path + ".sp"
+        sp_en_path = train_en_path + ".sp"
+        
+        # Use os.path.exists to only tokenize if not already there
+        if not os.path.exists(sp_ki_path) or not os.path.exists(sp_en_path):
+            for in_path, out_path in [(train_ki_path, sp_ki_path), (train_en_path, sp_en_path)]:
+                logger.info("Applying SentencePiece to %s -> %s", in_path, out_path)
+                with open(in_path, "r", encoding="utf-8") as fin, open(out_path, "w", encoding="utf-8") as fout:
+                    for line in fin:
+                        pieces = tokenizer.encode(line.strip())
+                        fout.write(" ".join(pieces) + "\n")
+                        
+        state["steps"].append("tokenize_corpora")
+        save_state(state_file, state)
+        train_ki_path = sp_ki_path
+        train_en_path = sp_en_path
     else:
-        logger.info("WARNING: SentencePiece model not found. Falling back to raw text for FastText training.")
+        logger.info("Corpora already tokenized (resuming).")
+        train_ki_path += ".sp"
+        train_en_path += ".sp"
+        from app.api.preprocessing import SubwordTokenizer
+        tokenizer = SubwordTokenizer(config.SP_MODEL_PATH)
 
     # 1. Train Monolingual Models
     ki_model = train_monolingual(train_ki_path, config.KI_MODEL_PATH, dim=dim)
