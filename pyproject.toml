@@ -22,6 +22,7 @@ dependencies = [
     "sentencepiece>=0.2.1",
     "cupy-cuda12x>=14.1.1",
     "httpx2>=2.4.0",
+    "torch>=2.12.1",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
