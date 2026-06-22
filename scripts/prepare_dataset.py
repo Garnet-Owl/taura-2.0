@@ -63,7 +63,8 @@ def main() -> None:
                 f.write(f"{ki_clean}\t{en_clean}\n")
         logger.info("Saved %s pairs to %s", len(split_data_list), file_path)
 
-    # Also save raw monolingual text files for training FastText embeddings
+    # Also save raw monolingual text files for training FastText embeddings.
+    # Use APPEND mode so that any existing large scraped corpora are preserved.
     from app.api.preprocessing import normalize_text
 
     for lang, idx, train_lang_path in [
@@ -71,13 +72,13 @@ def main() -> None:
         ("english", 1, config.TRAIN_EN_TXT),
     ]:
         os.makedirs(os.path.dirname(train_lang_path), exist_ok=True)
-        with open(train_lang_path, "w", encoding="utf-8") as f:
+        with open(train_lang_path, "a", encoding="utf-8") as f:
             for pair in train:
                 sentence = pair[idx]
                 normalized = normalize_text(sentence)
                 if normalized:
                     f.write(f"{normalized}\n")
-        logger.info("Saved raw normalized monolingual sentences to %s", train_lang_path)
+        logger.info("Appended normalized monolingual sentences to %s", train_lang_path)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,10 @@ def get_latest_run_dir() -> str:
     ]
     if not runs:
         return MODELS_DIR
-    runs.sort(reverse=True)
+    # Sort by actual directory modification time — never by name.
+    # This ensures timestamped dirs (run_20260622_...) beat legacy named dirs
+    # (run_v2_large) regardless of alphabetical order.
+    runs.sort(key=lambda d: os.path.getmtime(os.path.join(MODELS_DIR, d)), reverse=True)
     return os.path.join(MODELS_DIR, runs[0])
 
 
