@@ -243,14 +243,25 @@ def main() -> None:
         W_ki_en = np.load(config.PROJ_KI_EN_PATH)
         W_en_ki = np.load(config.PROJ_EN_KI_PATH)
     else:
-        ki_words = ki_model.get_words()
-        en_words = en_model.get_words()
-        seed_words = extract_identical_string_dictionary(ki_words, en_words)
-        
-        logger.info(f"Extracted {len(seed_words)} identical strings to use as anchor dictionary.")
-        
-        X = np.array([ki_model.get_word_vector(w) for w in seed_words]).T
-        Y = np.array([en_model.get_word_vector(w) for w in seed_words]).T
+        seed_dict_path = "data/processed/seed_dictionary.csv"
+        if os.path.exists(seed_dict_path):
+            import pandas as pd
+            logger.info(f"Loading seed dictionary from {seed_dict_path}")
+            df_seed = pd.read_csv(seed_dict_path)
+            seed_pairs = list(zip(df_seed["Kikuyu"], df_seed["English"]))
+            
+            logger.info(f"Loaded {len(seed_pairs)} translation pairs to use as anchor dictionary.")
+            X = np.array([ki_model.get_word_vector(str(k)) for k, e in seed_pairs]).T
+            Y = np.array([en_model.get_word_vector(str(e)) for k, e in seed_pairs]).T
+        else:
+            ki_words = ki_model.get_words()
+            en_words = en_model.get_words()
+            seed_words = extract_identical_string_dictionary(ki_words, en_words)
+            
+            logger.info(f"Extracted {len(seed_words)} identical strings to use as anchor dictionary.")
+            
+            X = np.array([ki_model.get_word_vector(w) for w in seed_words]).T
+            Y = np.array([en_model.get_word_vector(w) for w in seed_words]).T
 
         if "precompute_embeddings" not in state["steps"]:
             # We skip precomputing huge corpus embeddings for serving right here since we aren't using parallel sentences

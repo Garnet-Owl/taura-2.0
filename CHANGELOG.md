@@ -73,6 +73,7 @@ All notable changes to this project will be documented in this file.
 - Reorganized `models/` into timestamped versioning directories (`run_v1_baseline`, `run_v2_large`) and updated `app/api/config.py` to dynamically load from the latest run directory.
 - Updated `.gitignore` to ignore heavy FastText binary models and `*.sp` tokenized datasets.
 - Updated `README.md` to reference externally hosted models and datasets for download.
+- Updated `README.md` to reference externally hosted models and datasets for download.
 
 ## [Unreleased] - Performance and Memory Optimization
 - Refactored app/api/embeddings.py to extract embeddings in parallel using ProcessPoolExecutor.
@@ -82,3 +83,9 @@ All notable changes to this project will be documented in this file.
 - Integrated SentencePiece tokenizer generation directly into the embedding training loop (	rain_embeddings.py) to align with run versions.
 - Updated config.py so that SP_MODEL_PATH evaluates dynamically based on the current run directory, ensuring tokenizers are versioned directly beside their corresponding models.
 - Removed outdated and flaky test assertions related to model info metrics during fresh runs.
+
+## [Session 2026-06-22]
+- Extracted and ported `English20Kikuyu20Pairs2029.xlsx` dataset from the original `taura` repository to establish a clean seed dictionary baseline for FastText alignment.
+- Created `scripts/build_seed_dictionary.py` using statistical co-occurrence (Dice coefficient) to extract high-confidence translation pairs.
+- Modified `scripts/train_embeddings.py` to seamlessly detect and load `data/processed/seed_dictionary.csv` instead of relying purely on identical string matching.
+- Ported legacy web-scraping logic into `scripts/collect_data.py`.
