@@ -65,4 +65,3 @@ class TestPreprocessing(unittest.TestCase):
 
         with then("an empty list is returned"):
             assert_that(result, is_(equal_to([])))
-

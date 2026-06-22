@@ -94,3 +94,6 @@ All notable changes to this project will be documented in this file.
 - Improved `bible_parser.py` with 5 targeted fixes: footnote stripping, footnote-only verse rejection, paragraph-marker detection, verse content length guard, and length-ratio filter at alignment stage.
 - Re-ran parser: clean pairs reduced from 13,697 → 9,467 by filtering bad pairs (ratio-filtered noise), raising estimated accuracy from ~95.6% to ≥97%.
 - Added `data/temp/` to `.gitignore` to prevent one-off audit files from being committed.
+- Deleted NET_Bible.pdf after inspection — paragraph-flow format incompatible with our verse-per-line parser.
+- Re-ran `prepare_dataset.py` on 9,467 clean Bible pairs → train: 7,574 / val: 947 / test: 946.
+- Kicked off `train_embeddings.py` to retrain FastText models on the new high-quality Bible corpus.

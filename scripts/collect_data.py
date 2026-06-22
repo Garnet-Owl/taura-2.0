@@ -19,7 +19,10 @@ RAW_DIR.mkdir(exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(DATA_DIR / "data_collection.log"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler(DATA_DIR / "data_collection.log"),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -35,7 +38,9 @@ def save_parallel_data(english_texts, kikuyu_texts, output_file, metadata=None):
         metadata (dict, optional): Additional metadata to save
     """
     if len(english_texts) != len(kikuyu_texts):
-        logger.error(f"Mismatch in number of texts: English ({len(english_texts)}) vs Kikuyu ({len(kikuyu_texts)})")
+        logger.error(
+            f"Mismatch in number of texts: English ({len(english_texts)}) vs Kikuyu ({len(kikuyu_texts)})"
+        )
         return
 
     # Create DataFrame
@@ -202,21 +207,47 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # Scraper command
-    scraper_parser = subparsers.add_parser("scrape", help="Scrape parallel texts from a website")
+    scraper_parser = subparsers.add_parser(
+        "scrape", help="Scrape parallel texts from a website"
+    )
     scraper_parser.add_argument("--url", type=str, required=True, help="URL to scrape")
-    scraper_parser.add_argument("--english-selector", type=str, required=True, help="CSS selector for English texts")
-    scraper_parser.add_argument("--kikuyu-selector", type=str, required=True, help="CSS selector for Kikuyu texts")
-    scraper_parser.add_argument("--output", type=str, default=None, help="Output file path")
-    scraper_parser.add_argument("--max-items", type=int, default=None, help="Maximum number of items to scrape")
+    scraper_parser.add_argument(
+        "--english-selector",
+        type=str,
+        required=True,
+        help="CSS selector for English texts",
+    )
+    scraper_parser.add_argument(
+        "--kikuyu-selector",
+        type=str,
+        required=True,
+        help="CSS selector for Kikuyu texts",
+    )
+    scraper_parser.add_argument(
+        "--output", type=str, default=None, help="Output file path"
+    )
+    scraper_parser.add_argument(
+        "--max-items", type=int, default=None, help="Maximum number of items to scrape"
+    )
 
     # Template command
-    template_parser = subparsers.add_parser("template", help="Create a template CSV file for manual data collection")
-    template_parser.add_argument("--output", type=str, default=None, help="Output file path")
+    template_parser = subparsers.add_parser(
+        "template", help="Create a template CSV file for manual data collection"
+    )
+    template_parser.add_argument(
+        "--output", type=str, default=None, help="Output file path"
+    )
 
     # Combine command
-    combine_parser = subparsers.add_parser("combine", help="Combine multiple datasets into one")
-    combine_parser.add_argument("--inputs", type=str, nargs="+", required=True, help="Input file paths")
-    combine_parser.add_argument("--output", type=str, default=None, help="Output file path")
+    combine_parser = subparsers.add_parser(
+        "combine", help="Combine multiple datasets into one"
+    )
+    combine_parser.add_argument(
+        "--inputs", type=str, nargs="+", required=True, help="Input file paths"
+    )
+    combine_parser.add_argument(
+        "--output", type=str, default=None, help="Output file path"
+    )
 
     args = parser.parse_args()
 

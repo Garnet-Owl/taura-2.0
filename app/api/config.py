@@ -5,15 +5,21 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
+
 # Model Paths
 def get_latest_run_dir() -> str:
     if not os.path.exists(MODELS_DIR):
         return MODELS_DIR
-    runs = [d for d in os.listdir(MODELS_DIR) if d.startswith("run_") and os.path.isdir(os.path.join(MODELS_DIR, d))]
+    runs = [
+        d
+        for d in os.listdir(MODELS_DIR)
+        if d.startswith("run_") and os.path.isdir(os.path.join(MODELS_DIR, d))
+    ]
     if not runs:
         return MODELS_DIR
     runs.sort(reverse=True)
     return os.path.join(MODELS_DIR, runs[0])
+
 
 LATEST_RUN_DIR = get_latest_run_dir()
 
