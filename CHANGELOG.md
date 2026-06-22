@@ -89,3 +89,5 @@ All notable changes to this project will be documented in this file.
 - Created `scripts/build_seed_dictionary.py` using statistical co-occurrence (Dice coefficient) to extract high-confidence translation pairs.
 - Modified `scripts/train_embeddings.py` to seamlessly detect and load `data/processed/seed_dictionary.csv` instead of relying purely on identical string matching.
 - Ported legacy web-scraping logic into `scripts/collect_data.py`.
+- Added pre-commit hooks for linting with `ruff` and configured `.pre-commit-config.yaml`.
+- Downloaded Kikuyu and English PDF Bibles and ported the original PDF parsing scripts (`bible_parser.py`, etc.) to generate parallel datasets from them.
