@@ -11,16 +11,19 @@ from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+
 def main() -> None:
     logger.info("Starting dataset preparation pipeline...")
     all_pairs = []
-    
-    # We will load data exclusively from our processed Bible parallel dataset 
+
+    # We will load data exclusively from our processed Bible parallel dataset
     # instead of downloading the corrupted HuggingFace datasets.
     bible_csv_path = Path("data/processed/bible_parallel.csv")
-    
+
     if bible_csv_path.exists():
-        logger.info(f"Loading high-quality Bible parallel dataset from {bible_csv_path}")
+        logger.info(
+            f"Loading high-quality Bible parallel dataset from {bible_csv_path}"
+        )
         df = pd.read_csv(bible_csv_path)
         if "English" in df.columns and "Kikuyu" in df.columns:
             df = df.dropna(subset=["English", "Kikuyu"])
@@ -47,9 +50,9 @@ def main() -> None:
 
     # Save as TSV files
     for split_name, split_data_list, file_path in [
-        ("train", train, config.TRAIN_TSV_PATH), 
-        ("val", val, config.VAL_TSV_PATH), 
-        ("test", test, config.TEST_TSV_PATH)
+        ("train", train, config.TRAIN_TSV_PATH),
+        ("val", val, config.VAL_TSV_PATH),
+        ("test", test, config.TEST_TSV_PATH),
     ]:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w", encoding="utf-8") as f:
@@ -64,8 +67,8 @@ def main() -> None:
     from app.api.preprocessing import normalize_text
 
     for lang, idx, train_lang_path in [
-        ("kikuyu", 0, config.TRAIN_KI_TXT), 
-        ("english", 1, config.TRAIN_EN_TXT)
+        ("kikuyu", 0, config.TRAIN_KI_TXT),
+        ("english", 1, config.TRAIN_EN_TXT),
     ]:
         os.makedirs(os.path.dirname(train_lang_path), exist_ok=True)
         with open(train_lang_path, "w", encoding="utf-8") as f:
@@ -75,6 +78,7 @@ def main() -> None:
                 if normalized:
                     f.write(f"{normalized}\n")
         logger.info("Saved raw normalized monolingual sentences to %s", train_lang_path)
+
 
 if __name__ == "__main__":
     main()

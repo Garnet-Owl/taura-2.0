@@ -153,7 +153,11 @@ def main() -> None:
         )
         method_label = "Retrieval" if "retrieval" in key else "Word-by-Word"
         logger.info(
-            "| %s | %s | %.2f | %.2f |", dir_label, method_label, metrics["bleu"], metrics["chrf"]
+            "| %s | %s | %.2f | %.2f |",
+            dir_label,
+            method_label,
+            metrics["bleu"],
+            metrics["chrf"],
         )
 
     # Save to models/evaluation_metrics.json

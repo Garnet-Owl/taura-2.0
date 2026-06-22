@@ -1,14 +1,16 @@
 """Script to train monolingual FastText models and learn cross-lingual alignment."""
 
-import os
-import json
+import argparse
 import csv
-import numpy as np
-import fasttext
 import datetime
 import gc
+import json
 import multiprocessing
-import sentencepiece
+import os
+from pathlib import Path
+
+import fasttext
+import numpy as np
 
 from app.api.embeddings import (
     get_sentence_embedding,
@@ -22,11 +24,6 @@ from app.api import config
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
-
-import argparse
-
-
-
 
 
 def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
@@ -55,7 +52,7 @@ def train_monolingual(
     if os.path.exists(model_path):
         logger.info(f"Model already exists at {model_path}. Resuming and loading it.")
         return fasttext.load_model(model_path)
-        
+
     logger.info(f"Training FastText model on {train_path}...")
     model = fasttext.train_unsupervised(
         train_path,
@@ -152,7 +149,7 @@ def save_metrics(
 def setup_and_get_state() -> tuple[dict, str]:
     latest_run = config.LATEST_RUN_DIR
     state_file = os.path.join(latest_run, "training_state.json")
-    
+
     is_completed = False
     if os.path.exists(state_file):
         try:
@@ -162,7 +159,7 @@ def setup_and_get_state() -> tuple[dict, str]:
                     is_completed = True
         except Exception:
             pass
-            
+
     if is_completed or latest_run == config.MODELS_DIR:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         new_run = os.path.join(config.MODELS_DIR, f"run_{timestamp}")
@@ -199,19 +196,22 @@ def save_state(state_file: str, state: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--quick-test", action="store_true", help="Run a quick test on a subset of data")
+    parser.add_argument(
+        "--quick-test", action="store_true", help="Run a quick test on a subset of data"
+    )
     args = parser.parse_args()
 
     os.makedirs(config.MODELS_DIR, exist_ok=True)
     state, state_file = setup_and_get_state()
-    
+
     dim = config.EMBEDDING_DIM
 
     train_ki_path = config.TRAIN_KI_TXT
     train_en_path = config.TRAIN_EN_TXT
-    
+
     if args.quick_test:
         import tempfile
+
         logger.info("Running in QUICK TEST mode using validation TSV as training data")
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
@@ -219,47 +219,55 @@ def main() -> None:
         val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
         # write out to txt for fasttext
         with open(train_ki_path, "w", encoding="utf-8") as f:
-            for line in val_ki: f.write(line + "\n")
+            for line in val_ki:
+                f.write(line + "\n")
         with open(train_en_path, "w", encoding="utf-8") as f:
-            for line in val_en: f.write(line + "\n")
+            for line in val_en:
+                f.write(line + "\n")
         config.FASTTEXT_EPOCH = 5
-        
-    tokenizer = None
 
     # 1. Train Monolingual Models
     ki_model = train_monolingual(train_ki_path, config.KI_MODEL_PATH, dim=dim)
     if "train_kikuyu" not in state["steps"]:
         state["steps"].append("train_kikuyu")
         save_state(state_file, state)
-        
+
     en_model = train_monolingual(train_en_path, config.EN_MODEL_PATH, dim=dim)
     if "train_english" not in state["steps"]:
         state["steps"].append("train_english")
         save_state(state_file, state)
 
     # 2. Learn Cross-Lingual Alignment (SVD + iterative Procrustes refinement)
-    if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(config.PROJ_EN_KI_PATH):
+    if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(
+        config.PROJ_EN_KI_PATH
+    ):
         logger.info("Projection matrices already exist. Resuming and loading them.")
         W_ki_en = np.load(config.PROJ_KI_EN_PATH)
         W_en_ki = np.load(config.PROJ_EN_KI_PATH)
     else:
-        seed_dict_path = "data/processed/seed_dictionary.csv"
-        if os.path.exists(seed_dict_path):
+        seed_dict_path = Path("data/processed/seed_dictionary.csv")
+
+        # Always fetch word lists — needed for iterative Procrustes regardless of
+        # which seed-dictionary strategy is used.
+        ki_words = ki_model.get_words()
+        en_words = en_model.get_words()
+
+        if seed_dict_path.exists():
             import pandas as pd
+
             logger.info(f"Loading seed dictionary from {seed_dict_path}")
             df_seed = pd.read_csv(seed_dict_path)
             seed_pairs = list(zip(df_seed["Kikuyu"], df_seed["English"]))
-            
-            logger.info(f"Loaded {len(seed_pairs)} translation pairs to use as anchor dictionary.")
+            logger.info(
+                f"Loaded {len(seed_pairs)} translation pairs to use as anchor dictionary."
+            )
             X = np.array([ki_model.get_word_vector(str(k)) for k, e in seed_pairs]).T
             Y = np.array([en_model.get_word_vector(str(e)) for k, e in seed_pairs]).T
         else:
-            ki_words = ki_model.get_words()
-            en_words = en_model.get_words()
             seed_words = extract_identical_string_dictionary(ki_words, en_words)
-            
-            logger.info(f"Extracted {len(seed_words)} identical strings to use as anchor dictionary.")
-            
+            logger.info(
+                f"Extracted {len(seed_words)} identical strings to use as anchor dictionary."
+            )
             X = np.array([ki_model.get_word_vector(w) for w in seed_words]).T
             Y = np.array([en_model.get_word_vector(w) for w in seed_words]).T
 
@@ -285,7 +293,7 @@ def main() -> None:
         W_en_ki = iterative_procrustes(
             Y_all, X_all, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
         )
-        
+
         del X
         del Y
         del X_all
@@ -310,9 +318,13 @@ def main() -> None:
 
     val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
     val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
-    
-    translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en)
-    translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki)
+
+    translator_ki_en = CrossLingualTranslator(
+        ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en
+    )
+    translator_en_ki = CrossLingualTranslator(
+        en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki
+    )
     metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
     metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
 
@@ -322,7 +334,7 @@ def main() -> None:
     logger.info(json.dumps(metrics, indent=2))
 
     save_metrics(metrics)
-    
+
     state["status"] = "completed"
     save_state(state_file, state)
     logger.info("Training run completed successfully.")

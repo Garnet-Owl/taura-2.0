@@ -1,6 +1,5 @@
 import string
 import re
-import sentencepiece
 
 
 def normalize_text(text: str) -> str:
@@ -24,4 +23,3 @@ def tokenize_text(text: str) -> list[str]:
     if not text:
         return []
     return text.split(" ")
-

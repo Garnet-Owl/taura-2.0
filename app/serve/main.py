@@ -106,13 +106,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                         en_sentences.append(str(en).strip())
 
         # Load precomputed target embeddings
-        tgt_embs_ki = np.load(tgt_embs_ki_path) if os.path.exists(tgt_embs_ki_path) else None
-        tgt_embs_en = np.load(tgt_embs_en_path) if os.path.exists(tgt_embs_en_path) else None
+        tgt_embs_ki = (
+            np.load(tgt_embs_ki_path) if os.path.exists(tgt_embs_ki_path) else None
+        )
+        tgt_embs_en = (
+            np.load(tgt_embs_en_path) if os.path.exists(tgt_embs_en_path) else None
+        )
 
         # Initialize translators
         app.state.translators = {
-            "ki_en": CrossLingualTranslator(ki_model, en_model, W_ki_en, en_sentences, precomputed_tgt_embeddings=tgt_embs_en),
-            "en_ki": CrossLingualTranslator(en_model, ki_model, W_en_ki, ki_sentences, precomputed_tgt_embeddings=tgt_embs_ki),
+            "ki_en": CrossLingualTranslator(
+                ki_model,
+                en_model,
+                W_ki_en,
+                en_sentences,
+                precomputed_tgt_embeddings=tgt_embs_en,
+            ),
+            "en_ki": CrossLingualTranslator(
+                en_model,
+                ki_model,
+                W_en_ki,
+                ki_sentences,
+                precomputed_tgt_embeddings=tgt_embs_ki,
+            ),
         }
 
     yield

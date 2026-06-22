@@ -110,6 +110,6 @@ class TestModelInfoEndpoint(unittest.TestCase):
         """Model info metrics should return 200."""
         with when("calling /model/info"):
             response = self.client.get("/model/info")
-    
+
         with then("it returns 200"):
             assert_that(response.status_code, is_(equal_to(200)))
