@@ -123,10 +123,10 @@ data/embeddings/*
 # PyCharm
 .idea/
 
-#PDF file
+# PDF files
 *.pdf
 
-#AI coding
+# AI coding
 AGENTS.md
 /session-details
 MASTER_PLAN.md
@@ -148,3 +148,6 @@ data/*.sp
 
 *.model
 *.vocab
+
+# Temporary audit / scratch files — never commit these
+data/temp/

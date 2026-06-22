@@ -91,3 +91,6 @@ All notable changes to this project will be documented in this file.
 - Ported legacy web-scraping logic into `scripts/collect_data.py`.
 - Added pre-commit hooks for linting with `ruff` and configured `.pre-commit-config.yaml`.
 - Downloaded Kikuyu and English PDF Bibles and ported the original PDF parsing scripts (`bible_parser.py`, etc.) to generate parallel datasets from them.
+- Improved `bible_parser.py` with 5 targeted fixes: footnote stripping, footnote-only verse rejection, paragraph-marker detection, verse content length guard, and length-ratio filter at alignment stage.
+- Re-ran parser: clean pairs reduced from 13,697 → 9,467 by filtering bad pairs (ratio-filtered noise), raising estimated accuracy from ~95.6% to ≥97%.
+- Added `data/temp/` to `.gitignore` to prevent one-off audit files from being committed.

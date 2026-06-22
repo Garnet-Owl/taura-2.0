@@ -8,7 +8,7 @@ training machine translation models.
 
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -17,6 +17,40 @@ from scripts.preprocessing.structure.bible_structure import (
     get_book_by_kikuyu_name,
     is_valid_reference,
     kikuyu_to_english_book_name,
+)
+
+# Ratio bounds for post-extraction quality filtering
+_MIN_RATIO = 0.4
+_MAX_RATIO = 2.5
+_MIN_VERSE_CONTENT_LEN = 15
+
+# Footnote / cross-reference patterns to strip from English verse text
+_FOOTNOTE_RE = re.compile(
+    r"""
+    (?:                        # footnote markers
+      [*†‡§]\s*\d+:\d+       #  * 7:7  / † 12:3
+    | [*†‡§]\s*\d+           #  * 7
+    | \b\d+:\d+\b            #  bare  7:7  at start/end
+    )""",
+    re.VERBOSE,
+)
+
+# Measurement / unit stubs that indicate a footnote fragment, not a verse
+_MEASUREMENT_RE = re.compile(
+    r"""^(?:
+      (?:grams?|kg|kilograms?|ounces?|oz|pounds?|lb|liters?|litres?|
+         milliliters?|ml|inches?|in|centimeters?|cm|kilometers?|km|miles?|
+         cubits?|seah|ephah|hin|shekel)\s+(?:or|is|about|=|≈).*
+    | [*†‡§;,]\s*\d[\d:,;\s*†‡§]*  # footnote-only content
+    )$""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+# Known Kikuyu paragraph continuation words that follow a section-digit
+# e.g. "1 No rĩrĩa ..." is NOT verse 1 but a paragraph restart.
+_KIK_PARAGRAPH_STARTERS = re.compile(
+    r"^\d+\s+(No|Ningĩ|Na|Nake|Rĩrĩa|Nao|Arĩa|Naguo|Nokĩo|Nĩ\s)\b",
+    re.UNICODE,
 )
 
 # Set paths
@@ -54,6 +88,30 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         return ""
 
 
+def _clean_english_verse(text: str) -> str:
+    """Strip footnote markers and measurement stubs from an English verse."""
+    # Remove inline cross-reference markers like * 7:7  † 12:3  ‡ 9:4
+    text = re.sub(r"[*†‡§]\s*\d+:\d+", "", text)
+    text = re.sub(r"[*†‡§]\s*\d+", "", text)
+    # Remove lone reference strings at line boundaries e.g. "  ; 18:18"
+    text = re.sub(r"(?:^|\s)[;,]\s*\d+:\d+", "", text)
+    # Remove parenthetical commentary that starts with a close paren
+    text = re.sub(r"^\)\s*\.\s*", "", text.strip())
+    return text.strip()
+
+
+def _is_footnote_only(text: str) -> bool:
+    """Return True if the text looks like a footnote stub, not a verse."""
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if len(stripped) < _MIN_VERSE_CONTENT_LEN:
+        return True
+    if _MEASUREMENT_RE.match(stripped):
+        return True
+    return False
+
+
 def preprocess_bible_text(text: str, language: str) -> str:
     """
     Preprocess Bible text to normalize formatting and make parsing easier.
@@ -68,20 +126,19 @@ def preprocess_bible_text(text: str, language: str) -> str:
     # Step 1: Normalize whitespace
     text = re.sub(r"\s+", " ", text)
 
-    # Step 2: Fix inline verse numbers by adding a space before the word
+    # Step 2: Fix inline verse numbers by adding a space before the word.
+    # Guard against splitting numbers inside large figures (e.g. 35,400)
     if language == "kikuyu":
-        # Pattern for Kikuyu words (with special characters)
-        text = re.sub(r"(\d+)([A-ZĨŨĩũãĩ])", r"\n\1 \2", text)
+        text = re.sub(r"(\d+)([A-ZĨŨ])", r"\n\1 \2", text)
     else:
-        # Pattern for English words
         text = re.sub(r"(\d+)([A-Z])", r"\n\1 \2", text)
 
     # Step 3: Break into paragraphs on book references
     if language == "kikuyu":
-        # Pattern for Kikuyu book names
-        book_pattern = r"([A-ZĨŨĩũãĩ][A-Za-zĨŨĩũãĩ\-]+(?:\s+[A-ZĨŨĩũãĩ][A-Za-zĨŨĩũãĩ\-]+)*)\s+(\d+):(\d+)"
+        book_pattern = (
+            r"([A-ZĨŨ][A-Za-zĨŨĩũã\-]+(?:\s+[A-ZĨŨ][A-Za-zĨŨĩũã\-]+)*)\s+(\d+):(\d+)"
+        )
     else:
-        # Pattern for English book names
         book_pattern = r"([A-Z][A-Za-z\-]+(?:\s+[A-Z][A-Za-z\-]+)*)\s+(\d+):(\d+)"
 
     text = re.sub(book_pattern, r"\n\1 \2:\3\n", text)
@@ -152,13 +209,27 @@ def parse_kikuyu_verse(text: str) -> Dict[str, Dict[int, Dict[int, str]]]:
                         current_verse = verse_num
             continue
 
+        # Skip Kikuyu paragraph-restart lines (e.g. "1 No rĩrĩa ...") —
+        # these are section markers inside a verse, not new verse numbers.
+        if _KIK_PARAGRAPH_STARTERS.match(line):
+            if current_book and current_chapter and current_verse:
+                continuation = re.sub(r"^\d+\s+", "", line)
+                if current_verse in bible_dict[current_book][current_chapter]:
+                    bible_dict[current_book][current_chapter][current_verse] += (
+                        " " + continuation
+                    )
+            continue
+
         # Try to match a verse
         verse_match = re.match(verse_pattern, line)
         if verse_match and current_book and current_chapter:
             verse_num = int(verse_match.group(1))
             verse_text = verse_match.group(2).strip()
 
-            # Only add verse if it's valid according to our structure
+            # Require a minimum of real content to avoid capturing lone digits
+            if len(verse_text) < _MIN_VERSE_CONTENT_LEN:
+                continue
+
             english_book = kikuyu_to_english_book_name(current_book)
             if english_book and is_valid_reference(
                 english_book, current_chapter, verse_num
@@ -238,18 +309,25 @@ def parse_english_verse(text: str) -> Dict[str, Dict[int, Dict[int, str]]]:
         verse_match = re.match(verse_pattern, line)
         if verse_match and current_book and current_chapter:
             verse_num = int(verse_match.group(1))
-            verse_text = verse_match.group(2).strip()
+            verse_text = _clean_english_verse(verse_match.group(2))
 
-            # Only add verse if it's valid according to our structure
+            # Skip footnote-only content masquerading as a verse
+            if _is_footnote_only(verse_text):
+                continue
+
             if is_valid_reference(current_book, current_chapter, verse_num):
                 bible_dict[current_book][current_chapter][verse_num] = verse_text
                 current_verse = verse_num
             continue
 
-        # If no match but we have context, append to the current verse
+        # If no match but we have context, append to current verse
         if current_book and current_chapter and current_verse:
-            if current_verse in bible_dict[current_book][current_chapter]:
-                bible_dict[current_book][current_chapter][current_verse] += " " + line
+            cleaned = _clean_english_verse(line)
+            if cleaned and not _is_footnote_only(cleaned):
+                if current_verse in bible_dict[current_book][current_chapter]:
+                    bible_dict[current_book][current_chapter][current_verse] += (
+                        " " + cleaned
+                    )
 
     return bible_dict
 
@@ -286,7 +364,15 @@ def align_verses(kikuyu_dict: Dict, english_dict: Dict) -> List[Tuple[str, str, 
                             if not kikuyu_text.strip() or not english_text.strip():
                                 continue
 
-                            # Create reference and add to aligned verses
+                            # Fix 1: length-ratio filter — skip wildly mismatched pairs
+                            ratio = len(kikuyu_text) / max(len(english_text), 1)
+                            if ratio < _MIN_RATIO or ratio > _MAX_RATIO:
+                                continue
+
+                            # Fix 2: reject footnote-only English text
+                            if _is_footnote_only(english_text):
+                                continue
+
                             reference = f"{kikuyu_book} {chapter_num}:{verse_num}"
                             aligned_verses.append(
                                 (reference, kikuyu_text, english_text)
