@@ -97,3 +97,9 @@ All notable changes to this project will be documented in this file.
 - Deleted NET_Bible.pdf after inspection — paragraph-flow format incompatible with our verse-per-line parser.
 - Re-ran `prepare_dataset.py` on 9,467 clean Bible pairs → train: 7,574 / val: 947 / test: 946.
 - Kicked off `train_embeddings.py` to retrain FastText models on the new high-quality Bible corpus.
+- Fixed `UnboundLocalError` (`ki_words` undefined when seed dict exists) and `AttributeError` (`str` has no `.exists()`) in `train_embeddings.py`.
+- Added `from pathlib import Path` import to `train_embeddings.py`.
+- Fixed `get_latest_run_dir()` in `config.py` to sort by mtime instead of name — prevents legacy `run_v2_large` from shadowing newer timestamped runs.
+- Created `scripts/build_monolingual_corpus.py` — extracts 67K Kikuyu + 129K English sentences from the Bible PDFs for FastText training.
+- Changed `prepare_dataset.py` monolingual write mode from `"w"` (overwrite) to `"a"` (append) to preserve existing large corpora.
+- Rebuilt monolingual corpora: 74K Kikuyu / 137K English lines total.
