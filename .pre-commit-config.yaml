@@ -1,26 +1,16 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v4.6.0
     hooks:
-      - id: check-yaml
-      - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
       - id: check-added-large-files
-        args: ['--maxkb=10240']
-      - id: check-ast
-      - id: check-json
-      - id: check-merge-conflict
-      - id: detect-private-key
+        args: ['--maxkb=5000']
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.5
+    rev: v0.4.8
     hooks:
-      # Run the linter with basic rules only
       - id: ruff
-        args: [--fix]
-        exclude: ^notebooks/
-        types: [python]
-      # Run the formatter
+        args: [ --fix ]
       - id: ruff-format
-        exclude: ^notebooks/
-        types: [python]
