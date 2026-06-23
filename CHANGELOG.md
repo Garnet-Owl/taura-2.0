@@ -118,3 +118,7 @@ All notable changes to this project will be documented in this file.
 - Created unit tests in `tests/test_matthew_parser.py` validating cleaning, alignment, extraction, and validation logic.
 - Fixed verse parsing off-by-one/propagation shift bug to correctly handle missing or empty verses.
 - Updated project `README.md` with experimental status and contributor invite, and cleaned up temporary diagnostic scripts.
+- Refactored `BaseBibleParser` and `MatthewExtractor` to adopt a config-driven architecture using `PatternConfig`.
+- Centralized all regex pattern compilation and lambda converters in a default patterns mapping.
+- Simplified extraction method structure to keep individual helper methods short, modular, and single-purpose.
+- Verified that all unit tests pass (39/39) and the aligned Matthew corpus yields exactly 1,070 verses.

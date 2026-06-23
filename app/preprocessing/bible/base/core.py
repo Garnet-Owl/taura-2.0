@@ -3,7 +3,7 @@ Base Bible parser module containing shared structures, models, and parsing utili
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import fitz  # PyMuPDF
 
@@ -179,16 +179,44 @@ def parse_header_text(
     return (canonical_bk1, ch1, v1, canonical_bk2, ch2, v2)
 
 
+class PatternConfig:
+    def __init__(self, patterns: Dict[str, Dict[str, Union[re.Pattern, callable]]]):
+        """
+        Initialize PatternConfig with a dictionary of patterns.
+        Each pattern is a dictionary with:
+            - 'pattern': compiled regex pattern or list of patterns
+            - 'converter': a callable that converts/modifies matches (optional)
+        """
+        self.patterns = patterns
+
+
 class BaseBibleParser:
     """
     Base class containing common structures, algorithms, and configuration
     for Bible PDF parsing.
     """
 
-    def __init__(self):
+    def __init__(self, config: Optional[PatternConfig] = None):
+        self.config = config
         self.min_ratio = MIN_RATIO
         self.max_ratio = MAX_RATIO
         self.min_verse_content_len = MIN_VERSE_CONTENT_LEN
+
+    def parse_page_header(
+        self, header_text: str, lang: str
+    ) -> Optional[Tuple[str, int, int, str, int, int]]:
+        """
+        Parses page header text to extract verse boundaries.
+        """
+        if self.config and "header" in self.config.patterns:
+            patterns_info = self.config.patterns["header"]
+            pattern = patterns_info.get("pattern")
+            converter = patterns_info.get("converter")
+            if pattern:
+                match = pattern.search(header_text)
+                if match and converter:
+                    return converter(match, lang)
+        return parse_header_text(header_text, lang)
 
     def build_page_ranges(
         self, pdf_path: str, lang: str, start_page: int, end_page: Optional[int] = None
@@ -208,7 +236,7 @@ class BaseBibleParser:
             for b in blocks:
                 x0, y0, x1, y1, text, block_no, block_type = b
                 if y0 < 100:
-                    header_parsed = parse_header_text(text, lang)
+                    header_parsed = self.parse_page_header(text, lang)
                     if header_parsed:
                         break
 
@@ -330,6 +358,19 @@ class BaseBibleParser:
 
     def clean_english_verse(self, text: str) -> str:
         """Strip footnote markers and measurement stubs from an English verse."""
+        if self.config and "english_cross_ref" in self.config.patterns:
+            patterns_info = self.config.patterns["english_cross_ref"]
+            pattern = patterns_info.get("pattern")
+            converter = patterns_info.get("converter")
+            if isinstance(pattern, list):
+                for pat in pattern:
+                    text = pat.sub("", text)
+            elif pattern:
+                text = pattern.sub("", text)
+            if converter:
+                text = converter(text)
+            return text.strip()
+
         # Remove inline cross-reference markers like * 7:7  † 12:3  ‡ 9:4
         text = re.sub(r"[*†‡§]\s*\d+:\d+", "", text)
         text = re.sub(r"[*†‡§]\s*\d+", "", text)
@@ -349,6 +390,13 @@ class BaseBibleParser:
             and len(stripped) < self.min_verse_content_len
         ):
             return True
+
+        if self.config and "footnote_measurement" in self.config.patterns:
+            patterns_info = self.config.patterns["footnote_measurement"]
+            pattern = patterns_info.get("pattern")
+            if pattern and pattern.match(stripped):
+                return True
+            return False
 
         # Measurement / unit stubs that indicate a footnote fragment, not a verse
         measurement_re = re.compile(
