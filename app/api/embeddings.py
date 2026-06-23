@@ -66,7 +66,7 @@ def compute_csls_penalty(
     sim = norm_embs @ norm_ref.T
     sim.sort(axis=1)
     topk_sim = sim[:, -min(k, sim.shape[1]) :]
-    return topk_sim.mean(axis=1)
+    return topk_sim.mean(axis=1)  # type: ignore[no-any-return]
 
 
 # Global variables for worker processes
@@ -142,7 +142,7 @@ def learn_alignment_matrix(
             M = t_tgt @ t_src.T
             U, _, Vt = torch.linalg.svd(M)
             W = U @ Vt
-            return W.cpu().numpy()
+            return W.cpu().numpy()  # type: ignore[no-any-return]
         except Exception as e:
             logger.warning(
                 "PyTorch failed during learn_alignment_matrix SVD: %s. Falling back to NumPy.",
@@ -207,8 +207,8 @@ def iterative_procrustes(
                 r_S, _ = torch.topk(sim, min(csls_k, sim.shape[0]), dim=0)
                 r_S = r_S.mean(dim=0, keepdim=True)  # (1, N_tgt)
 
-                csls_sim = 2 * sim - r_T - r_S
-                csls_sim = csls_sim.cpu().numpy()
+                csls_sim_tensor = 2 * sim - r_T - r_S
+                csls_sim = csls_sim_tensor.cpu().numpy()
             except Exception as e:
                 logger.warning(
                     "PyTorch failed during iterative_procrustes CSLS: %s. Falling back to NumPy.",

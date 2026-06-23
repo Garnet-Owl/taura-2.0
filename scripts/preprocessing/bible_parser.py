@@ -10,12 +10,11 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import fitz  # PyMuPDF
 import pandas as pd
 
 from scripts.preprocessing.structure.bible_structure import (
-    get_book_by_name,
-    get_book_by_kikuyu_name,
-    is_valid_reference,
+    BIBLE_BOOKS,
     kikuyu_to_english_book_name,
 )
 
@@ -24,65 +23,317 @@ _MIN_RATIO = 0.4
 _MAX_RATIO = 2.5
 _MIN_VERSE_CONTENT_LEN = 15
 
-# Footnote / cross-reference patterns to strip from English verse text
-_FOOTNOTE_RE = re.compile(
-    r"""
-    (?:                        # footnote markers
-      [*†‡§]\s*\d+:\d+       #  * 7:7  / † 12:3
-    | [*†‡§]\s*\d+           #  * 7
-    | \b\d+:\d+\b            #  bare  7:7  at start/end
-    )""",
-    re.VERBOSE,
+# Map of Kikuyu headers to standard English names
+KIKUYU_BOOK_HEADERS = {
+    "Genesis": "Kĩambĩrĩria",
+    "Exodus": "Thaama",
+    "Leviticus": "Alawii",
+    "Numbers": "Ndari",
+    "Deuteronomy": "Gũcookerithia",
+    "Joshua": "Joshua",
+    "Judges": "Atiirĩrĩri",
+    "Ruth": "Ruthu",
+    "1 Samuel": "1 Samũeli",
+    "2 Samuel": "2 Samũeli",
+    "1 Kings": "1 Athamaki",
+    "2 Kings": "2 Athamaki",
+    "1 Chronicles": "1 Maũndũ",
+    "2 Chronicles": "2 Maũndũ",
+    "Ezra": "Ezara",
+    "Nehemiah": "Nehemia",
+    "Esther": "Esiteri",
+    "Job": "Ayubu",
+    "Psalms": "Thaburi",
+    "Proverbs": "Thimo",
+    "Ecclesiastes": "Kohelethu",
+    "Song of Solomon": "Rwĩmbo",
+    "Isaiah": "Isaia",
+    "Jeremiah": "Jeremia",
+    "Lamentations": "Macakaya",
+    "Ezekiel": "Ezekieli",
+    "Daniel": "Danieli",
+    "Hosea": "Hosea",
+    "Joel": "Joeli",
+    "Amos": "Amosi",
+    "Obadiah": "Obadia",
+    "Jonah": "Jona",
+    "Micah": "Mika",
+    "Nahum": "Nahumu",
+    "Habakkuk": "Habakuku",
+    "Zephaniah": "Zefania",
+    "Haggai": "Hagai",
+    "Zechariah": "Zekaria",
+    "Malachi": "Malaki",
+    "Matthew": "Mathayo",
+    "Mark": "Mariko",
+    "Luke": "Luka",
+    "John": "Johana",
+    "Acts": "Atũmwo",
+    "Romans": "Aroma",
+    "1 Corinthians": "1 Akorinitho",
+    "2 Corinthians": "2 Akorinitho",
+    "Galatians": "Agalatia",
+    "Ephesians": "Aefeso",
+    "Philippians": "Afilipi",
+    "Colossians": "Akolosai",
+    "1 Thessalonians": "1 Athesalonike",
+    "2 Thessalonians": "2 Athesalonike",
+    "1 Timothy": "1 Timotheo",
+    "2 Timothy": "2 Timotheo",
+    "Titus": "Tito",
+    "Philemon": "Filemona",
+    "Hebrews": "Ahibirania",
+    "James": "Jakubu",
+    "1 Peter": "1 Petero",
+    "2 Peter": "2 Petero",
+    "1 John": "1 Johana",
+    "2 John": "2 Johana",
+    "3 John": "3 Johana",
+    "Jude": "Judasi",
+    "Revelation": "Kũguũrĩrio",
+}
+
+
+def clean_book_name(s: str) -> str:
+    s = s.strip().lower()
+    match = re.match(r"^([1-3])\s*(.*)", s)
+    if match:
+        digit = match.group(1)
+        rest = match.group(2)
+        rest_cleaned = re.sub(r"[^a-z\u00C0-\u017F\u0100-\u017F]", "", rest)
+        return digit + rest_cleaned
+    return re.sub(r"[^a-z\u00C0-\u017F\u0100-\u017F]", "", s)
+
+
+# Build cleaned mappings
+CLEAN_KIKUYU_MAP = {}
+CLEAN_ENGLISH_MAP = {}
+for book in BIBLE_BOOKS:
+    cname = book["book_name"]
+    CLEAN_KIKUYU_MAP[clean_book_name(book["kikuyu_name"])] = cname
+    if cname in KIKUYU_BOOK_HEADERS:
+        CLEAN_KIKUYU_MAP[clean_book_name(KIKUYU_BOOK_HEADERS[cname])] = cname
+    CLEAN_ENGLISH_MAP[clean_book_name(cname)] = cname
+
+CLEAN_KIKUYU_MAP["1maũndũmamatukũmatene"] = "1 Chronicles"
+CLEAN_KIKUYU_MAP["2maũndũmamatukũmatene"] = "2 Chronicles"
+CLEAN_KIKUYU_MAP["1maũndũ"] = "1 Chronicles"
+CLEAN_KIKUYU_MAP["2maũndũ"] = "2 Chronicles"
+CLEAN_ENGLISH_MAP["song"] = "Song of Solomon"
+CLEAN_ENGLISH_MAP["psalm"] = "Psalms"
+ENG_TO_KIK_BOOK = {book["book_name"]: book["kikuyu_name"] for book in BIBLE_BOOKS}
+
+# Flat sequence of all canonical verses
+ALL_VERSES_SEQ = []
+for book in BIBLE_BOOKS:
+    bname = book["book_name"]
+    for ch in book["chapters"]:
+        ch_no = ch["chapter_no"]
+        v_count = ch["num_verses"]
+        for v_no in range(1, v_count + 1):
+            ALL_VERSES_SEQ.append((bname, ch_no, v_no))
+
+VERSE_TO_IDX = {ref: idx for idx, ref in enumerate(ALL_VERSES_SEQ)}
+
+
+def get_next_verse(ref: Tuple[str, int, int]) -> Optional[Tuple[str, int, int]]:
+    idx = VERSE_TO_IDX.get(ref)
+    if idx is not None and idx + 1 < len(ALL_VERSES_SEQ):
+        return ALL_VERSES_SEQ[idx + 1]
+    return None
+
+
+def get_previous_verse(ref: Tuple[str, int, int]) -> Optional[Tuple[str, int, int]]:
+    idx = VERSE_TO_IDX.get(ref)
+    if idx is not None and idx - 1 >= 0:
+        return ALL_VERSES_SEQ[idx - 1]
+    return None
+
+
+HEADER_PATTERN = re.compile(
+    r"([1-3]?\s*[a-zA-Z\u00C0-\u017F\u0100-\u017Fʼ\s\(\)-]+?)\s+(\d+)(?::(\d+))?\s+(\d+)\s+([1-3]?\s*[a-zA-Z\u00C0-\u017F\u0100-\u017Fʼ\s\(\)-]+?)\s+(\d+)(?::(\d+))?"
 )
 
-# Measurement / unit stubs that indicate a footnote fragment, not a verse
-_MEASUREMENT_RE = re.compile(
-    r"""^(?:
-      (?:grams?|kg|kilograms?|ounces?|oz|pounds?|lb|liters?|litres?|
-         milliliters?|ml|inches?|in|centimeters?|cm|kilometers?|km|miles?|
-         cubits?|seah|ephah|hin|shekel)\s+(?:or|is|about|=|≈).*
-    | [*†‡§;,]\s*\d[\d:,;\s*†‡§]*  # footnote-only content
-    )$""",
-    re.VERBOSE | re.IGNORECASE,
-)
 
-# Known Kikuyu paragraph continuation words that follow a section-digit
-# e.g. "1 No rĩrĩa ..." is NOT verse 1 but a paragraph restart.
-_KIK_PARAGRAPH_STARTERS = re.compile(
-    r"^\d+\s+(No|Ningĩ|Na|Nake|Rĩrĩa|Nao|Arĩa|Naguo|Nokĩo|Nĩ\s)\b",
-    re.UNICODE,
-)
+def parse_header_text(
+    header_text: str, lang: str
+) -> Optional[Tuple[str, int, int, str, int, int]]:
+    match = HEADER_PATTERN.search(header_text)
+    if not match:
+        return None
 
-# Set paths
-DATA_DIR = Path(__file__).parent.parent.parent / "data"
-PROCESSED_DIR = DATA_DIR / "processed"
-PDF_DIR = DATA_DIR
+    raw_bk1 = match.group(1)
+    ch1 = int(match.group(2))
+    v1 = int(match.group(3)) if match.group(3) else 1
+
+    raw_bk2 = match.group(5)
+    ch2 = int(match.group(6))
+    v2 = int(match.group(7)) if match.group(7) else 1
+
+    bk1 = clean_book_name(raw_bk1)
+    bk2 = clean_book_name(raw_bk2)
+
+    map_dict = CLEAN_KIKUYU_MAP if lang == "kikuyu" else CLEAN_ENGLISH_MAP
+
+    canonical_bk1 = map_dict.get(bk1)
+    canonical_bk2 = map_dict.get(bk2)
+
+    if not canonical_bk1 or not canonical_bk2:
+        return None
+
+    return (canonical_bk1, ch1, v1, canonical_bk2, ch2, v2)
+
+
+def build_page_ranges(
+    pdf_path: str, lang: str, start_page: int
+) -> Dict[int, Tuple[Tuple[str, int, int], Tuple[str, int, int]]]:
+    doc = fitz.open(pdf_path)
+    page_ranges = {}
+
+    for page_idx in range(start_page, len(doc)):
+        page = doc[page_idx]
+        blocks = page.get_text("blocks")
+        header_parsed = None
+
+        for b in blocks:
+            x0, y0, x1, y1, text, block_no, block_type = b
+            if y0 < 100:
+                header_parsed = parse_header_text(text, lang)
+                if header_parsed:
+                    break
+
+        if header_parsed:
+            canonical_bk1, ch1, v1, canonical_bk2, ch2, v2 = header_parsed
+            page_ranges[page_idx] = ((canonical_bk1, ch1, v1), (canonical_bk2, ch2, v2))
+        else:
+            page_ranges[page_idx] = None
+
+    # Filter out backward jumps and invalid end < start refs
+    raw_ranges = {}
+    last_valid_idx = -1
+    for page_idx in range(start_page, len(doc)):
+        r = page_ranges.get(page_idx)
+        if r is None:
+            raw_ranges[page_idx] = None
+            continue
+        ref1, ref2 = r
+        if ref1 not in VERSE_TO_IDX or ref2 not in VERSE_TO_IDX:
+            raw_ranges[page_idx] = None
+            continue
+        idx1 = VERSE_TO_IDX[ref1]
+        idx2 = VERSE_TO_IDX[ref2]
+        if idx1 > idx2:
+            raw_ranges[page_idx] = None
+            continue
+
+        if last_valid_idx != -1:
+            prev_end_ref = raw_ranges[last_valid_idx][1]
+            prev_end_idx = VERSE_TO_IDX[prev_end_ref]
+            if idx1 < prev_end_idx:
+                raw_ranges[page_idx] = None
+                continue
+
+        raw_ranges[page_idx] = (ref1, ref2)
+        last_valid_idx = page_idx
+
+    page_ranges = dict(raw_ranges)
+
+    # Forward propagation
+    for page_idx in range(start_page, len(doc)):
+        if page_ranges[page_idx] is None:
+            prev_idx = page_idx - 1
+            if prev_idx >= start_page and page_ranges[prev_idx] is not None:
+                _, prev_end = page_ranges[prev_idx]
+                next_start = get_next_verse(prev_end)
+                if next_start:
+                    page_ranges[page_idx] = (next_start, next_start)
+
+    # Backward propagation
+    for page_idx in range(len(doc) - 1, start_page - 1, -1):
+        if page_idx + 1 < len(doc) and page_ranges[page_idx + 1] is not None:
+            next_start, _ = page_ranges[page_idx + 1]
+            prev_end = get_previous_verse(next_start)
+            if prev_end:
+                if page_ranges[page_idx] is None:
+                    page_ranges[page_idx] = (prev_end, prev_end)
+                else:
+                    start_ref, _ = page_ranges[page_idx]
+                    page_ranges[page_idx] = (start_ref, prev_end)
+
+    # Equal split for contiguous None blocks
+    none_blocks = []
+    in_block = False
+    start_none = None
+    for idx in range(start_page, len(doc)):
+        is_none = raw_ranges[idx] is None
+        if is_none:
+            if not in_block:
+                start_none = idx
+                in_block = True
+        else:
+            if in_block:
+                none_blocks.append((start_none, idx - 1))
+                in_block = False
+    if in_block:
+        none_blocks.append((start_none, len(doc) - 1))
+
+    for start_none, end_none in none_blocks:
+        prev_end_idx = None
+        if start_none - 1 >= start_page and page_ranges[start_none - 1] is not None:
+            prev_end_ref = page_ranges[start_none - 1][1]
+            prev_end_idx = VERSE_TO_IDX[prev_end_ref]
+
+        next_start_idx = None
+        if end_none + 1 < len(doc) and page_ranges[end_none + 1] is not None:
+            next_start_ref = page_ranges[end_none + 1][0]
+            next_start_idx = VERSE_TO_IDX[next_start_ref]
+
+        if prev_end_idx is not None and next_start_idx is not None:
+            missing_verses = ALL_VERSES_SEQ[prev_end_idx + 1 : next_start_idx]
+            num_pages = end_none - start_none + 1
+            if missing_verses:
+                verses_per_page = max(1, len(missing_verses) // num_pages)
+                for offset, p_idx in enumerate(range(start_none, end_none + 1)):
+                    s_i = offset * verses_per_page
+                    e_i = (offset + 1) * verses_per_page - 1
+                    if p_idx == end_none:
+                        e_i = len(missing_verses) - 1
+                    page_ranges[p_idx] = (missing_verses[s_i], missing_verses[e_i])
+
+    return page_ranges
+
+
+def find_next_verse_pos(
+    body_text: str, v_no: int, current_pos: int
+) -> Optional[re.Match]:
+    pattern = re.compile(rf"(?<!\d){v_no}(?!\d)")
+    matches = list(pattern.finditer(body_text, current_pos))
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    first_match = matches[0]
+    if first_match.start() - current_pos < 300:
+        return first_match
+    strict_suffix = re.compile(
+        r"^\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+    )
+    for m in matches:
+        if strict_suffix.match(body_text[m.end() :]):
+            return m
+    return first_match
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
     Extract text from a PDF file using PyMuPDF (fitz).
-
-    Args:
-        pdf_path: Path to the PDF file
-
-    Returns:
-        Extracted text from the PDF
     """
     try:
-        import fitz  # PyMuPDF
-
         text = ""
         with fitz.open(pdf_path) as doc:
             for page in doc:
                 text += page.get_text() + "\n"
-
         return text
-    except ImportError:
-        print(
-            "PyMuPDF library not found. Please install it using 'pip install PyMuPDF'"
-        )
-        return ""
     except Exception as e:
         print(f"Error extracting text from PDF {pdf_path}: {e}")
         return ""
@@ -107,296 +358,165 @@ def _is_footnote_only(text: str) -> bool:
         return True
     if len(stripped) < _MIN_VERSE_CONTENT_LEN:
         return True
-    if _MEASUREMENT_RE.match(stripped):
+    # Measurement / unit stubs that indicate a footnote fragment, not a verse
+    measurement_re = re.compile(
+        r"""^(?:
+          (?:grams?|kg|kilograms?|ounces?|oz|pounds?|lb|liters?|litres?|
+             milliliters?|ml|inches?|in|centimeters?|cm|kilometers?|km|miles?|
+             cubits?|seah|ephah|hin|shekel)\s+(?:or|is|about|=|≈).*
+        | [*†‡§;,]\s*\d[\d:,;\s*†‡§]*  # footnote-only content
+        )$""",
+        re.VERBOSE | re.IGNORECASE,
+    )
+    if measurement_re.match(stripped):
         return True
     return False
 
 
-def preprocess_bible_text(text: str, language: str) -> str:
-    """
-    Preprocess Bible text to normalize formatting and make parsing easier.
+def parse_pdf_verses(
+    pdf_path: str, lang: str, start_page: int
+) -> Dict[str, Dict[int, Dict[int, str]]]:
+    page_ranges = build_page_ranges(pdf_path, lang, start_page)
+    doc = fitz.open(pdf_path)
+    parsed_verses = {}
 
-    Args:
-        text: Raw text from Bible PDF
-        language: 'kikuyu' or 'english'
-
-    Returns:
-        Preprocessed text with normalized spacing and verse markers
-    """
-    # Step 1: Normalize whitespace
-    text = re.sub(r"\s+", " ", text)
-
-    # Step 2: Fix inline verse numbers by adding a space before the word.
-    # Guard against splitting numbers inside large figures (e.g. 35,400)
-    if language == "kikuyu":
-        text = re.sub(r"(\d+)([A-ZĨŨ])", r"\n\1 \2", text)
-    else:
-        text = re.sub(r"(\d+)([A-Z])", r"\n\1 \2", text)
-
-    # Step 3: Break into paragraphs on book references
-    if language == "kikuyu":
-        book_pattern = (
-            r"([A-ZĨŨ][A-Za-zĨŨĩũã\-]+(?:\s+[A-ZĨŨ][A-Za-zĨŨĩũã\-]+)*)\s+(\d+):(\d+)"
-        )
-    else:
-        book_pattern = r"([A-Z][A-Za-z\-]+(?:\s+[A-Z][A-Za-z\-]+)*)\s+(\d+):(\d+)"
-
-    text = re.sub(book_pattern, r"\n\1 \2:\3\n", text)
-
-    # Step 4: Break at verse numbers that start a line
-    text = re.sub(r"\s+(\d+)\s+", r"\n\1 ", text)
-
-    return text
-
-
-def parse_kikuyu_verse(text: str) -> Dict[str, Dict[int, Dict[int, str]]]:
-    """
-    Parse Kikuyu Bible text to extract verses.
-
-    Args:
-        text: Raw text from the Kikuyu Bible PDF
-
-    Returns:
-        Dictionary with structure {book_name: {chapter: {verse: verse_text}}}
-    """
-    # Dictionary to store the parsed verses
-    bible_dict = {}
-
-    # First preprocess the text to normalize verses
-    text = preprocess_bible_text(text, "kikuyu")
-
-    # Current book, chapter, and verse tracking
-    current_book = None
-    current_chapter = None
-    current_verse = None
-
-    # Process text line by line
-    lines = text.split("\n")
-
-    # Patterns for matching
-    book_pattern = r"([A-ZĨŨĩũãĩ][A-Za-zĨŨĩũãĩ\-]+(?:\s+[A-ZĨŨĩũãĩ][A-Za-zĨŨĩũãĩ\-]+)*)(\s+)(\d+):(\d+)"
-    verse_pattern = r"^\s*(\d+)\s+(.*)"
-
-    for line in lines:
-        line = line.strip()
-        if not line:
+    for page_idx in range(start_page, len(doc)):
+        r_range = page_ranges.get(page_idx)
+        if not r_range:
             continue
 
-        # Try to match a book reference
-        book_match = re.match(book_pattern, line, re.UNICODE)
-        if book_match:
-            book_name = book_match.group(1)
-            chapter_num = int(book_match.group(3))
-            verse_num = int(book_match.group(4))
-
-            # Try to find the canonical book name
-            canonical_book = get_book_by_kikuyu_name(book_name)
-
-            if canonical_book:
-                current_book = canonical_book["kikuyu_name"]
-                current_chapter = chapter_num
-
-                if current_book not in bible_dict:
-                    bible_dict[current_book] = {}
-                if current_chapter not in bible_dict[current_book]:
-                    bible_dict[current_book][current_chapter] = {}
-
-                # Only add verse if it's valid according to our structure
-                english_book = canonical_book["book_name"]
-                if is_valid_reference(english_book, chapter_num, verse_num):
-                    if verse_num not in bible_dict[current_book][current_chapter]:
-                        bible_dict[current_book][current_chapter][verse_num] = ""
-                        current_verse = verse_num
+        start_ref, end_ref = r_range
+        if start_ref not in VERSE_TO_IDX or end_ref not in VERSE_TO_IDX:
             continue
 
-        # Skip Kikuyu paragraph-restart lines (e.g. "1 No rĩrĩa ...") —
-        # these are section markers inside a verse, not new verse numbers.
-        if _KIK_PARAGRAPH_STARTERS.match(line):
-            if current_book and current_chapter and current_verse:
-                continuation = re.sub(r"^\d+\s+", "", line)
-                if current_verse in bible_dict[current_book][current_chapter]:
-                    bible_dict[current_book][current_chapter][current_verse] += (
-                        " " + continuation
-                    )
-            continue
+        start_idx = VERSE_TO_IDX[start_ref]
+        end_idx = VERSE_TO_IDX[end_ref]
+        page_verses = ALL_VERSES_SEQ[start_idx : end_idx + 1]
 
-        # Try to match a verse
-        verse_match = re.match(verse_pattern, line)
-        if verse_match and current_book and current_chapter:
-            verse_num = int(verse_match.group(1))
-            verse_text = verse_match.group(2).strip()
+        page = doc[page_idx]
+        blocks = page.get_text("blocks")
+        body_blocks = []
+        for b in blocks:
+            x0, y0, x1, y1, text, block_no, block_type = b
+            if y1 >= 71 and y0 < 719:
+                body_blocks.append(text)
+        body_text = " ".join(body_blocks)
+        body_text = re.sub(r"\s+", " ", body_text).strip()
 
-            # Require a minimum of real content to avoid capturing lone digits
-            if len(verse_text) < _MIN_VERSE_CONTENT_LEN:
-                continue
+        current_pos = 0
+        verse_positions = []
 
-            english_book = kikuyu_to_english_book_name(current_book)
-            if english_book and is_valid_reference(
-                english_book, current_chapter, verse_num
-            ):
-                bible_dict[current_book][current_chapter][verse_num] = verse_text
-                current_verse = verse_num
-            continue
+        for bname, ch_no, v_no in page_verses:
+            match = None
+            if v_no == 1:
+                # Start of a new chapter. Try patterns and pick the earliest match.
+                pattern_strict = re.compile(
+                    rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+                )
+                pattern_relaxed = re.compile(
+                    rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)"
+                )
+                pattern_one = re.compile(
+                    r"(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+                )
+                pattern_one_relaxed = re.compile(r"(?<!\d)1(?!\d)")
 
-        # If no match but we have context, append to the current verse
-        if current_book and current_chapter and current_verse:
-            if current_verse in bible_dict[current_book][current_chapter]:
-                bible_dict[current_book][current_chapter][current_verse] += " " + line
+                candidates = []
+                for pat in [
+                    pattern_strict,
+                    pattern_relaxed,
+                    pattern_one,
+                    pattern_one_relaxed,
+                ]:
+                    m = pat.search(body_text, current_pos)
+                    if m:
+                        candidates.append(m)
+                if candidates:
+                    match = min(candidates, key=lambda x: x.start())
+            else:
+                match = find_next_verse_pos(body_text, v_no, current_pos)
 
-    return bible_dict
+            if match:
+                verse_positions.append(
+                    {
+                        "ref": (bname, ch_no, v_no),
+                        "start_pos": match.end(),
+                        "marker_pos": match.start(),
+                    }
+                )
+                current_pos = match.end()
+            else:
+                verse_positions.append(
+                    {
+                        "ref": (bname, ch_no, v_no),
+                        "start_pos": current_pos,
+                        "marker_pos": current_pos,
+                        "missing": True,
+                    }
+                )
 
+        # Set end_pos and yield text
+        for idx in range(len(verse_positions)):
+            curr = verse_positions[idx]
+            if idx + 1 < len(verse_positions):
+                curr["end_pos"] = verse_positions[idx + 1]["marker_pos"]
+            else:
+                curr["end_pos"] = len(body_text)
 
-def parse_english_verse(text: str) -> Dict[str, Dict[int, Dict[int, str]]]:
-    """
-    Parse English Bible text to extract verses.
+            ref = curr["ref"]
+            bname, ch_no, v_no = ref
+            v_text = body_text[curr["start_pos"] : curr["end_pos"]].strip()
 
-    Args:
-        text: Raw text from the English Bible PDF
+            if lang == "english":
+                v_text = _clean_english_verse(v_text)
+                if _is_footnote_only(v_text):
+                    v_text = ""
 
-    Returns:
-        Dictionary with structure {book_name: {chapter: {verse: verse_text}}}
-    """
-    # Dictionary to store the parsed verses
-    bible_dict = {}
+            ref_book = ENG_TO_KIK_BOOK[bname] if lang == "kikuyu" else bname
+            if ref_book not in parsed_verses:
+                parsed_verses[ref_book] = {}
+            if ch_no not in parsed_verses[ref_book]:
+                parsed_verses[ref_book][ch_no] = {}
 
-    # First preprocess the text to normalize verses
-    text = preprocess_bible_text(text, "english")
+            parsed_verses[ref_book][ch_no][v_no] = v_text
 
-    # Current book, chapter, and verse tracking
-    current_book = None
-    current_chapter = None
-    current_verse = None
-
-    # Process text line by line
-    lines = text.split("\n")
-
-    # Patterns for matching
-    book_pattern = r"([A-Z][A-Za-z\-]+(?:\s+[A-Z][A-Za-z\-]+)*)(\s+)(\d+):(\d+)"
-    verse_pattern = r"^\s*(\d+)\s+(.*)"
-
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-
-        # Try to match a book reference
-        book_match = re.match(book_pattern, line)
-        if book_match:
-            book_name = book_match.group(1)
-            chapter_num = int(book_match.group(3))
-            verse_num = int(book_match.group(4))
-
-            # Try to find the canonical book name
-            canonical_book = get_book_by_name(book_name)
-
-            if canonical_book:
-                current_book = canonical_book["book_name"]
-                current_chapter = chapter_num
-
-                if current_book not in bible_dict:
-                    bible_dict[current_book] = {}
-                if current_chapter not in bible_dict[current_book]:
-                    bible_dict[current_book][current_chapter] = {}
-
-                # Only add verse if it's valid according to our structure
-                if is_valid_reference(current_book, chapter_num, verse_num):
-                    if verse_num not in bible_dict[current_book][current_chapter]:
-                        bible_dict[current_book][current_chapter][verse_num] = ""
-                        current_verse = verse_num
-            continue
-
-        # Try to match a verse
-        verse_match = re.match(verse_pattern, line)
-        if verse_match and current_book and current_chapter:
-            verse_num = int(verse_match.group(1))
-            verse_text = _clean_english_verse(verse_match.group(2))
-
-            # Skip footnote-only content masquerading as a verse
-            if _is_footnote_only(verse_text):
-                continue
-
-            if is_valid_reference(current_book, current_chapter, verse_num):
-                bible_dict[current_book][current_chapter][verse_num] = verse_text
-                current_verse = verse_num
-            continue
-
-        # If no match but we have context, append to current verse
-        if current_book and current_chapter and current_verse:
-            cleaned = _clean_english_verse(line)
-            if cleaned and not _is_footnote_only(cleaned):
-                if current_verse in bible_dict[current_book][current_chapter]:
-                    bible_dict[current_book][current_chapter][current_verse] += (
-                        " " + cleaned
-                    )
-
-    return bible_dict
+    return parsed_verses
 
 
 def align_verses(kikuyu_dict: Dict, english_dict: Dict) -> List[Tuple[str, str, str]]:
-    """
-    Align verses between Kikuyu and English Bibles.
-
-    Args:
-        kikuyu_dict: Dictionary of parsed Kikuyu Bible
-        english_dict: Dictionary of parsed English Bible
-
-    Returns:
-        List of (reference, Kikuyu verse, English verse) tuples
-    """
     aligned_verses = []
 
     # Iterate through Kikuyu books
     for kikuyu_book, chapters in kikuyu_dict.items():
         english_book = kikuyu_to_english_book_name(kikuyu_book)
-
         if english_book and english_book in english_dict:
-            # Iterate through chapters
             for chapter_num, verses in chapters.items():
                 if chapter_num in english_dict[english_book]:
-                    # Iterate through verses
                     for verse_num, kikuyu_text in verses.items():
                         if verse_num in english_dict[english_book][chapter_num]:
                             english_text = english_dict[english_book][chapter_num][
                                 verse_num
                             ]
 
-                            # Skip empty verses
                             if not kikuyu_text.strip() or not english_text.strip():
                                 continue
 
-                            # Fix 1: length-ratio filter — skip wildly mismatched pairs
                             ratio = len(kikuyu_text) / max(len(english_text), 1)
                             if ratio < _MIN_RATIO or ratio > _MAX_RATIO:
-                                continue
-
-                            # Fix 2: reject footnote-only English text
-                            if _is_footnote_only(english_text):
                                 continue
 
                             reference = f"{kikuyu_book} {chapter_num}:{verse_num}"
                             aligned_verses.append(
                                 (reference, kikuyu_text, english_text)
                             )
-
     return aligned_verses
 
 
 def create_dataset(
     aligned_verses: List[Tuple[str, str, str]], max_examples: Optional[int] = None
 ) -> pd.DataFrame:
-    """
-    Create a dataset from aligned verses.
-
-    Args:
-        aligned_verses: List of (reference, Kikuyu verse, English verse) tuples
-        max_examples: Maximum number of examples to include (None for all)
-
-    Returns:
-        Pandas DataFrame with Reference, Kikuyu, and English columns
-    """
     if max_examples is not None:
         aligned_verses = aligned_verses[:max_examples]
-
     df = pd.DataFrame(aligned_verses, columns=["Reference", "Kikuyu", "English"])
     return df
 
@@ -404,63 +524,30 @@ def create_dataset(
 def process_bible_texts(
     kikuyu_pdf_path: str, english_pdf_path: str, max_examples: Optional[int] = None
 ) -> pd.DataFrame:
-    """
-    Process Bible texts from PDFs and create a parallel corpus.
+    print(f"Extracting and parsing Kikuyu PDF {kikuyu_pdf_path}...")
+    kikuyu_dict = parse_pdf_verses(kikuyu_pdf_path, "kikuyu", start_page=3)
 
-    Args:
-        kikuyu_pdf_path: Path to Kikuyu Bible PDF
-        english_pdf_path: Path to English Bible PDF
-        max_examples: Maximum number of examples to include (None for all)
-
-    Returns:
-        Pandas DataFrame with aligned verses
-    """
-    print(f"Extracting text from {kikuyu_pdf_path}...")
-    kikuyu_text = extract_text_from_pdf(kikuyu_pdf_path)
-
-    print(f"Extracting text from {english_pdf_path}...")
-    english_text = extract_text_from_pdf(english_pdf_path)
-
-    print("Parsing Kikuyu verses...")
-    kikuyu_dict = parse_kikuyu_verse(kikuyu_text)
-
-    print("Parsing English verses...")
-    english_dict = parse_english_verse(english_text)
+    print(f"Extracting and parsing English PDF {english_pdf_path}...")
+    english_dict = parse_pdf_verses(english_pdf_path, "english", start_page=6)
 
     print("Aligning verses...")
     aligned_verses = align_verses(kikuyu_dict, english_dict)
 
-    print(f"Creating dataset with {len(aligned_verses)} verse pairs...")
-    if max_examples:
-        print(f"Limiting to {max_examples} examples as requested")
-
+    print(f"Aligned {len(aligned_verses)} verse pairs.")
     df = create_dataset(aligned_verses, max_examples)
-
     return df
 
 
 def save_bible_dataset(df: pd.DataFrame, output_path: Optional[str] = None) -> None:
-    """
-    Save the Bible dataset to a CSV file.
-
-    Args:
-        df: DataFrame with aligned verses
-        output_path: Path to save the CSV file (default: DATA_DIR/processed/bible_parallel.csv)
-    """
     if output_path is None:
-        output_path = PROCESSED_DIR / "bible_parallel.csv"
-
+        output_path = Path("data/processed/bible_parallel.csv")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
     print(f"Saved Bible dataset to {output_path}")
 
 
 if __name__ == "__main__":
-    # Define paths to PDF files
-    kikuyu_pdf = PDF_DIR / "Kikuyu_Bible_all.pdf"
-    english_pdf = PDF_DIR / "English_Bible_all.pdf"
-
-    # Process the Bible texts
-    df = process_bible_texts(str(kikuyu_pdf), str(english_pdf), max_examples=None)
-
-    # Save the dataset
+    kikuyu_pdf = "data/Kikuyu_Bible_all.pdf"
+    english_pdf = "data/English_Bible_all.pdf"
+    df = process_bible_texts(kikuyu_pdf, english_pdf)
     save_bible_dataset(df)
