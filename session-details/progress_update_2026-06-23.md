@@ -45,6 +45,7 @@ Current extracted evidence:
 | Genesis | Extracted with 1,533 aligned verse pairs. |
 | Proverbs | Extracted with 915 aligned verse pairs. |
 | Ecclesiastes | Extracted with 222 aligned verse pairs. |
+| Jeremiah | Extracted with 1,364 aligned verse pairs. |
 
 Latest baseline BLEU after recent corpus improvements:
 
