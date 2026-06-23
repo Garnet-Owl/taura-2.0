@@ -12,6 +12,9 @@ belong in handoffs, tests, and code comments.
 - Added validated aligned corpora for Matthew, Mark, Luke, John, Acts, Romans, and 1 Corinthians; the test suite reached 70 passing tests.
 - Added the 2 Corinthians extractor and aligned corpus with 257 validated verse pairs for the next corpus rebuild.
 
+## 2026-06-23 - Training Run Data Versioning
+- Monolingual training text files are now written into each run's directory (e.g. `models/run_*/train.kikuyu`) instead of overwriting `data/monolingual/`, so every training experiment is fully reproducible.
+
 ## 2026-06-23 - Ruff Config Upgrade
 - Broadened linting coverage with bugbear, isort, and non-top-level import detection; preprocessing files are excluded so hand-tuned regex patterns are never touched.
 
