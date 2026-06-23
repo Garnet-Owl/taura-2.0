@@ -15,9 +15,9 @@ paths:
   feedback_file: data/feedback.jsonl
 
 training:
-  embedding_dim: 150
+  embedding_dim: 300
   fasttext_model_type: skipgram
-  fasttext_epoch: 35
+  fasttext_epoch: 50
   fasttext_lr: 0.1
   fasttext_ws: 8
   fasttext_min_count: 2

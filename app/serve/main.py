@@ -1,9 +1,10 @@
 """FastAPI application for Kikuyu-English bidirectional translation."""
 
-import os
 import csv
 import json
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator, Optional
 import numpy as np
 import fasttext
@@ -14,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from app.api.embeddings import CrossLingualTranslator, get_sentence_embedding
-from app.api import config
+from app.shared import config
 
 APP_VERSION = "2.0.0"
 
@@ -63,74 +64,72 @@ class ModelInfoResponse(BaseModel):
     metrics: dict = Field(default_factory=dict, description="Evaluation metrics")
 
 
+def _load_parallel_sentences() -> tuple[list[str], list[str]]:
+    """Loads all parallel CSVs, returns (ki_sentences, en_sentences)."""
+    ki_list: list[str] = []
+    en_list: list[str] = []
+    for csv_path in sorted(Path(config.PARALLEL_DATA_DIR).glob("*.csv")):
+        with open(csv_path, "r", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                ki = row.get("Kikuyu", "").strip()
+                en = row.get("English", "").strip()
+                if ki and en:
+                    ki_list.append(ki)
+                    en_list.append(en)
+    return ki_list, en_list
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Paths to model files
-    ki_model_path = config.KI_MODEL_PATH
-    en_model_path = config.EN_MODEL_PATH
-    proj_ki_en_path = config.PROJ_KI_EN_PATH
-    proj_en_ki_path = config.PROJ_EN_KI_PATH
-    train_tsv_path = config.TRAIN_TSV_PATH
-
-    tgt_embs_ki_path = config.TGT_EMBS_KI_PATH
-    tgt_embs_en_path = config.TGT_EMBS_EN_PATH
-
-    # Check if models exist
-    if not (
-        os.path.exists(ki_model_path)
-        and os.path.exists(en_model_path)
-        and os.path.exists(proj_ki_en_path)
-        and os.path.exists(proj_en_ki_path)
-    ):
+    required = [
+        config.KI_MODEL_PATH,
+        config.EN_MODEL_PATH,
+        config.PROJ_KI_EN_PATH,
+        config.PROJ_EN_KI_PATH,
+    ]
+    if not all(os.path.exists(p) for p in required):
         app.state.translators = None
-    else:
-        # Load FastText models
-        ki_model = fasttext.load_model(ki_model_path)
-        en_model = fasttext.load_model(en_model_path)
+        yield
+        return
 
-        # Load alignment projection matrices
-        W_ki_en = np.load(proj_ki_en_path)
-        W_en_ki = np.load(proj_en_ki_path)
+    ki_model = fasttext.load_model(config.KI_MODEL_PATH)
+    en_model = fasttext.load_model(config.EN_MODEL_PATH)
+    W_ki_en = np.load(config.PROJ_KI_EN_PATH)
+    W_en_ki = np.load(config.PROJ_EN_KI_PATH)
 
-        # Load parallel sentences for retrieval fallback/dictionary
-        ki_sentences = []
-        en_sentences = []
-        if os.path.exists(train_tsv_path):
-            with open(train_tsv_path, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f, delimiter="\t")
-                for row in reader:
-                    ki = row.get("kikuyu")
-                    en = row.get("english")
-                    if ki and en:
-                        ki_sentences.append(str(ki).strip())
-                        en_sentences.append(str(en).strip())
+    ki_sentences, en_sentences = _load_parallel_sentences()
 
-        # Load precomputed target embeddings
-        tgt_embs_ki = (
-            np.load(tgt_embs_ki_path) if os.path.exists(tgt_embs_ki_path) else None
-        )
-        tgt_embs_en = (
-            np.load(tgt_embs_en_path) if os.path.exists(tgt_embs_en_path) else None
-        )
+    tgt_embs_ki = (
+        np.load(config.TGT_EMBS_KI_PATH)
+        if os.path.exists(config.TGT_EMBS_KI_PATH)
+        else None
+    )
+    tgt_embs_en = (
+        np.load(config.TGT_EMBS_EN_PATH)
+        if os.path.exists(config.TGT_EMBS_EN_PATH)
+        else None
+    )
 
-        # Initialize translators
-        app.state.translators = {
-            "ki_en": CrossLingualTranslator(
-                ki_model,
-                en_model,
-                W_ki_en,
-                en_sentences,
-                precomputed_tgt_embeddings=tgt_embs_en,
-            ),
-            "en_ki": CrossLingualTranslator(
-                en_model,
-                ki_model,
-                W_en_ki,
-                ki_sentences,
-                precomputed_tgt_embeddings=tgt_embs_ki,
-            ),
-        }
+    translator_ki_en = CrossLingualTranslator(
+        ki_model,
+        en_model,
+        W_ki_en,
+        en_sentences,
+        precomputed_tgt_embeddings=tgt_embs_en,
+    )
+    translator_en_ki = CrossLingualTranslator(
+        en_model,
+        ki_model,
+        W_en_ki,
+        ki_sentences,
+        precomputed_tgt_embeddings=tgt_embs_ki,
+    )
 
+    # Pre-build HNSW vocab indexes so word-by-word inference uses all CPU cores
+    translator_ki_en.build_vocab_hnsw_index()
+    translator_en_ki.build_vocab_hnsw_index()
+
+    app.state.translators = {"ki_en": translator_ki_en, "en_ki": translator_en_ki}
     yield
 
 

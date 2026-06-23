@@ -274,6 +274,7 @@ class CrossLingualTranslator:
         precomputed_tgt_embeddings: np.ndarray | None = None,
         csls_k: int = 10,
     ) -> None:
+        self._vocab_hnsw_index: Any = None  # set via build_vocab_hnsw_index()
         self.src_model = src_model
         self.tgt_model = tgt_model
         self.projection_matrix = projection_matrix
@@ -327,6 +328,49 @@ class CrossLingualTranslator:
         best_idx = int(np.argmax(scores))
         return self.tgt_sentences[best_idx]
 
+    def build_vocab_hnsw_index(self, ef_construction: int = 200, M: int = 16) -> None:
+        """Builds an hnswlib HNSW index over the target vocabulary for fast word lookup."""
+        try:
+            import hnswlib
+        except ImportError:
+            logger.warning(
+                "hnswlib not installed — falling back to brute-force vocab search."
+            )
+            return
+
+        if not hasattr(self, "tgt_vocab_words"):
+            self.tgt_vocab_words = self.tgt_model.get_words()
+            raw = np.array(
+                [self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words]
+            )
+            norms = np.linalg.norm(raw, axis=1, keepdims=True)
+            norms[norms < 1e-8] = 1.0
+            self.tgt_vocab_embeddings = raw / norms
+            self.tgt_vocab_norms = np.ones(len(self.tgt_vocab_words), dtype=np.float32)
+
+            src_words = self.src_model.get_words()[:20000]
+            src_vocab_embs = np.array(
+                [self.src_model.get_word_vector(w) for w in src_words]
+            )
+            projected_src_vocab = src_vocab_embs @ self.projection_matrix.T
+            self.tgt_word_csls_penalty = compute_csls_penalty(
+                self.tgt_vocab_embeddings, projected_src_vocab, k=self.csls_k
+            )
+
+        dim = self.tgt_vocab_embeddings.shape[1]
+        index = hnswlib.Index(space="cosine", dim=dim)
+        index.init_index(
+            max_elements=len(self.tgt_vocab_words),
+            ef_construction=ef_construction,
+            M=M,
+        )
+        index.add_items(self.tgt_vocab_embeddings)
+        index.set_ef(64)
+        self._vocab_hnsw_index = index
+        logger.info(
+            "Built HNSW vocab index over %d target words.", len(self.tgt_vocab_words)
+        )
+
     def translate_word_by_word(self, src_sentence: str) -> str:
         """
         Translates a source sentence word-by-word by projecting each word's embedding
@@ -375,14 +419,22 @@ class CrossLingualTranslator:
                 translated_words.append(token)
                 continue
 
-            scores = np.dot(self.tgt_vocab_embeddings, projected) / (
-                self.tgt_vocab_norms * norm_proj
-            )
+            if self._vocab_hnsw_index is not None:
+                # Fast approximate search: get top-64 candidates, re-rank with CSLS
+                q = (projected / norm_proj).reshape(1, -1)
+                labels, _ = self._vocab_hnsw_index.knn_query(q, k=64)
+                cand = labels[0]
+                cand_vecs = self.tgt_vocab_embeddings[cand]
+                cosines = cand_vecs @ (projected / norm_proj)
+                csls_scores = 2 * cosines - self.tgt_word_csls_penalty[cand]
+                best_idx = int(cand[np.argmax(csls_scores)])
+            else:
+                scores = np.dot(self.tgt_vocab_embeddings, projected) / (
+                    self.tgt_vocab_norms * norm_proj
+                )
+                scores = 2 * scores - self.tgt_word_csls_penalty
+                best_idx = int(np.argmax(scores))
 
-            # Apply CSLS penalty
-            scores = 2 * scores - self.tgt_word_csls_penalty
-
-            best_idx = int(np.argmax(scores))
             translated_words.append(self.tgt_vocab_words[best_idx])
 
         return " ".join(translated_words)

@@ -10,7 +10,7 @@ import fasttext
 import sacrebleu
 
 from app.api.embeddings import CrossLingualTranslator, get_sentence_embedding
-from app.api import config
+from app.shared import config
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
