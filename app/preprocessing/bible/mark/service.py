@@ -30,9 +30,9 @@ class MarkExtractor(BaseBibleParser, MarkExtractorBase):
         BaseBibleParser.__init__(self, self.pattern_config)
 
     @staticmethod
-    def _default_patterns() -> (
-        Dict[str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]]
-    ):
+    def _default_patterns() -> Dict[
+        str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]
+    ]:
         return {
             "verse_marker_strict": {"pattern": re.compile(r"^\s*[\"'‘’“”A-ZĨŨÀ-ÞĀ-ſ]")},
             "footnote_measurement": {

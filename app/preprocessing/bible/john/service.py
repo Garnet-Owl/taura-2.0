@@ -32,9 +32,9 @@ class JohnExtractor(BaseBibleParser, JohnExtractorBase):
         BaseBibleParser.__init__(self, self.pattern_config)
 
     @staticmethod
-    def _default_patterns() -> (
-        Dict[str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]]
-    ):
+    def _default_patterns() -> Dict[
+        str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]
+    ]:
         upper = _UPPER
         return {
             "verse_marker_strict": {"pattern": re.compile(r"^\s*" + upper)},
