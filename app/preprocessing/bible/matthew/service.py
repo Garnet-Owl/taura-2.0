@@ -31,9 +31,9 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         BaseBibleParser.__init__(self, self.pattern_config)
 
     @staticmethod
-    def _default_patterns() -> (
-        Dict[str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]]
-    ):
+    def _default_patterns() -> Dict[
+        str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]
+    ]:
         """Define default patterns with their respective converters."""
         return {
             "verse_marker_strict": {
