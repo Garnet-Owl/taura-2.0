@@ -21,7 +21,7 @@ def load_all_parallel_csvs(parallel_dir: str) -> Tuple[List[str], List[str]]:
     """Loads all parallel CSV files from a directory, returning (ki_list, en_list)."""
     ki_list: List[str] = []
     en_list: List[str] = []
-    csv_files = sorted(Path(parallel_dir).glob("*.csv"))
+    csv_files = sorted(Path(parallel_dir).rglob("*.csv"))
     if not csv_files:
         raise FileNotFoundError(f"No CSV files found in {parallel_dir}")
     for csv_path in csv_files:

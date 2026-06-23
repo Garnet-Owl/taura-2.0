@@ -25,8 +25,9 @@ known-first-party = ["app"]
 
 [lint.per-file-ignores]
 "__init__.py" = ["E402", "F401"]
-# Optional SDK imports (torch/hnswlib) are guarded by availability checks — must stay inline
+# Optional SDK imports guarded by try/except ImportError — must stay inline
 "app/api/embeddings.py" = ["PLC0415"]
+"scripts/train_embeddings.py" = ["PLC0415"]
 
 [format]
 quote-style = "double"

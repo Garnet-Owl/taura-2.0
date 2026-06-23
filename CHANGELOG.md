@@ -12,6 +12,12 @@ belong in handoffs, tests, and code comments.
 - Added validated aligned corpora for Matthew, Mark, Luke, John, Acts, Romans, and 1 Corinthians; the test suite reached 70 passing tests.
 - Added the 2 Corinthians extractor and aligned corpus with 257 validated verse pairs for the next corpus rebuild.
 
+## 2026-06-23 - Agriculture Data, Recursive Loading, and Morfessor
+- Added 3,852 agriculture sentence pairs (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado) to `data/parallel/agriculture/` — total corpus grows from 5,911 to 9,763 pairs.
+- Data loading is now recursive: adding a new sub-folder under `data/parallel/` is all that's needed to include a new source.
+- FastText n-gram range tightened to minn=2/maxn=7 to better capture Kikuyu's short agglutinative prefixes.
+- Morfessor unsupervised morphological segmentation applied to Kikuyu before FastText training, splitting verb prefixes into separate tokens for cleaner morpheme-level embeddings.
+
 ## 2026-06-23 - Training Run Data Versioning
 - Monolingual training text files are now written into each run's directory (e.g. `models/run_*/train.kikuyu`) instead of overwriting `data/monolingual/`, so every training experiment is fully reproducible.
 

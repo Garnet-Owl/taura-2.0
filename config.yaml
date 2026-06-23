@@ -1,11 +1,12 @@
 paths:
-  # Directory containing aligned parallel CSV files (*.csv)
+  # Root directory scanned recursively for *.csv parallel data files.
+  # Add a new sub-folder here to register a new data source — no code change needed.
   parallel_data_dir: data/parallel
 
   # Root directory where training run sub-folders are created
   models_dir: models
 
-  # Directory where monolingual .txt files are written before FastText training
+  # Directory where accumulated monolingual text lives (append-only, not used by training directly)
   monolingual_dir: data/monolingual
 
   # Seed dictionary CSV with columns "Kikuyu" and "English"
@@ -14,6 +15,12 @@ paths:
   # Translation feedback log
   feedback_file: data/feedback.jsonl
 
+# Active parallel data sources (sub-folders of parallel_data_dir).
+# Document only — the loader scans all CSVs recursively.
+data_sources:
+  bible: data/parallel          # Matthew, Mark, Luke, John, Acts, Romans, 1-2 Corinthians
+  agriculture: data/parallel/agriculture  # Coffee, Dairy, Poultry, Potato, Banana, Mango, Cabbage, Avocado
+
 training:
   embedding_dim: 300
   fasttext_model_type: skipgram
@@ -21,6 +28,10 @@ training:
   fasttext_lr: 0.1
   fasttext_ws: 8
   fasttext_min_count: 2
+  # n-gram range: minn=2 captures Kikuyu's 1-2 char prefixes (a-, u-, mu-)
+  # maxn=7 captures longer suffixes common in Bantu verb conjugation
+  fasttext_minn: 2
+  fasttext_maxn: 7
   alignment_refinement_iters: 5
 
   # Sentence pairs held out from training for evaluation

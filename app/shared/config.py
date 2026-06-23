@@ -47,13 +47,13 @@ FASTTEXT_LR: float = float(_train["fasttext_lr"])
 FASTTEXT_WS: int = int(_train["fasttext_ws"])
 FASTTEXT_MIN_COUNT: int = int(_train["fasttext_min_count"])
 ALIGNMENT_REFINEMENT_ITERS: int = int(_train["alignment_refinement_iters"])
+FASTTEXT_MINN: int = int(_train.get("fasttext_minn", 3))
+FASTTEXT_MAXN: int = int(_train.get("fasttext_maxn", 6))
 VAL_SIZE: int = int(_train["val_size"])
 
 # ── HuggingFace repos ─────────────────────────────────────────────────────
 REPO_CGIAR: str = str(_ds.get("repo_cgiar", "CGIAR/KikuyuEnglish_translation"))
-REPO_MICH: str = str(
-    _ds.get("repo_mich", "michsethowusu/english-kikuyu_sentence-pairs")
-)
+REPO_MICH: str = str(_ds.get("repo_mich", "michsethowusu/english-kikuyu_sentence-pairs"))
 
 
 # ── Latest run helpers (derived at import time, mutable by scripts) ───────

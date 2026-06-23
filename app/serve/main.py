@@ -69,7 +69,7 @@ def _load_parallel_sentences() -> tuple[list[str], list[str]]:
     """Loads all parallel CSVs, returns (ki_sentences, en_sentences)."""
     ki_list: list[str] = []
     en_list: list[str] = []
-    for csv_path in sorted(Path(config.PARALLEL_DATA_DIR).glob("*.csv")):
+    for csv_path in sorted(Path(config.PARALLEL_DATA_DIR).rglob("*.csv")):
         with open(csv_path, "r", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 ki = row.get("Kikuyu", "").strip()
