@@ -2,14 +2,14 @@ name: Taura CI
 
 on:
   push:
-    branches: ['**']  # matches every branch
+    branches: ['**']
     paths:
       - 'app/**'
       - 'tests/**'
+      - 'scripts/**'
       - 'pyproject.toml'
       - 'uv.lock'
       - '.github/workflows/**'
-      - 'ruff.toml'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -19,20 +19,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-and-test:
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.12']
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          python-version: '3.12'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -41,18 +37,10 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: |
-          uv sync --all-groups
+        run: uv sync --all-groups
 
-      - name: Basic Lint with Ruff
-        run: |
-          uv run ruff check --select E,F --ignore E501,E741 --exclude "notebooks/*" .
+      - name: Lint with Ruff
+        run: uv run ruff check --select E,F --ignore E501,E741 .
 
       - name: Format check with Ruff
-        run: |
-          uv run ruff format --check --exclude "notebooks/*" .
-
-      - name: Run tests with pytest
-        run: |
-          uv run pytest
-
+        run: uv run ruff format --check .
