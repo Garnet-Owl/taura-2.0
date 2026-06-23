@@ -52,7 +52,7 @@ def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
     """Loads all parallel CSV files from a directory, returning (ki_list, en_list)."""
     ki_list: list[str] = []
     en_list: list[str] = []
-    csv_files = sorted(Path(parallel_dir).glob("*.csv"))
+    csv_files = sorted(Path(parallel_dir).rglob("*.csv"))
     if not csv_files:
         raise FileNotFoundError(f"No CSV files found in {parallel_dir}")
     for csv_path in csv_files:
@@ -68,6 +68,46 @@ def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
         f"Loaded {len(ki_list)} sentence pairs from {len(csv_files)} CSV files in {parallel_dir}"
     )
     return ki_list, en_list
+
+
+def segment_kikuyu_with_morfessor(sentences: list[str]) -> list[str]:
+    """Pre-segments Kikuyu sentences into morpheme tokens using Morfessor.
+
+    Morfessor (unsupervised morphological segmentation) learns prefix/suffix
+    boundaries from raw text. For Kikuyu's agglutinative morphology this means
+    verb conjugation prefixes like 'a-', 'mũ-', 'ũ-' are split out, giving
+    FastText cleaner subword units to learn from.
+    Returns the original sentences unchanged if morfessor is not installed.
+    """
+    try:
+        import morfessor
+    except ImportError:
+        logger.warning("morfessor not installed — skipping morphological segmentation.")
+        return sentences
+
+    model = morfessor.BaselineModel()
+
+    # Build word-frequency list from the corpus
+    word_counts: dict[str, int] = {}
+    for sent in sentences:
+        for word in sent.lower().split():
+            word_counts[word] = word_counts.get(word, 0) + 1
+
+    train_data = [(count, word) for word, count in word_counts.items()]
+    model.train_batch(train_data)
+    logger.info("Morfessor trained on %d unique Kikuyu word types.", len(word_counts))
+
+    segmented: list[str] = []
+    for sent in sentences:
+        tokens = []
+        for word in sent.split():
+            try:
+                morphemes, _ = model.viterbi_segment(word.lower())
+                tokens.append(" ".join(morphemes))
+            except Exception:
+                tokens.append(word)
+        segmented.append(" ".join(tokens))
+    return segmented
 
 
 def write_monolingual_txt(sentences: list[str], path: str) -> None:
@@ -96,6 +136,8 @@ def train_monolingual(
         lr=config.FASTTEXT_LR,
         ws=config.FASTTEXT_WS,
         minCount=config.FASTTEXT_MIN_COUNT,
+        minn=config.FASTTEXT_MINN,
+        maxn=config.FASTTEXT_MAXN,
         thread=max(1, multiprocessing.cpu_count()),
     )
     model.save_model(model_path)
@@ -201,14 +243,20 @@ def main() -> None:
         f"Split: {len(train_ki_sentences)} train / {len(val_ki)} val sentence pairs"
     )
 
+    # Apply Morfessor morphological segmentation to Kikuyu before FastText training.
+    # This splits agglutinative prefixes/suffixes into separate tokens so FastText
+    # learns cleaner morpheme-level embeddings (English is left unsegmented).
+    logger.info("Applying Morfessor segmentation to Kikuyu training sentences...")
+    train_ki_segmented = segment_kikuyu_with_morfessor(train_ki_sentences)
+
     # Write monolingual train files into the run directory so each run is self-contained
     train_ki_path = os.path.join(config.LATEST_RUN_DIR, "train.kikuyu")
     train_en_path = os.path.join(config.LATEST_RUN_DIR, "train.english")
-    write_monolingual_txt(train_ki_sentences, train_ki_path)
+    write_monolingual_txt(train_ki_segmented, train_ki_path)
     write_monolingual_txt(train_en_sentences, train_en_path)
 
     if args.quick_test:
-        logger.info("Running in QUICK TEST mode — using first 200 pairs, 5 epochs")
+        logger.info("Running in QUICK TEST mode â€” using first 200 pairs, 5 epochs")
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
         train_en_path = os.path.join(temp_dir, "test_en.txt")
@@ -238,8 +286,8 @@ def main() -> None:
         ki_words = ki_model.get_words()
         en_words = en_model.get_words()
 
-        # ── Supervised Procrustes from parallel sentence embeddings ──────────
-        # Use the training pairs directly as alignment anchors — much stronger
+        # â”€â”€ Supervised Procrustes from parallel sentence embeddings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Use the training pairs directly as alignment anchors â€” much stronger
         # than loanwords or identical strings alone.
         logger.info(
             f"Computing sentence embeddings for {len(train_ki_sentences)} training pairs..."
@@ -251,7 +299,7 @@ def main() -> None:
             get_sentence_embedding(en_model, s) for s in train_en_sentences
         ])  # (N, dim)
 
-        # ── Source 2: seed dictionary word pairs (explicit translations) ────
+        # â”€â”€ Source 2: seed dictionary word pairs (explicit translations) â”€â”€â”€â”€
         seed_dict_path = Path(config.SEED_DICTIONARY_PATH)
         if seed_dict_path.exists():
             logger.info(f"Augmenting anchors with seed dictionary from {seed_dict_path}")
@@ -263,7 +311,7 @@ def main() -> None:
             en_sent_embs = np.vstack([en_sent_embs, seed_en])
             logger.info(f"After seed dictionary: {len(ki_sent_embs)} anchor pairs")
 
-        # ── Source 3: identical-string word pairs (vocabulary breadth) ────────
+        # â”€â”€ Source 3: identical-string word pairs (vocabulary breadth) â”€â”€â”€â”€â”€â”€â”€â”€
         # Same surface form in both vocabularies (shared proper nouns, numbers,
         # loanwords). Each model embeds them differently, so they carry real signal.
         identical_words = extract_identical_string_dictionary(ki_words, en_words)
@@ -287,7 +335,7 @@ def main() -> None:
         del ki_sent_embs, en_sent_embs, X, Y
         gc.collect()
 
-        # ── Iterative Procrustes refinement with MNN + CSLS ──────────────────
+        # â”€â”€ Iterative Procrustes refinement with MNN + CSLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         logger.info("Refining matrices via iterative Procrustes with CSLS...")
         ki_top_words = ki_words[:20000]
         en_top_words = en_words[:20000]
@@ -329,14 +377,14 @@ def main() -> None:
     acc_ki_en = evaluate_retrieval_accuracy(translator_ki_en, val_ki, val_en)
     acc_en_ki = evaluate_retrieval_accuracy(translator_en_ki, val_en, val_ki)
 
-    # BLEU / ChrF — retrieval
+    # BLEU / ChrF â€” retrieval
     ki_en_ret = [translator_ki_en.translate_sentence_retrieval(s) for s in val_ki]
     bleu_ki_en_ret, chrf_ki_en_ret = calculate_translation_scores(ki_en_ret, val_en)
 
     en_ki_ret = [translator_en_ki.translate_sentence_retrieval(s) for s in val_en]
     bleu_en_ki_ret, chrf_en_ki_ret = calculate_translation_scores(en_ki_ret, val_ki)
 
-    # BLEU / ChrF — word-by-word
+    # BLEU / ChrF â€” word-by-word
     ki_en_wbw = [translator_ki_en.translate_word_by_word(s) for s in val_ki]
     bleu_ki_en_wbw, chrf_ki_en_wbw = calculate_translation_scores(ki_en_wbw, val_en)
 
