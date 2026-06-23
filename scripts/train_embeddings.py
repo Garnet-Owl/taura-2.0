@@ -17,6 +17,7 @@ import pandas as pd
 from app.api.embeddings import (
     CrossLingualTranslator,
     extract_identical_string_dictionary,
+    extract_parallel_proper_noun_anchors,
     get_sentence_embedding,
     get_sentence_embeddings_parallel,
     iterative_procrustes,
@@ -214,6 +215,14 @@ def main() -> None:
         train_ki_sentences, save_path=morfessor_save_path
     )
 
+    total_words = sum(len(s.split()) for s in train_ki_sentences)
+    total_morphemes = sum(len(s.split()) for s in train_ki_segmented)
+    splits_per_word = (total_morphemes / total_words) if total_words > 0 else 1.0
+    logger.info(
+        f"Morfessor diagnostics: {total_words} words split into {total_morphemes} morphemes "
+        f"({splits_per_word:.2f} morphemes/word average)."
+    )
+
     # Write monolingual train files into the run directory so each run is self-contained
     train_ki_path = os.path.join(config.LATEST_RUN_DIR, "train.kikuyu")
     train_en_path = os.path.join(config.LATEST_RUN_DIR, "train.english")
@@ -221,7 +230,7 @@ def main() -> None:
     write_monolingual_txt(train_en_sentences, train_en_path)
 
     if args.quick_test:
-        logger.info("Running in QUICK TEST mode â€” using first 200 pairs, 5 epochs")
+        logger.info("Running in QUICK TEST mode - using first 200 pairs, 5 epochs")
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
         train_en_path = os.path.join(temp_dir, "test_en.txt")
@@ -251,8 +260,8 @@ def main() -> None:
         ki_words = ki_model.get_words()
         en_words = en_model.get_words()
 
-        # â”€â”€ Supervised Procrustes from parallel sentence embeddings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        # Use the training pairs directly as alignment anchors â€” much stronger
+        # -- Supervised Procrustes from parallel sentence embeddings ----------
+        # Use the training pairs directly as alignment anchors - much stronger
         # than loanwords or identical strings alone.
         logger.info(
             f"Computing sentence embeddings for {len(train_ki_segmented)} training pairs..."
@@ -267,7 +276,7 @@ def main() -> None:
             get_sentence_embedding(en_model, s) for s in train_en_sentences
         ])  # (N, dim)
 
-        # â”€â”€ Source 2: seed dictionary word pairs (explicit translations) â”€â”€â”€â”€
+        # -- Source 2: seed dictionary word pairs (explicit translations) ----
         seed_dict_path = Path(config.SEED_DICTIONARY_PATH)
         if seed_dict_path.exists():
             logger.info(f"Augmenting anchors with seed dictionary from {seed_dict_path}")
@@ -279,7 +288,7 @@ def main() -> None:
             en_sent_embs = np.vstack([en_sent_embs, seed_en])
             logger.info(f"After seed dictionary: {len(ki_sent_embs)} anchor pairs")
 
-        # â”€â”€ Source 3: identical-string word pairs (vocabulary breadth) â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Source 3: identical-string word pairs (vocabulary breadth) ----------
         # Same surface form in both vocabularies (shared proper nouns, numbers,
         # loanwords). Each model embeds them differently, so they carry real signal.
         identical_words = extract_identical_string_dictionary(ki_words, en_words)
@@ -293,6 +302,31 @@ def main() -> None:
                 f" ({len(identical_words)} identical-string pairs added)"
             )
 
+        # -- Source 4: parallel proper-noun / loanword anchors ------------------
+        # Words appearing verbatim in the SAME sentence pair — positional
+        # co-occurrence is stronger evidence than vocabulary overlap alone.
+        # Captures Bible names, place names, and English loanwords that both
+        # languages kept in English spelling (e.g. "Kenya", "hospitali"->"hospital").
+        proper_noun_words = extract_parallel_proper_noun_anchors(
+            train_en_sentences, train_ki_sentences
+        )
+        if proper_noun_words:
+            morfessor_path = os.path.join(config.LATEST_RUN_DIR, "morfessor_ki.bin")
+            ki_seg_fn_anchor = load_morfessor_segment_fn(morfessor_path)
+            pn_ki = np.array([
+                ki_model.get_word_vector(
+                    ki_seg_fn_anchor(w).split()[0] if ki_seg_fn_anchor else w
+                )
+                for w in proper_noun_words
+            ])
+            pn_en = np.array([en_model.get_word_vector(w) for w in proper_noun_words])
+            ki_sent_embs = np.vstack([ki_sent_embs, pn_ki])
+            en_sent_embs = np.vstack([en_sent_embs, pn_en])
+            logger.info(
+                f"After proper-noun anchors: {len(ki_sent_embs)} total anchor pairs"
+                f" ({len(proper_noun_words)} proper-noun/loanword pairs added)"
+            )
+
         X = ki_sent_embs.T  # (dim, N)
         Y = en_sent_embs.T  # (dim, N)
 
@@ -303,7 +337,7 @@ def main() -> None:
         del ki_sent_embs, en_sent_embs, X, Y
         gc.collect()
 
-        # â”€â”€ Iterative Procrustes refinement with MNN + CSLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Iterative Procrustes refinement with MNN + CSLS -----------------
         logger.info("Refining matrices via iterative Procrustes with CSLS...")
         ki_top_words = ki_words[:20000]
         en_top_words = en_words[:20000]
@@ -359,14 +393,14 @@ def main() -> None:
     acc_ki_en = evaluate_retrieval_accuracy(translator_ki_en, val_ki, val_en)
     acc_en_ki = evaluate_retrieval_accuracy(translator_en_ki, val_en, val_ki)
 
-    # BLEU / ChrF â€” retrieval
+    # BLEU / ChrF - retrieval
     ki_en_ret = [translator_ki_en.translate_sentence_retrieval(s) for s in val_ki]
     bleu_ki_en_ret, chrf_ki_en_ret = calculate_translation_scores(ki_en_ret, val_en)
 
     en_ki_ret = [translator_en_ki.translate_sentence_retrieval(s) for s in val_en]
     bleu_en_ki_ret, chrf_en_ki_ret = calculate_translation_scores(en_ki_ret, val_ki)
 
-    # BLEU / ChrF â€” word-by-word
+    # BLEU / ChrF - word-by-word
     ki_en_wbw = [translator_ki_en.translate_word_by_word(s) for s in val_ki]
     bleu_ki_en_wbw, chrf_ki_en_wbw = calculate_translation_scores(ki_en_wbw, val_en)
 

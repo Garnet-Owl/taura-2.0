@@ -38,6 +38,42 @@ def extract_identical_string_dictionary(
     return sorted(seed)[:5000]
 
 
+def extract_parallel_proper_noun_anchors(
+    en_sentences: list[str],
+    ki_sentences: list[str],
+    min_len: int = 3,
+    max_anchors: int = 5000,
+) -> list[str]:
+    """Extract words that appear verbatim on both sides of aligned sentence pairs.
+
+    In a Bible + agriculture corpus, many proper nouns and place names are spelled
+    identically in Kikuyu and English (e.g. "Kenya", "Peter", "Abraham").  Unlike
+    the vocabulary-level identical-string dictionary, these anchors are
+    positionally verified — a word that co-occurs in the SAME sentence pair is
+    guaranteed to refer to the same entity.
+
+    English proper nouns (capitalised, alpha-only) are checked against the
+    lowercased Kikuyu sentence so Bantu phonology variants (capitalised En vs
+    lowercase Ki) are also captured.
+    """
+    anchors: set[str] = set()
+    for en_s, ki_s in zip(en_sentences, ki_sentences, strict=False):
+        ki_words_lower = {w.lower() for w in ki_s.split()}
+        for raw_word in en_s.split():
+            word = raw_word.strip(".,;:!?\"'()")
+            if (
+                len(word) >= min_len
+                and word[0].isupper()
+                and word.isalpha()
+                and word.lower() in ki_words_lower
+            ):
+                anchors.add(word.lower())
+    logger.info(
+        "Parallel proper-noun anchors extracted: %d unique names/loanwords.", len(anchors)
+    )
+    return sorted(anchors)[:max_anchors]
+
+
 def compute_csls_penalty(embs: np.ndarray, ref_embs: np.ndarray, k: int = 10) -> np.ndarray:
     """Computes the mean cosine similarity of each embedding in `embs` to its `k` nearest neighbors in `ref_embs`."""
     if is_cuda_available:
