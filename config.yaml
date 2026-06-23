@@ -37,6 +37,10 @@ training:
   # Sentence pairs held out from training for evaluation
   val_size: 100
 
+  # Fixed seed for FastText — ensures reproducible embeddings across runs so
+  # BLEU comparisons reflect algorithm changes, not random initialisation variance
+  fasttext_seed: 42
+
 datasets:
   repo_cgiar: CGIAR/KikuyuEnglish_translation
   repo_mich: michsethowusu/english-kikuyu_sentence-pairs
