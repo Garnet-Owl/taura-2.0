@@ -34,3 +34,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-06-23 - Baseline Quality Check
 - Re-ran offline evaluation after corpus improvements and recorded better baseline BLEU scores: 5.34 for Kikuyu to English and 4.91 for English to Kikuyu.
+
+## 2026-06-23 - Ephesians and Philippians Extraction
+- Added the Ephesians and Philippians extractors and aligned corpus with 155 and 104 validated verse pairs respectively.
