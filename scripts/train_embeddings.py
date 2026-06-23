@@ -70,7 +70,9 @@ def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
     return ki_list, en_list
 
 
-def segment_kikuyu_with_morfessor(sentences: list[str]) -> list[str]:
+def segment_kikuyu_with_morfessor(
+    sentences: list[str], save_path: str | None = None
+) -> list[str]:
     """Pre-segments Kikuyu sentences into morpheme tokens using Morfessor.
 
     Morfessor (unsupervised morphological segmentation) learns prefix/suffix
@@ -78,6 +80,8 @@ def segment_kikuyu_with_morfessor(sentences: list[str]) -> list[str]:
     verb conjugation prefixes like 'a-', 'mũ-', 'ũ-' are split out, giving
     FastText cleaner subword units to learn from.
     Returns the original sentences unchanged if morfessor is not installed.
+    If `save_path` is given the trained model is persisted there so inference
+    can reuse the same segmentation boundaries as training.
     """
     try:
         import morfessor
@@ -96,6 +100,13 @@ def segment_kikuyu_with_morfessor(sentences: list[str]) -> list[str]:
     train_data = [(count, word) for word, count in word_counts.items()]
     model.train_batch(train_data)
     logger.info("Morfessor trained on %d unique Kikuyu word types.", len(word_counts))
+
+    if save_path:
+        try:
+            morfessor.MorfessorIO().write_binary_file(save_path, model)
+            logger.info("Morfessor model saved to %s", save_path)
+        except Exception as e:
+            logger.warning("Could not save Morfessor model: %s", e)
 
     segmented: list[str] = []
     for sent in sentences:
@@ -244,10 +255,13 @@ def main() -> None:
     )
 
     # Apply Morfessor morphological segmentation to Kikuyu before FastText training.
-    # This splits agglutinative prefixes/suffixes into separate tokens so FastText
-    # learns cleaner morpheme-level embeddings (English is left unsegmented).
+    # The trained Morfessor model is saved alongside the run artifacts so the server
+    # can reload it and apply the same segmentation to inference-time queries.
     logger.info("Applying Morfessor segmentation to Kikuyu training sentences...")
-    train_ki_segmented = segment_kikuyu_with_morfessor(train_ki_sentences)
+    morfessor_save_path = os.path.join(config.LATEST_RUN_DIR, "morfessor_ki.bin")
+    train_ki_segmented = segment_kikuyu_with_morfessor(
+        train_ki_sentences, save_path=morfessor_save_path
+    )
 
     # Write monolingual train files into the run directory so each run is self-contained
     train_ki_path = os.path.join(config.LATEST_RUN_DIR, "train.kikuyu")
