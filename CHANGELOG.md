@@ -103,3 +103,8 @@ All notable changes to this project will be documented in this file.
 - Created `scripts/build_monolingual_corpus.py` — extracts 67K Kikuyu + 129K English sentences from the Bible PDFs for FastText training.
 - Changed `prepare_dataset.py` monolingual write mode from `"w"` (overwrite) to `"a"` (append) to preserve existing large corpora.
 - Rebuilt monolingual corpora: 74K Kikuyu / 137K English lines total.
+
+## [Session 2026-06-23]
+- Fixed Mypy type annotation and assignment mismatch issues in `app/shared/logger.py` and `app/api/embeddings.py` to ensure 100% type safety.
+- Fixed lint and formatting violations across `scripts/preprocessing/bible_parser.py`, `scripts/build_seed_dictionary.py`, and `scripts/verify_semantic_nn.py`.
+- Ran the offline evaluation pipeline (`scripts/evaluate.py`) for the new models, recording BLEU improvements to 5.34 (Kikuyu->English) and 4.91 (English->Kikuyu).
