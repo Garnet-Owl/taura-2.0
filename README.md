@@ -21,19 +21,26 @@ Taura is not just a translation API. It is a full pipeline:
 The long-term goal is to push translation quality to the point where Taura is genuinely useful to Kikuyu speakers, and to serve as a replicable blueprint for other low-resource African languages.
 
 
-## How We Improved
+## Performance Progression
 
-> This section is updated as new techniques and data are added. Every row represents a real training run.
+> This section tracks the evolution of Taura's cross-lingual alignment. Every row represents a real training run, evaluated on a 100-sentence held-out validation set.
 
-The table below shows how retrieval BLEU changed as alignment techniques were introduced. Numbers marked `—` were not measured for that run.
+> [!NOTE]
+> **Metrics Key:**
+> - **BLEU / chrF:** Measures translation similarity to a human reference. Higher is better.
+> - **Top-1 / Top-5:** The percentage of times the exact correct translation was in the #1 or Top 5 retrieved results.
+> - **MRR (Mean Reciprocal Rank):** How close the correct translation was to rank #1 on average.
+> - **MNN (Mutual Nearest Neighbors):** The number of Kikuyu and English vocabulary words that perfectly aligned. Higher means a better vocabulary bridge.
 
-| Run | Key Changes | BLEU Ki→En | BLEU En→Ki | Top-1 Ki→En | MNN Pairs |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **Baseline** | Raw FastText + simple Procrustes | 5.34 | 4.91 | — | — |
-| **Hybrid alignment** | Sentence-pair anchors + seed dictionary + identical-string anchors; iterative Procrustes with MNN + CSLS | 21.00 | 35.09 | — | 3,007 |
-| **Agriculture + Proper-Nouns** | +3,852 agriculture pairs; parallel proper-noun anchors added; Morfessor removed; default n-grams (`minn=3 / maxn=6`) restored | 23.35 | 34.92 | 27% | 4,788 |
+| Run | Direction | BLEU | chrF | Top-1 | Top-5 | MRR | MNN |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1. Baseline**<br>Raw FastText + simple Procrustes | Ki→En<br>En→Ki | 5.34<br>4.91 | —<br>— | —<br>— | —<br>— | —<br>— | — |
+| **2. Hybrid alignment**<br>Sentence anchors + seed dict + identical strings; iterative Procrustes with MNN+CSLS | Ki→En<br>En→Ki | 21.00<br>35.09 | —<br>— | —<br>— | —<br>— | —<br>— | 3,007 |
+| **3. Agriculture + Proper-Nouns**<br>+3,852 agri pairs; proper-noun anchors; restored default n-grams | Ki→En<br>En→Ki | 23.36<br>34.92 | 44.16<br>51.92 | 6%<br>27% | 32%<br>50% | 0.208<br>0.398 | 4,788 |
+| **4. Expanded Bible Corpus**<br>+Galatians, Ephesians, Philippians, Colossians, 1 Thess (10,255 pairs) | Ki→En<br>En→Ki | 35.27<br>34.38 | 49.10<br>55.18 | 20%<br>22% | 38%<br>41% | 0.305<br>0.320 | 4,859 |
 
-The hybrid alignment is the single biggest jump — a **4× BLEU improvement** from baseline. The agriculture and proper-noun anchor run confirms the embedding space is still improving, with MNN growth to 4,751.
+The hybrid alignment was the single biggest jump — a **4× BLEU improvement** from baseline.
+The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.
 
 **What drove the 5 → 21 BLEU jump:**
 Three alignment anchor sources were combined — parallel sentence embeddings, a seed dictionary, and identical-string vocabulary pairs — giving the Procrustes solver a much richer and more diverse set of constraints. Iterative refinement with Mutual Nearest Neighbors and CSLS de-hubbing then pushed the MNN count from near-zero to 3,007, meaning 3,007 Kikuyu vocabulary words found their correct English counterpart through the learned projection.
@@ -42,24 +49,6 @@ Three alignment anchor sources were combined — parallel sentence embeddings, a
 - Supervised cross-lingual alignment (what we do) consistently outperforms unsupervised methods when at least 1–5k parallel pairs are available [(Conneau et al., MUSE)](https://github.com/facebookresearch/MUSE)
 - Cross-lingual transfer from related high-resource languages (e.g. Swahili → Kikuyu) can add 1.5–3.5 BLEU in low-resource Bantu pairs [(Congolese Swahili study)](https://arxiv.org/pdf/2103.10734)
 - Chain-of-languages multilingual anchors (English → Swahili → Kikuyu) have shown promise for zero-resource directions [(multilingual anchor chains)](https://arxiv.org/pdf/2311.12489)
-
-
-## Current Performance
-
-> [!NOTE]
-> **Metrics Key:**
-> - **BLEU / chrF:** Measures translation similarity to a human reference. Higher is better.
-> - **Top-1 / Top-5:** The percentage of times the exact correct translation was in the #1 or Top 5 retrieved results.
-> - **MRR (Mean Reciprocal Rank):** How close the correct translation was to rank #1 on average.
-> - **MNN (Mutual Nearest Neighbors):** The number of Kikuyu and English vocabulary words that perfectly aligned (each word is the other's #1 closest match). Higher means a better vocabulary bridge.
-
-> Last measured: 2026-06-23.
-> Trained on 9,812 pairs from Bible (8 books) and agriculture (8 crop sectors).
-
-| Direction | BLEU (retrieval) | chrF (retrieval) | Top-1 | Top-5 | MRR |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| Kikuyu → English | 23.36 | 44.16 | 6% | 32% | 0.208 |
-| English → Kikuyu | 34.92 | 51.92 | 27% | 50% | 0.398 |
 
 
 ## Quick Start
