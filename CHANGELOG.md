@@ -155,7 +155,5 @@ All notable changes to this project will be documented in this file.
 - Verified Ruff and full pytest suite: 70/70 passing.
 
 ## [Session 2026-06-23 - Planning Docs Restructure]
-- Rewrote root `MASTER_PLAN.md` as the milestone roadmap for Taura 2.0.
-- Rewrote dated progress updates as milestone snapshots instead of duplicate changelog task boards.
-- Clarified that Bible extraction is one corpus-expansion phase, with individual books treated as implementation detail.
-- Updated `AGENTS.md` so future agents update progress files only when milestone state, metrics, blockers, or next focus changes.
+- Reworked the planning docs so `MASTER_PLAN.md` shows milestones, progress updates show milestone status, and `CHANGELOG.md` stays for short change history.
+- Updated agent instructions so future updates stay concise and avoid duplicate progress logs.
