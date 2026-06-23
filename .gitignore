@@ -129,7 +129,7 @@ data/embeddings/*
 # AI coding
 AGENTS.md
 /session-details
-MASTER_PLAN.md
+
 
 # Local wheel packages
 *.whl
