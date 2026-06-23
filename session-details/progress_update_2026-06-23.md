@@ -42,16 +42,16 @@ Current extracted evidence:
 | Colossians | Extracted with 95 aligned verse pairs. |
 | 1 Thessalonians | Extracted with 89 aligned verse pairs. |
 | Psalms | Extracted with 2,461 aligned verse pairs. |
-| Genesis | Extracted with 1,493 aligned verse pairs. |
+| Genesis | Extracted with 1,533 aligned verse pairs. |
 | Proverbs | Extracted with 915 aligned verse pairs. |
 | Ecclesiastes | Extracted with 222 aligned verse pairs. |
 
 Latest baseline BLEU after recent corpus improvements:
 
-- **Kikuyu -> English:** 34.04 BLEU (up from 33.18)
-- **English -> Kikuyu:** 37.22 BLEU (up from 35.96, breaking 37 for the first time!)
-- **English -> Kikuyu Top-5:** 51% (broke 50% for the first time!)
-- **Mutual Nearest Neighbors (MNN):** 6,521 (massive jump from 5,654)
+- **Kikuyu -> English:** 38.67 BLEU (huge jump up from 33.18)
+- **English -> Kikuyu:** 38.53 BLEU (huge jump up from 35.96)
+- **Kikuyu -> English Top-5:** 44% (recovered 10 points after fixing alignment!)
+- **Mutual Nearest Neighbors (MNN):** 6,571 (massive jump from 5,654)
 
 ## Next Work
 
