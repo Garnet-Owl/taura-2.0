@@ -153,3 +153,9 @@ All notable changes to this project will be documented in this file.
 - Added `tests/test_corinthians1_parser.py` with 5 BDD tests covering constants, cleaning, validation, body filtering, and full PDF alignment.
 - Extracted `data/parallel/corinthians1_aligned.csv` with 437 aligned pairs; 0 missing/empty verses on both sides.
 - Verified Ruff and full pytest suite: 70/70 passing.
+
+## [Session 2026-06-23 - Planning Docs Restructure]
+- Rewrote root `MASTER_PLAN.md` as the milestone roadmap for Taura 2.0.
+- Rewrote dated progress updates as milestone snapshots instead of duplicate changelog task boards.
+- Clarified that Bible extraction is one corpus-expansion phase, with individual books treated as implementation detail.
+- Updated `AGENTS.md` so future agents update progress files only when milestone state, metrics, blockers, or next focus changes.

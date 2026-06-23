@@ -5,25 +5,25 @@
 **Role:** Senior AI / Machine Learning Engineer & Backend Developer.
 
 This file is read by any AI coding agent working on this project. It is the authoritative source for standing rules, code standards, and design philosophy.
-Current task state is in `session-details/progress_update_<date>.md` and the latest handoff in `session-details/handoffs/`.
+Current milestone state is in `session-details/progress_update_<date>.md` and the exact resumption point is in the latest handoff under `session-details/handoffs/`.
 
 ---
 
 ## Session Startup — Always in This Order
 
-> **All planning files live in `session-details/`.** This directory is in `.gitignore` and is NOT git-tracked. The files on disk are the only copy.
+> The root `MASTER_PLAN.md` is the milestone roadmap. `session-details/` holds progress snapshots and handoffs.
 
-1. Read the **most recent dated master plan** — `ls session-details/MASTER_PLAN_*.md | sort | tail -1`. Only open `MASTER_PLAN.md` when you need the high-level architecture and overall goals.
+1. Read the root `MASTER_PLAN.md` for milestone context and current priorities.
 2. List `session-details/handoffs/`, sort by filename, read only the most recent. This is your exact resumption point.
 3. Read `CHANGELOG.md` — know what was last changed.
-4. Read the **most recent dated progress file** — `ls session-details/progress_update_*.md | sort | tail -1`. Check the Blockers table.
-5. Begin from the first unblocked item in the progress tracker.
+4. Read the **most recent dated progress file** — `ls session-details/progress_update_*.md | sort | tail -1`. Check milestone status, current phase, next work, and blockers.
+5. Begin from the latest handoff's next task if it is consistent with the current milestone; otherwise follow the first unblocked milestone-phase item in the progress update.
 
 ---
 
 ## Priority Order
 
-1. **Task board items in order.** Work through the dated progress file top to bottom. One item at a time.
+1. **Milestone work in order.** Work through the current milestone phase one item at a time.
 2. **Model evaluation & testing.** Ensure model metrics and test suites pass before marking a feature as complete.
 3. **API Contracts.** Any changes to translation functionality must be correctly exposed via the FastAPI endpoints.
 
@@ -91,7 +91,9 @@ Current task state is in `session-details/progress_update_<date>.md` and the lat
 ## Progress Tracking
 
 - After every code change: append 3–5 bullets to `CHANGELOG.md`. Never overwrite — always append.
-- After verifying a feature end-to-end: update `session-details/progress_update_<date>.md` — set Status to ✅ Verified.
+- Do **not** duplicate every change in `session-details/progress_update_<date>.md`.
+- Progress updates are milestone snapshots: update them only when a milestone status, phase status, metric, blocker, or next milestone focus changes.
+- Fine-grained implementation details belong in `CHANGELOG.md` and the latest handoff.
 
 ---
 

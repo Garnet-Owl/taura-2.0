@@ -1,27 +1,39 @@
-# Taura 2.0 - Progress Update
+# Taura 2.0 - Progress Update (2026-06-20)
 
-## Task Board
+This is a milestone snapshot, not a changelog. Detailed implementation history
+belongs in `CHANGELOG.md`.
 
-| Task | Status | Notes |
-| :--- | :---: | :--- |
-| **1. Project Scaffolding & Setup** | | |
-| Initialize project with Poetry, Ruff, and Pytest | ✅ Verified | pyproject.toml exists with dependencies |
-| Define feature-based directory structure (`app/api`, `app/serve`, `models/`, `data/`) | ✅ Verified | `models/`, `app/serve` created |
-| Set up CI/CD pipelines and contribution guidelines | ✅ Verified | `.github/workflows/ci.yml` and `CONTRIBUTING.md` created |
-| **2. Data Engineering & Preprocessing** | | |
-| Collect and curate Kikuyu-English parallel corpora | ✅ Verified | HF dataset downloaded and preprocessed in previous session |
-| Implement robust tokenization and text normalization scripts | ✅ Verified | Implemented in app/api/preprocessing.py and verified by unit tests |
-| Prepare train/validation/test splits | ✅ Verified | Implemented in app/api/split.py and verified by unit tests |
-| **3. Model Development & Training** | | |
-| Implement FastText embeddings training pipeline | ✅ Verified | Implemented in scripts/train_embeddings.py and app/api/embeddings.py |
-| Train models for both Kikuyu -> English and English -> Kikuyu | ✅ Verified | Models and alignment projection matrices trained and saved |
-| Evaluate translation quality | ✅ Verified | Top-1, top-5, and MRR metrics computed and saved to JSON |
-| **4. API Service & Integration** | | |
-| Wrap models into a FastAPI service | ✅ Verified | Implemented in app/serve/main.py with context lifespan |
-| Implement endpoints for bidirectional translation | ✅ Verified | Bidirectional endpoints support retrieval and word-by-word methods |
-| Write integration tests for API | ✅ Verified | Integration tests implemented in app/tests/test_api.py |
+## Milestone Status
 
+| Milestone | Status | Evidence |
+|---|---|---|
+| 0 - Project Foundation | Complete | `uv`, Ruff, pytest, CI workflow, contributor docs, project directories |
+| 1 - FastText Baseline | Complete | preprocessing, split generation, embedding training, alignment matrices, saved metrics |
+| 2 - API, Evaluation, and Demo UI | In progress | FastAPI service and UI present; offline evaluation pipeline added |
+| 3 - Corpus Expansion and Quality Control | Not started | Bible extraction and larger corpus work not yet organized as a milestone |
+| 4 - NLLB Fine-Tuning Readiness | Not started | No sequence-to-sequence training workflow yet |
+| 5 - NLLB Training and Evaluation | Not started | No trained NLLB adapter yet |
+| 6 - Release Packaging | In progress | README/setup docs exist but still evolving |
+
+## Current Focus
+
+Stabilize the FastText baseline and make the API/evaluation surface usable
+enough to compare future corpus and model changes.
+
+## Recent Evidence
+
+- Core project scaffolding and CI are in place.
+- Text normalization and train/validation/test splitting are implemented.
+- FastText embedding training and alignment are implemented.
+- FastAPI translation endpoints and integration tests are present.
+- Offline BLEU/ChrF evaluation has been introduced.
+
+## Next Milestone Work
+
+1. Finish API/evaluation documentation.
+2. Improve corpus quality and quantity.
+3. Re-evaluate the baseline after each meaningful corpus change.
 
 ## Blockers
 
-None. All blockers have been successfully resolved.
+None.

@@ -1,73 +1,179 @@
-# Taura 2.0 — Machine Translation Master Plan & Recipe
+# Taura 2.0 - Master Plan
 
-This document serves as the authoritative blueprint for building a bidirectional (Kikuyu ↔ English) machine translation system capable of handling complex morpho-syntactic structures and semantic context variations.
+Taura 2.0 is an open-source machine translation project for Kikuyu and English.
+The goal is a practical bidirectional translator with a clean data pipeline,
+measurable model quality, and a small FastAPI service that can be improved by
+contributors over time.
 
----
-
-## 1. Scientific & Linguistic Context
-
-Kikuyu (Gĩkũyũ) is a morphologically rich, agglutinative Bantu language. Translation challenges include:
-*   **Agglutination:** Single words consist of a root verb combined with subject prefixes, tense markers, object infixes, and aspect suffixes (e.g., *nĩndamũrũrire* $\rightarrow$ "I looked at him"). Standard word-by-word mapping fails.
-*   **Noun Classes:** 18 grammatical noun classes govern strict concord (agreement) across verbs, adjectives, and pronouns.
-*   **Semantic Variation:** Homographs change meaning based on context (e.g., tone and surrounding tokens).
-
-To resolve these, we must use a context-aware sequence-to-sequence model rather than static bilingual word projection.
+This file is the roadmap. It should describe the project direction, milestones,
+and acceptance criteria. Detailed day-to-day changes belong in `CHANGELOG.md`.
+Milestone status belongs in `session-details/progress_update_*.md`.
 
 ---
 
-## 2. High-Accuracy Translation Recipe
+## 1. Project Goal
 
-Our goal is to achieve **70–75%+ translation accuracy** (equivalent to a BLEU score of $25.0+$ and ChrF score of $50.0+$ on low-resource test splits) using transfer learning on pre-trained multilingual models.
+Build a Kikuyu-English translation system that moves from a retrieval-based
+FastText baseline to a context-aware sequence-to-sequence model.
 
-```mermaid
-graph TD
-    A[Raw Parallel Datasets] --> B[Advanced Data Cleaning & Filter Pipeline]
-    B --> C[Clean parallel corpus]
-    D[Pre-trained NLLB-200-distilled-600M] --> E[Parameter-Efficient Fine-Tuning LoRA]
-    C --> E
-    E --> F[Context-Aware Fine-Tuned Model]
-    F --> G[FastAPI Service / Translation UI]
-```
-
-### Recipe Blueprint
-
-| Ingredient | Description | Purpose |
-| :--- | :--- | :--- |
-| **Base Model** | `facebook/nllb-200-distilled-600M` | Distilled, fast, handles `kik_Latn` and `eng_Latn` natively. |
-| **Vocabulary** | NLLB SentencePiece Tokenizer (256K vocabulary) | Captures subwords, morphemes, and prevents Out-of-Vocabulary (OOV) errors. |
-| **Fine-Tuning Method** | LoRA (Low-Rank Adaptation) on attention projection layers ($W_q, W_v$) | Prevents catastrophic forgetting; allows training on 8GB VRAM. |
-| **Data Regularization** | Label Smoothing ($0.1$) & Dropout ($0.2$) | Combats overfitting on small low-resource sets. |
+Target release quality:
+- Reproducible dataset preparation and evaluation.
+- Publicly understandable corpus provenance.
+- API support for bidirectional translation.
+- Documented model metrics and limitations.
+- A path from the current FastText baseline to NLLB-200 fine-tuning.
 
 ---
 
-## 3. Step-by-Step Implementation Procedures
+## 2. Technical Direction
 
-### Step 1: Establish the Evaluation Pipeline (Run first!)
-Before training any model, we must establish a standalone evaluation suite to run on a golden test split of 500 hand-verified parallel sentences:
-1.  **ChrF/ChrF++ (Character F-score):** Primary metric. Essential for Bantu languages to evaluate prefix/suffix alignment.
-2.  **BLEU (n-gram precision):** Standard corpus-level fluency metric.
-3.  **COMET/BLEURT (Neural Similarity):** Uses cross-lingual embeddings to capture semantic similarity even if translation uses synonyms.
+### Baseline System
 
-### Step 2: Advanced Dataset Filtering
-1.  **Language Identification:** Filter Hugging Face datasets using a pre-trained FastText LangID model to remove non-Kikuyu languages (e.g. Indonesian, Tamil).
-2.  **Script/Character Filtering:** Remove rows containing non-Latin alphabets or missing Kikuyu-specific character markers (`ĩ` and `ũ`).
-3.  **Similarity Thresholding:** Drop parallel pairs with similarity scores below $1.15$ in mined corpora.
+The current baseline uses:
+- Normalized parallel corpora.
+- FastText embeddings for Kikuyu and English.
+- Orthogonal Procrustes alignment.
+- Retrieval-based sentence translation and word-by-word fallback.
+- FastAPI endpoints for translation, candidates, model metadata, feedback, and
+  health checks.
 
-### Step 3: Kaggle Remote GPU Fine-Tuning
-1.  **Draft training script** utilizing Hugging Face `Seq2SeqTrainer` with support for mixed precision (`fp16`).
-2.  **Export training configurations** and datasets to Kaggle using the Kaggle API.
-3.  **Execute LoRA fine-tuning** using Kaggle's free Tesla T4 GPU (30+ hours/week).
-4.  **Save & Download** the LoRA weights (`adapter_model.bin`) back to the `models/` folder.
+This baseline is valuable because it is small, inspectable, and useful for
+corpus-quality experiments.
 
-### Step 4: Bidirectional Service Integration
-1.  Extend the FastAPI service (`app/serve/main.py`) to support the fine-tuned NLLB model.
-2.  Maintain the existing retrieval mode as a fallback/hybrid system for exact phrase matching.
+### Target System
+
+The target system uses transfer learning:
+- Base model: `facebook/nllb-200-distilled-600M`.
+- Languages: `kik_Latn` and `eng_Latn`.
+- Fine-tuning: LoRA adapters on attention projection layers.
+- Primary metric: ChrF/ChrF++.
+- Secondary metrics: BLEU, retrieval accuracy, and qualitative review.
+
+The FastText retrieval system remains a fallback and data-quality diagnostic
+tool while the NLLB path matures.
 
 ---
 
-## 4. Timeline & Milestones
+## 3. Milestones
 
-*   **Milestone 1: Evaluation Pipeline Setup** — Create evaluation test harness (`scripts/evaluate_seq2seq.py`) and golden test dataset.
-*   **Milestone 2: Data Cleaning & Normalization** — Write script to filter noisy Hugging Face corpora.
-*   **Milestone 3: LoRA Training Deployment** — Train NLLB-200 model on Kaggle remote GPU.
-*   **Milestone 4: API & Web UI Integration** — Port the model weights to the live FastAPI server.
+### Milestone 0 - Project Foundation
+
+Purpose: establish a maintainable Python project that contributors can run.
+
+Acceptance criteria:
+- `uv` manages dependencies and lockfile.
+- Ruff, pytest, and CI are configured.
+- Package structure is feature-oriented enough for API, preprocessing, serving,
+  and scripts.
+- Contributor setup docs exist.
+
+Status: complete.
+
+### Milestone 1 - FastText Baseline
+
+Purpose: build the first measurable Kikuyu-English translation baseline.
+
+Acceptance criteria:
+- Text normalization and train/validation/test splitting are reproducible.
+- FastText embeddings train for both language directions.
+- Alignment matrices are saved with versioned model artifacts.
+- Retrieval metrics are generated and stored.
+
+Status: complete.
+
+### Milestone 2 - API, Evaluation, and Demo UI
+
+Purpose: expose the baseline through a useful service and verify behavior.
+
+Acceptance criteria:
+- FastAPI serves bidirectional translation.
+- `/translate/candidates` exposes ranked hypotheses.
+- `/model/info` exposes model version, hyperparameters, and available metrics.
+- Offline evaluation reports BLEU/ChrF.
+- A simple browser UI exists for manual translation and feedback.
+
+Status: complete.
+
+### Milestone 3 - Corpus Expansion and Quality Control
+
+Purpose: improve translation quality by increasing trustworthy parallel and
+monolingual data.
+
+Phases:
+1. Seed dictionary extraction from legacy spreadsheet pairs.
+2. Web and public-source corpus collection where licensing allows.
+3. Bible corpus extraction as one data-processing phase.
+4. Monolingual corpus expansion for FastText training.
+5. Rebuild splits, retrain baseline, and compare metrics.
+
+Bible extraction is a phase within this milestone, not a milestone per book.
+Individual book extractors are implementation details and should be recorded in
+the changelog or handoff notes unless they change milestone status.
+
+Acceptance criteria:
+- Corpus sources and cleaning rules are documented.
+- Extracted verse pairs pass missing/empty validation.
+- Generated datasets are reproducible from scripts.
+- Model metrics improve or the regression is explained.
+
+Status: in progress.
+
+### Milestone 4 - NLLB Fine-Tuning Readiness
+
+Purpose: prepare the project for sequence-to-sequence training.
+
+Acceptance criteria:
+- A golden evaluation split is defined.
+- Dataset filtering rejects obvious non-Kikuyu/non-English noise.
+- Training configuration for LoRA fine-tuning is documented.
+- Remote GPU workflow is reproducible.
+
+Status: not started.
+
+### Milestone 5 - NLLB Training and Evaluation
+
+Purpose: train a context-aware translation model and compare it to the baseline.
+
+Acceptance criteria:
+- LoRA adapters train successfully on a GPU environment.
+- Evaluation includes ChrF/ChrF++, BLEU, and qualitative samples.
+- Model artifacts are versioned without committing large binaries to git.
+- The FastAPI service can select the fine-tuned model or fallback baseline.
+
+Status: not started.
+
+### Milestone 6 - Release Packaging
+
+Purpose: make the project understandable and usable by outside contributors.
+
+Acceptance criteria:
+- README explains current quality honestly.
+- Setup, training, evaluation, and serving commands are current.
+- Model and dataset download locations are documented.
+- Known limitations and next research tasks are visible.
+
+Status: in progress.
+
+---
+
+## 4. Progress-Tracking Rules
+
+Use the documents this way:
+
+- `MASTER_PLAN.md`: stable roadmap, milestone definitions, acceptance criteria.
+- `session-details/progress_update_*.md`: milestone status snapshots and current
+  blockers. Update only when a milestone status, phase status, metric, or next
+  milestone focus changes.
+- `CHANGELOG.md`: detailed chronological implementation history. Update after
+  code or documentation changes.
+- `session-details/handoffs/`: exact resumption point for the next agent run.
+
+Do not duplicate every changelog entry into a progress update.
+
+---
+
+## 5. Current Priority
+
+Finish Milestone 3 by completing the Bible corpus extraction phase, rebuilding
+the corpus, retraining the FastText baseline, and comparing metrics against the
+latest recorded scores.

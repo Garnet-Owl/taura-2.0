@@ -1,57 +1,40 @@
-# Taura 2.0 - Progress Update
+# Taura 2.0 - Progress Update (2026-06-21)
 
-## Task Board
+This is a milestone snapshot. It should summarize milestone health and next
+focus, not repeat every implementation entry from `CHANGELOG.md`.
 
-| Task | Status | Notes |
-| :--- | :---: | :--- |
-| **1. Project Scaffolding & Setup** | | |
-| Initialize project with Poetry, Ruff, and Pytest | ✅ Verified | `pyproject.toml` exists with dependencies |
-| Define feature-based directory structure (`app/api`, `app/serve`, `models/`, `data/`) | ✅ Verified | `models/`, `app/serve` created |
-| Set up CI/CD pipelines and contribution guidelines | ✅ Verified | `.github/workflows/ci.yml` and `CONTRIBUTING.md` created |
-| **2. Data Engineering & Preprocessing** | | |
-| Collect and curate Kikuyu-English parallel corpora | ✅ Verified | HF dataset downloaded and preprocessed |
-| Implement robust tokenization and text normalization scripts | ✅ Verified | Implemented in `app/api/preprocessing.py` and verified by unit tests |
-| Prepare train/validation/test splits | ✅ Verified | Implemented in `app/api/split.py` and verified by unit tests |
-| **3. Model Development & Training** | | |
-| Implement FastText embeddings training pipeline | ✅ Verified | Implemented in `scripts/train_embeddings.py` and `app/api/embeddings.py` |
-| Train models for both Kikuyu -> English and English -> Kikuyu | ✅ Verified | Models and alignment projection matrices trained and saved |
-| Evaluate translation quality | ✅ Verified | Top-1, top-5, and MRR metrics computed and saved to JSON |
-| **4. API Service & Integration** | | |
-| Wrap models into a FastAPI service | ✅ Verified | Implemented in `app/serve/main.py` with context lifespan |
-| Implement endpoints for bidirectional translation | ✅ Verified | Bidirectional endpoints support retrieval and word-by-word methods |
-| Write integration tests for API | ✅ Verified | Integration tests implemented in `app/tests/test_api.py` |
-| **5. Phase 2 Features (Evaluation & Web UI)** | | |
-| Build robust offline evaluation pipeline with `sacrebleu` | ✅ Verified | Implemented in `scripts/evaluate.py` calculating BLEU/ChrF |
-| Construct FastAPI single-page web UI layout and controller | ✅ Verified | Designed glassmorphic dark-mode SPA under `/` with template mounting |
-| Implement feedback collection and logging pipeline | ✅ Verified | Log user ratings and feedback suggestions to `data/feedback.jsonl` |
-| **6. Phase 3 Features (uv Packaging Migration)** | | |
-| Migrate pyproject.toml to PEP 621 metadata & Hatchling backend | ✅ Verified | Replaced Poetry with PEP 621 structure using Hatchling |
-| Generate uv.lock and synchronize dependencies | ✅ Verified | Generated uv.lock using `uv lock` and synced with `uv sync` |
-| Migrate CI/CD pipeline to use setup-uv | ✅ Verified | Replaced Snok Poetry action with astral-sh/setup-uv action |
-| Update project documentation (README.md, INSTALL.md, CONTRIBUTING.md) | ✅ Verified | Replaced Poetry commands with uv commands |
-| Align developer instructions (AGENTS.md) with uv toolset | ✅ Verified | Updated developer guidelines to enforce uv |
-| **7. Phase 4 Features (Model Scaling & Optimization)** | | |
-| Clean and normalize unsupervised monolingual corpora | ✅ Verified | Applied text normalization to monolingual corpora exports |
-| Implement automated hyperparameter tuning script | ✅ Verified | Created `scripts/tune_hyperparameters.py` for grid search |
-| Train final models with optimal hyperparameters | ✅ Verified | Updated `scripts/train_embeddings.py` and retrained models |
-| Re-evaluate on test set and verify API test suite | ✅ Verified | Re-evaluated metrics and verified all pytest test suites |
+## Milestone Status
+
+| Milestone | Status | Evidence |
+|---|---|---|
+| 0 - Project Foundation | Complete | `uv` migration, CI update, docs aligned to current toolchain |
+| 1 - FastText Baseline | Complete | bidirectional embeddings, Procrustes alignment, retrieval metrics |
+| 2 - API, Evaluation, and Demo UI | Complete | translation endpoints, candidate endpoint, model info endpoint, feedback route, UI, BLEU/ChrF evaluation |
+| 3 - Corpus Expansion and Quality Control | In progress | subword tokenization and model optimization started; larger corpus still needed |
+| 4 - NLLB Fine-Tuning Readiness | Not started | target architecture documented but no training workflow yet |
+| 5 - NLLB Training and Evaluation | Not started | no fine-tuned NLLB adapter yet |
+| 6 - Release Packaging | In progress | README metrics and API examples updated |
+
+## Current Focus
+
+Improve the baseline before moving to NLLB by tightening metrics, model metadata,
+subword tokenization, and training reproducibility.
+
+## Recent Evidence
+
+- `/translate/candidates` and `/model/info` expose model behavior for inspection.
+- `iterative_procrustes` and alignment refinement were added for baseline quality.
+- SentencePiece tokenization was introduced for Kikuyu morphology experiments.
+- Model runs are versioned in `models/` and configuration resolves the latest run.
+- Current baseline metrics and API examples are documented in README.
+
+## Next Milestone Work
+
+1. Expand high-quality parallel data.
+2. Improve monolingual corpora used by FastText.
+3. Rebuild the corpus and compare baseline metrics after each meaningful data
+   improvement.
 
 ## Blockers
 
 None.
-
-| **8. Phase 5 & 6 Features (Model Scaling & Optimization)** | | |
-| Expand Parallel Corpora & Retraining | ✅ Verified | Task 195 successfully processed, evaluated and metrics saved |
-| **9. Phase 7 Features (Open Source Release & Documentation)** | | |
-| Fix hyperparameter config (EPOCH=35, MIN_COUNT=2) | ✅ Verified | Corrected `config.py` to match tuned values |
-| Add `/translate/candidates` (top-K) endpoint | ✅ Verified | Implemented with TDD tests in `test_candidates_endpoint.py` |
-| Add `/model/info` metadata endpoint | ✅ Verified | Returns version, hyperparameters, and live evaluation metrics |
-| Update README with metrics and new endpoints | ✅ Verified | Added performance table and new API examples |
-| **10. Phase 8 Features (Alignment Refinement)** | | |
-| Implement `iterative_procrustes` in `app/api/embeddings.py` | ✅ Verified | 2 TDD tests pass; function refines W over N SVD iterations |
-| Create `scripts/refine_alignment.py` | ✅ Verified | Loads models, runs 5-iteration refinement, saves matrices, re-evaluates |
-| **11. Phase 9 Features (Subword Tokenization)** | | |
-| Add `SubwordTokenizer` to `app/api/preprocessing.py` | ✅ Verified | SentencePiece BPE wrapper with encode/decode; 3 TDD tests pass |
-| Add `build_subword_vocabulary` to `scripts/prepare_dataset.py` | ✅ Verified | Trains shared BPE model over Kikuyu+English corpora as final prep step |
-| Add `SP_MODEL_PATH`, `SP_VOCAB_SIZE` to `app/api/config.py` | ✅ Verified | Centralised config; vocab_size=8000 |
-| Train FastText on SP-tokenized corpora | ✅ Verified | Updated `scripts/train_embeddings.py` and retrained models; Top-1 accuracy improved |
