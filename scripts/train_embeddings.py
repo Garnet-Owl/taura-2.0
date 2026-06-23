@@ -13,7 +13,6 @@ import fasttext
 import numpy as np
 
 from app.api.embeddings import (
-    get_sentence_embedding,
     get_sentence_embeddings_parallel,
     learn_alignment_matrix,
     iterative_procrustes,
@@ -22,6 +21,7 @@ from app.api.embeddings import (
 )
 from app.api import config
 from app.shared.logger import setup_logger
+from scripts.evaluate import calculate_translation_scores, evaluate_retrieval_accuracy
 
 logger = setup_logger(__name__)
 
@@ -43,6 +43,37 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
                 ki_list.append(ki_str)
                 en_list.append(en_str)
     return ki_list, en_list
+
+
+def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
+    """Loads all parallel CSV files from a directory, returning (ki_list, en_list)."""
+    ki_list: list[str] = []
+    en_list: list[str] = []
+    csv_files = sorted(Path(parallel_dir).glob("*.csv"))
+    if not csv_files:
+        raise FileNotFoundError(f"No CSV files found in {parallel_dir}")
+    for csv_path in csv_files:
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                ki = row.get("Kikuyu", "").strip()
+                en = row.get("English", "").strip()
+                if ki and en:
+                    ki_list.append(ki)
+                    en_list.append(en)
+    logger.info(
+        f"Loaded {len(ki_list)} sentence pairs from {len(csv_files)} CSV files in {parallel_dir}"
+    )
+    return ki_list, en_list
+
+
+def write_monolingual_txt(sentences: list[str], path: str) -> None:
+    """Writes one sentence per line to a plain-text file for FastText training."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        for s in sentences:
+            f.write(s + "\n")
+    logger.info(f"Wrote {len(sentences)} sentences to {path}")
 
 
 def train_monolingual(
@@ -67,60 +98,6 @@ def train_monolingual(
     model.save_model(model_path)
     logger.info(f"Model saved to {model_path}")
     return model
-
-
-def evaluate_translator(
-    translator: CrossLingualTranslator,
-    src_sentences: list[str],
-    tgt_sentences: list[str],
-) -> dict[str, float]:
-    """
-    Evaluates translation quality via cross-lingual sentence retrieval.
-    Computes Top-1 Accuracy, Top-5 Accuracy, and Mean Reciprocal Rank (MRR).
-    """
-    correct_top1 = 0
-    correct_top5 = 0
-    mrr_sum = 0.0
-    n = len(src_sentences)
-
-    # Precompute target embeddings
-    tgt_embs = translator.tgt_embeddings
-    norms_tgt = np.linalg.norm(tgt_embs, axis=1)
-    norms_tgt[norms_tgt < 1e-8] = 1.0
-
-    for i, (src_s, true_tgt_s) in enumerate(zip(src_sentences, tgt_sentences)):
-        src_emb = get_sentence_embedding(translator.src_model, src_s)
-        projected = translator.projection_matrix @ src_emb
-
-        norm_projected = np.linalg.norm(projected)
-        if norm_projected < 1e-8:
-            # Cannot align, rank is worst
-            mrr_sum += 1.0 / n
-            continue
-
-        scores = np.dot(tgt_embs, projected) / (norms_tgt * norm_projected)
-
-        # Sort indices by score descending
-        sorted_indices = np.argsort(scores)[::-1]
-
-        # Find index of true target sentence
-        try:
-            rank_idx = list(sorted_indices).index(i)
-            rank = rank_idx + 1
-        except ValueError:
-            rank = n
-
-        if rank == 1:
-            correct_top1 += 1
-        if rank <= 5:
-            correct_top5 += 1
-        mrr_sum += 1.0 / rank
-
-    return {
-        "accuracy_top1": correct_top1 / n,
-        "accuracy_top5": correct_top5 / n,
-        "mrr": mrr_sum / n,
-    }
 
 
 def save_metrics(
@@ -206,24 +183,36 @@ def main() -> None:
 
     dim = config.EMBEDDING_DIM
 
+    # Load all parallel CSVs and split: last VAL_SIZE pairs held out for evaluation
+    parallel_dir = config.PARALLEL_DATA_DIR
+    all_ki, all_en = load_all_parallel_csvs(parallel_dir)
+
+    VAL_SIZE = config.VAL_SIZE
+    train_ki_sentences = all_ki[:-VAL_SIZE]
+    train_en_sentences = all_en[:-VAL_SIZE]
+    val_ki = all_ki[-VAL_SIZE:]
+    val_en = all_en[-VAL_SIZE:]
+    logger.info(
+        f"Split: {len(train_ki_sentences)} train / {len(val_ki)} val sentence pairs"
+    )
+
+    # Write monolingual train files for FastText
     train_ki_path = config.TRAIN_KI_TXT
     train_en_path = config.TRAIN_EN_TXT
+    write_monolingual_txt(train_ki_sentences, train_ki_path)
+    write_monolingual_txt(train_en_sentences, train_en_path)
 
     if args.quick_test:
+        logger.info("Running in QUICK TEST mode — using first 200 pairs, 5 epochs")
         import tempfile
 
-        logger.info("Running in QUICK TEST mode using validation TSV as training data")
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
         train_en_path = os.path.join(temp_dir, "test_en.txt")
-        val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
-        # write out to txt for fasttext
-        with open(train_ki_path, "w", encoding="utf-8") as f:
-            for line in val_ki:
-                f.write(line + "\n")
-        with open(train_en_path, "w", encoding="utf-8") as f:
-            for line in val_en:
-                f.write(line + "\n")
+        write_monolingual_txt(all_ki[:200], train_ki_path)
+        write_monolingual_txt(all_en[:200], train_en_path)
+        val_ki = all_ki[200:300]
+        val_en = all_en[200:300]
         config.FASTTEXT_EPOCH = 5
 
     # 1. Train Monolingual Models
@@ -309,26 +298,54 @@ def main() -> None:
             state["steps"].append("align_models")
             save_state(state_file, state)
 
-    # 3. Evaluate on Validation Set
-    val_ki, val_en = load_sentences(config.VAL_TSV_PATH)
-    # Limit evaluation to 1000 sentences to avoid O(N^2) hang
-    val_ki = val_ki[:1000]
-    val_en = val_en[:1000]
-    logger.info(f"Evaluating alignment on {len(val_ki)} validation sentences...")
+    # 3. Full evaluation on the held-out val set
+    logger.info(f"Evaluating on {len(val_ki)} validation sentences...")
 
     val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
     val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
 
+    # Translators whose sentence bank IS the val set (required for accuracy/MRR)
     translator_ki_en = CrossLingualTranslator(
         ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en
     )
     translator_en_ki = CrossLingualTranslator(
         en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki
     )
-    metrics_ki_en = evaluate_translator(translator_ki_en, val_ki, val_en)
-    metrics_en_ki = evaluate_translator(translator_en_ki, val_en, val_ki)
 
-    metrics = {"kikuyu_to_english": metrics_ki_en, "english_to_kikuyu": metrics_en_ki}
+    # Accuracy / MRR
+    acc_ki_en = evaluate_retrieval_accuracy(translator_ki_en, val_ki, val_en)
+    acc_en_ki = evaluate_retrieval_accuracy(translator_en_ki, val_en, val_ki)
+
+    # BLEU / ChrF — retrieval
+    ki_en_ret = [translator_ki_en.translate_sentence_retrieval(s) for s in val_ki]
+    bleu_ki_en_ret, chrf_ki_en_ret = calculate_translation_scores(ki_en_ret, val_en)
+
+    en_ki_ret = [translator_en_ki.translate_sentence_retrieval(s) for s in val_en]
+    bleu_en_ki_ret, chrf_en_ki_ret = calculate_translation_scores(en_ki_ret, val_ki)
+
+    # BLEU / ChrF — word-by-word
+    ki_en_wbw = [translator_ki_en.translate_word_by_word(s) for s in val_ki]
+    bleu_ki_en_wbw, chrf_ki_en_wbw = calculate_translation_scores(ki_en_wbw, val_en)
+
+    en_ki_wbw = [translator_en_ki.translate_word_by_word(s) for s in val_en]
+    bleu_en_ki_wbw, chrf_en_ki_wbw = calculate_translation_scores(en_ki_wbw, val_ki)
+
+    metrics = {
+        "kikuyu_to_english": {
+            "bleu_retrieval": bleu_ki_en_ret,
+            "chrf_retrieval": chrf_ki_en_ret,
+            "bleu_word_by_word": bleu_ki_en_wbw,
+            "chrf_word_by_word": chrf_ki_en_wbw,
+            **acc_ki_en,
+        },
+        "english_to_kikuyu": {
+            "bleu_retrieval": bleu_en_ki_ret,
+            "chrf_retrieval": chrf_en_ki_ret,
+            "bleu_word_by_word": bleu_en_ki_wbw,
+            "chrf_word_by_word": chrf_en_ki_wbw,
+            **acc_en_ki,
+        },
+    }
 
     logger.info("\nEvaluation Metrics:")
     logger.info(json.dumps(metrics, indent=2))

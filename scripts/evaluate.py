@@ -1,36 +1,44 @@
-"""Offline translation evaluation pipeline using SacreBLEU and ChrF."""
+"""Offline translation evaluation pipeline using SacreBLEU, ChrF, Top-K Accuracy, and MRR."""
 
 import csv
 import json
 import os
+from pathlib import Path
 from typing import List, Tuple, Dict
 import numpy as np
 import fasttext
 import sacrebleu
 
-from app.api.embeddings import CrossLingualTranslator
+from app.api.embeddings import CrossLingualTranslator, get_sentence_embedding
 from app.api import config
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
 
 
-def load_test_data(tsv_path: str) -> Tuple[List[str], List[str]]:
-    """Loads Kikuyu and English sentence pairs from a TSV file."""
-    ki_sentences = []
-    en_sentences = []
-    if not os.path.exists(tsv_path):
-        raise FileNotFoundError(f"Test file not found: {tsv_path}")
-
-    with open(tsv_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        for row in reader:
-            ki = row.get("kikuyu")
-            en = row.get("english")
-            if ki is not None and en is not None:
-                ki_sentences.append(str(ki).strip())
-                en_sentences.append(str(en).strip())
-    return ki_sentences, en_sentences
+def load_all_parallel_csvs(parallel_dir: str) -> Tuple[List[str], List[str]]:
+    """Loads all parallel CSV files from a directory, returning (ki_list, en_list)."""
+    ki_list: List[str] = []
+    en_list: List[str] = []
+    csv_files = sorted(Path(parallel_dir).glob("*.csv"))
+    if not csv_files:
+        raise FileNotFoundError(f"No CSV files found in {parallel_dir}")
+    for csv_path in csv_files:
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                ki = row.get("Kikuyu", "").strip()
+                en = row.get("English", "").strip()
+                if ki and en:
+                    ki_list.append(ki)
+                    en_list.append(en)
+    logger.info(
+        "Loaded %d sentence pairs from %d CSV files in %s",
+        len(ki_list),
+        len(csv_files),
+        parallel_dir,
+    )
+    return ki_list, en_list
 
 
 def calculate_translation_scores(
@@ -42,160 +50,197 @@ def calculate_translation_scores(
     return float(bleu.score), float(chrf.score)
 
 
-def main() -> None:
-    # Model and data paths
-    ki_model_path = config.KI_MODEL_PATH
-    en_model_path = config.EN_MODEL_PATH
-    proj_ki_en_path = config.PROJ_KI_EN_PATH
-    proj_en_ki_path = config.PROJ_EN_KI_PATH
-    train_tsv_path = config.TRAIN_TSV_PATH
-    test_tsv_path = config.TEST_TSV_PATH
-    metrics_json_path = config.METRICS_JSON_PATH
+def evaluate_retrieval_accuracy(
+    translator: CrossLingualTranslator,
+    src_sentences: List[str],
+    tgt_sentences: List[str],
+) -> Dict[str, float]:
+    """
+    Computes Top-1 Accuracy, Top-5 Accuracy, and MRR for sentence retrieval.
+    Each source sentence should map to the sentence at the same index in tgt_sentences.
+    """
+    correct_top1 = 0
+    correct_top5 = 0
+    mrr_sum = 0.0
+    n = len(src_sentences)
 
-    # Verify everything exists
+    tgt_embs = translator.tgt_embeddings
+    norms_tgt = np.linalg.norm(tgt_embs, axis=1)
+    norms_tgt[norms_tgt < 1e-8] = 1.0
+
+    for i, src_s in enumerate(src_sentences):
+        src_emb = get_sentence_embedding(translator.src_model, src_s)
+        projected = translator.projection_matrix @ src_emb
+
+        norm_projected = np.linalg.norm(projected)
+        if norm_projected < 1e-8:
+            mrr_sum += 1.0 / n
+            continue
+
+        scores = np.dot(tgt_embs, projected) / (norms_tgt * norm_projected)
+        sorted_indices = np.argsort(scores)[::-1]
+
+        try:
+            rank = list(sorted_indices).index(i) + 1
+        except ValueError:
+            rank = n
+
+        if rank == 1:
+            correct_top1 += 1
+        if rank <= 5:
+            correct_top5 += 1
+        mrr_sum += 1.0 / rank
+
+    return {
+        "accuracy_top1": correct_top1 / n,
+        "accuracy_top5": correct_top5 / n,
+        "mrr": mrr_sum / n,
+    }
+
+
+def main() -> None:
+    all_ki, all_en = load_all_parallel_csvs(config.PARALLEL_DATA_DIR)
+
+    val_size = config.VAL_SIZE
+    corpus_ki = all_ki[:-val_size]
+    corpus_en = all_en[:-val_size]
+    test_ki = all_ki[-val_size:]
+    test_en = all_en[-val_size:]
+    logger.info(
+        "Corpus: %d sentences | Test: %d sentences", len(corpus_ki), len(test_ki)
+    )
+
     for path in [
-        ki_model_path,
-        en_model_path,
-        proj_ki_en_path,
-        proj_en_ki_path,
-        train_tsv_path,
-        test_tsv_path,
+        config.KI_MODEL_PATH,
+        config.EN_MODEL_PATH,
+        config.PROJ_KI_EN_PATH,
+        config.PROJ_EN_KI_PATH,
     ]:
         if not os.path.exists(path):
             logger.error("Required file %s is missing. Train models first.", path)
             return
 
-    # Load FastText models
     logger.info("Loading models...")
-    ki_model = fasttext.load_model(ki_model_path)
-    en_model = fasttext.load_model(en_model_path)
+    ki_model = fasttext.load_model(config.KI_MODEL_PATH)
+    en_model = fasttext.load_model(config.EN_MODEL_PATH)
 
-    # Load projection matrices
-    W_ki_en = np.load(proj_ki_en_path)
-    W_en_ki = np.load(proj_en_ki_path)
+    W_ki_en = np.load(config.PROJ_KI_EN_PATH)
+    W_en_ki = np.load(config.PROJ_EN_KI_PATH)
 
-    # Load dictionaries for retrieval (limit to 50k to prevent OOM/hangs on 2.2M sentences)
-    train_ki_sentences = []
-    train_en_sentences = []
-    count = 0
-    with open(train_tsv_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        for row in reader:
-            if count >= 50000:
-                break
-            ki = row.get("kikuyu")
-            en = row.get("english")
-            if ki and en:
-                train_ki_sentences.append(str(ki).strip())
-                train_en_sentences.append(str(en).strip())
-                count += 1
+    translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, corpus_en)
+    translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, corpus_ki)
 
-    # Initialize translators
-    translator_ki_en = CrossLingualTranslator(
-        ki_model, en_model, W_ki_en, train_en_sentences
-    )
-    translator_en_ki = CrossLingualTranslator(
-        en_model, ki_model, W_en_ki, train_ki_sentences
-    )
+    # --- BLEU / ChrF ---
+    logger.info("Evaluating Kikuyu -> English (Retrieval)...")
+    ki_en_ret = [translator_ki_en.translate_sentence_retrieval(s) for s in test_ki]
+    bleu_ki_en_ret, chrf_ki_en_ret = calculate_translation_scores(ki_en_ret, test_en)
 
-    # Load test split (limit to 1000 to prevent O(N^2) hangs)
-    logger.info("Loading test dataset...")
-    test_ki, test_en = load_test_data(test_tsv_path)
-    test_ki = test_ki[:1000]
-    test_en = test_en[:1000]
+    logger.info("Evaluating Kikuyu -> English (Word-by-word)...")
+    ki_en_wbw = [translator_ki_en.translate_word_by_word(s) for s in test_ki]
+    bleu_ki_en_wbw, chrf_ki_en_wbw = calculate_translation_scores(ki_en_wbw, test_en)
 
-    results: Dict[str, Dict[str, float]] = {
-        "kikuyu_to_english_retrieval": {},
-        "kikuyu_to_english_word_by_word": {},
-        "english_to_kikuyu_retrieval": {},
-        "english_to_kikuyu_word_by_word": {},
-    }
+    logger.info("Evaluating English -> Kikuyu (Retrieval)...")
+    en_ki_ret = [translator_en_ki.translate_sentence_retrieval(s) for s in test_en]
+    bleu_en_ki_ret, chrf_en_ki_ret = calculate_translation_scores(en_ki_ret, test_ki)
 
-    # 1. Kikuyu to English - Retrieval
-    logger.info("Evaluating Kikuyu to English (Retrieval)...")
-    ki_en_ret_translations = [
-        translator_ki_en.translate_sentence_retrieval(s) for s in test_ki
-    ]
-    b, c = calculate_translation_scores(ki_en_ret_translations, test_en)
-    results["kikuyu_to_english_retrieval"] = {"bleu": b, "chrf": c}
+    logger.info("Evaluating English -> Kikuyu (Word-by-word)...")
+    en_ki_wbw = [translator_en_ki.translate_word_by_word(s) for s in test_en]
+    bleu_en_ki_wbw, chrf_en_ki_wbw = calculate_translation_scores(en_ki_wbw, test_ki)
 
-    # 2. Kikuyu to English - Word-by-word
-    logger.info("Evaluating Kikuyu to English (Word-by-word)...")
-    ki_en_wbw_translations = [
-        translator_ki_en.translate_word_by_word(s) for s in test_ki
-    ]
-    b, c = calculate_translation_scores(ki_en_wbw_translations, test_en)
-    results["kikuyu_to_english_word_by_word"] = {"bleu": b, "chrf": c}
+    # --- Accuracy / MRR (use a sub-translator whose sentence bank IS the test set
+    #     so rank 1 = exact match, consistent with train_embeddings.py) ---
+    logger.info("Evaluating retrieval accuracy / MRR...")
+    acc_translator_ki_en = CrossLingualTranslator(ki_model, en_model, W_ki_en, test_en)
+    acc_translator_en_ki = CrossLingualTranslator(en_model, ki_model, W_en_ki, test_ki)
+    acc_ki_en = evaluate_retrieval_accuracy(acc_translator_ki_en, test_ki, test_en)
+    acc_en_ki = evaluate_retrieval_accuracy(acc_translator_en_ki, test_en, test_ki)
 
-    # 3. English to Kikuyu - Retrieval
-    logger.info("Evaluating English to Kikuyu (Retrieval)...")
-    en_ki_ret_translations = [
-        translator_en_ki.translate_sentence_retrieval(s) for s in test_en
-    ]
-    b, c = calculate_translation_scores(en_ki_ret_translations, test_ki)
-    results["english_to_kikuyu_retrieval"] = {"bleu": b, "chrf": c}
-
-    # 4. English to Kikuyu - Word-by-word
-    logger.info("Evaluating English to Kikuyu (Word-by-word)...")
-    en_ki_wbw_translations = [
-        translator_en_ki.translate_word_by_word(s) for s in test_en
-    ]
-    b, c = calculate_translation_scores(en_ki_wbw_translations, test_ki)
-    results["english_to_kikuyu_word_by_word"] = {"bleu": b, "chrf": c}
-
-    # Print results summary table
-    logger.info("\n### Translation Quality Summary")
-    logger.info("| Direction | Method | BLEU Score | ChrF Score |")
-    logger.info("| :--- | :--- | :---: | :---: |")
-    for key, metrics in results.items():
-        dir_label = (
-            "Kikuyu -> English" if "kikuyu_to_english" in key else "English -> Kikuyu"
-        )
-        method_label = "Retrieval" if "retrieval" in key else "Word-by-Word"
-        logger.info(
-            "| %s | %s | %.2f | %.2f |",
-            dir_label,
-            method_label,
-            metrics["bleu"],
-            metrics["chrf"],
-        )
-
-    # Save to models/evaluation_metrics.json
-    metrics_data = {}
-    if os.path.exists(metrics_json_path):
+    # --- Merge and save ---
+    metrics_data: Dict = {}
+    if os.path.exists(config.METRICS_JSON_PATH):
         try:
-            with open(metrics_json_path, "r", encoding="utf-8") as f:
+            with open(config.METRICS_JSON_PATH, "r", encoding="utf-8") as f:
                 metrics_data = json.load(f)
         except json.JSONDecodeError:
             pass
 
-    # Ensure sections exist and assign new metrics
-    if "kikuyu_to_english" not in metrics_data:
-        metrics_data["kikuyu_to_english"] = {}
-    if "english_to_kikuyu" not in metrics_data:
-        metrics_data["english_to_kikuyu"] = {}
+    metrics_data.setdefault("kikuyu_to_english", {})
+    metrics_data.setdefault("english_to_kikuyu", {})
 
     metrics_data["kikuyu_to_english"].update(
         {
-            "bleu_retrieval": results["kikuyu_to_english_retrieval"]["bleu"],
-            "chrf_retrieval": results["kikuyu_to_english_retrieval"]["chrf"],
-            "bleu_word_by_word": results["kikuyu_to_english_word_by_word"]["bleu"],
-            "chrf_word_by_word": results["kikuyu_to_english_word_by_word"]["chrf"],
+            "bleu_retrieval": bleu_ki_en_ret,
+            "chrf_retrieval": chrf_ki_en_ret,
+            "bleu_word_by_word": bleu_ki_en_wbw,
+            "chrf_word_by_word": chrf_ki_en_wbw,
+            **acc_ki_en,
         }
     )
-
     metrics_data["english_to_kikuyu"].update(
         {
-            "bleu_retrieval": results["english_to_kikuyu_retrieval"]["bleu"],
-            "chrf_retrieval": results["english_to_kikuyu_retrieval"]["chrf"],
-            "bleu_word_by_word": results["english_to_kikuyu_word_by_word"]["bleu"],
-            "chrf_word_by_word": results["english_to_kikuyu_word_by_word"]["chrf"],
+            "bleu_retrieval": bleu_en_ki_ret,
+            "chrf_retrieval": chrf_en_ki_ret,
+            "bleu_word_by_word": bleu_en_ki_wbw,
+            "chrf_word_by_word": chrf_en_ki_wbw,
+            **acc_en_ki,
         }
     )
 
-    with open(metrics_json_path, "w", encoding="utf-8") as f:
+    with open(config.METRICS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(metrics_data, f, indent=2)
-    logger.info("Saved metrics to %s", metrics_json_path)
+    logger.info("Saved metrics to %s", config.METRICS_JSON_PATH)
+
+    # --- Summary table ---
+    logger.info("\n### Translation Quality Summary")
+    logger.info(
+        "%-22s %-12s %6s %6s %8s %8s %6s",
+        "Direction",
+        "Method",
+        "BLEU",
+        "ChrF",
+        "Top-1",
+        "Top-5",
+        "MRR",
+    )
+    logger.info("-" * 72)
+    for direction, bleu_ret, chrf_ret, bleu_wbw, chrf_wbw, acc in [
+        (
+            "Kikuyu -> English",
+            bleu_ki_en_ret,
+            chrf_ki_en_ret,
+            bleu_ki_en_wbw,
+            chrf_ki_en_wbw,
+            acc_ki_en,
+        ),
+        (
+            "English -> Kikuyu",
+            bleu_en_ki_ret,
+            chrf_en_ki_ret,
+            bleu_en_ki_wbw,
+            chrf_en_ki_wbw,
+            acc_en_ki,
+        ),
+    ]:
+        logger.info(
+            "%-22s %-12s %6.2f %6.2f %8.0f%% %8.0f%% %6.3f",
+            direction,
+            "Retrieval",
+            bleu_ret,
+            chrf_ret,
+            acc["accuracy_top1"] * 100,
+            acc["accuracy_top5"] * 100,
+            acc["mrr"],
+        )
+        logger.info(
+            "%-22s %-12s %6.2f %6.2f %8s %8s %6s",
+            "",
+            "Word-by-word",
+            bleu_wbw,
+            chrf_wbw,
+            "-",
+            "-",
+            "-",
+        )
 
 
 if __name__ == "__main__":
