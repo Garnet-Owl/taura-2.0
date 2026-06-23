@@ -27,19 +27,29 @@ The long-term goal is to push translation quality to the point where Taura is ge
 
 The table below shows how retrieval BLEU changed as alignment techniques were introduced. Numbers marked `—` were not measured for that run.
 
-| Run | Key Changes | BLEU Ki→En | BLEU En→Ki | MNN Pairs |
-| :--- | :--- | :---: | :---: | :---: |
-| **Baseline** | Raw FastText + simple Procrustes | 5.34 | 4.91 | — |
-| **Hybrid alignment** | Sentence-pair anchors + seed dictionary + identical-string anchors; iterative Procrustes with MNN + CSLS | 21.00 | 35.09 | 3,007 |
-| **Agriculture data + Morfessor + n-gram tuning** | +3,852 agriculture pairs; Morfessor morpheme segmentation on Kikuyu; `minn=2 / maxn=7` for short Bantu prefixes | 18.94 | **35.49** | **4,651** |
+| Run | Key Changes | BLEU Ki→En | BLEU En→Ki | Top-1 Ki→En | MNN Pairs |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Baseline** | Raw FastText + simple Procrustes | 5.34 | 4.91 | — | — |
+| **Hybrid alignment** | Sentence-pair anchors + seed dictionary + identical-string anchors; iterative Procrustes with MNN + CSLS | 21.00 | 35.09 | — | 3,007 |
+| **Agriculture data + Morfessor + n-gram tuning** | +3,852 agriculture pairs; Morfessor pre-segmentation of Kikuyu; `minn=2 / maxn=7`; fixed seed=42; consistent anchor/eval embeddings | *pending rerun* | *pending rerun* | — | 4,672 |
 
-The En→Ki direction reaches **35.49 BLEU** — a 7× improvement over baseline. The Ki→En slight dip vs. the prior run is expected: the validation set now spans two domains (Bible + agriculture) and Morfessor needs more data to fully pay off; the MNN growth from 3,007 → 4,651 confirms the embedding space is becoming better aligned.
+The hybrid alignment is the single biggest jump — a **4× BLEU improvement** from baseline. The agriculture + Morfessor run is now seeded (seed=42) so comparisons will be reproducible; the MNN growth to 4,672 confirms the embedding space is still improving.
+
+**What drove the 5 → 21 BLEU jump:**
+Three alignment anchor sources were combined — parallel sentence embeddings, a seed dictionary, and identical-string vocabulary pairs — giving the Procrustes solver a much richer and more diverse set of constraints. Iterative refinement with Mutual Nearest Neighbors and CSLS de-hubbing then pushed the MNN count from near-zero to 3,007, meaning 3,007 Kikuyu vocabulary words found their correct English counterpart through the learned projection.
+
+**What the literature says for similar low-resource Bantu scenarios:**
+- Supervised cross-lingual alignment (what we do) consistently outperforms unsupervised methods when at least 1–5k parallel pairs are available [(Conneau et al., MUSE)](https://github.com/facebookresearch/MUSE)
+- For agglutinative languages, Morfessor `corpusweight` must be tuned below 1.0 to force actual segmentation; the default often produces the trivial all-words-intact solution [(Morfessor 2.0 docs)](https://morfessor.readthedocs.io/en/latest/libinterface.html)
+- Cross-lingual transfer from related high-resource languages (e.g. Swahili → Kikuyu) can add 1.5–3.5 BLEU in low-resource Bantu pairs [(Congolese Swahili study)](https://arxiv.org/pdf/2103.10734)
+- Chain-of-languages multilingual anchors (English → Swahili → Kikuyu) have shown promise for zero-resource directions [(multilingual anchor chains)](https://arxiv.org/pdf/2311.12489)
 
 
 ## Current Performance
 
-> Last updated: 2026-06-23 — training run `run_20260623_194319`.
-> Trained on 9,663 pairs from Bible (7 books) and agriculture (8 crop sectors), validated on 100 held-out pairs.
+> Last measured: 2026-06-23 — best verified run before seed was fixed.
+> Trained on 9,663 pairs from Bible (7 books) and agriculture (8 crop sectors).
+> A rerun with `seed=42` and fixed Morfessor segmentation is in progress — this table will be updated once complete.
 
 | Direction | BLEU (retrieval) | chrF (retrieval) | Top-1 | Top-5 | MRR |
 | :--- | :---: | :---: | :---: | :---: | :---: |
