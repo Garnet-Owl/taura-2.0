@@ -11,6 +11,7 @@ from app.api.embeddings import (
     CrossLingualTranslator,
     compute_csls_penalty,
     extract_identical_string_dictionary,
+    extract_parallel_proper_noun_anchors,
     get_sentence_embedding,
     iterative_procrustes,
     learn_alignment_matrix,
@@ -230,6 +231,44 @@ class TestCrossLingualAlignmentPipeline(unittest.TestCase):
         with then("only valid overlapping strings are extracted"):
             assert_that(len(seed), is_(equal_to(2)))
             assert_that(seed, is_(equal_to(["123", "kenya"])))  # Sorted order
+
+    def test_extract_parallel_proper_noun_anchors_finds_shared_names(self):
+        """Should extract proper nouns appearing verbatim in both sides of a pair."""
+        with given([]) as _:
+            # 'Kenya' appears capitalised in English but as 'kenya' in Kikuyu
+            en = ["Kenya is a beautiful country", "Peter went to Jerusalem"]
+            ki = ["kenya ni iguru", "peter niakinya yerusalemu"]
+
+        with when("extracting proper-noun anchors"):
+            anchors = extract_parallel_proper_noun_anchors(en, ki)
+
+        with then("shared names are extracted (case-normalised)"):
+            assert_that("kenya" in anchors, is_(True))
+            assert_that("peter" in anchors, is_(True))
+
+    def test_extract_parallel_proper_noun_anchors_excludes_short_words(self):
+        """Words shorter than min_len must not be included as anchors."""
+        with given([]) as _:
+            en = ["Go to Ki today"]
+            ki = ["ki ni thii hari"]
+
+        with when("extracting with default min_len=3"):
+            anchors = extract_parallel_proper_noun_anchors(en, ki)
+
+        with then("'Ki' (2 chars) is excluded"):
+            assert_that("ki" in anchors, is_(False))
+
+    def test_extract_parallel_proper_noun_anchors_ignores_non_shared_words(self):
+        """Proper nouns that appear only on the English side must be excluded."""
+        with given([]) as _:
+            en = ["Abraham went to Egypt"]
+            ki = ["niakinya atiriri"]  # Abraham / Egypt NOT present in Kikuyu
+
+        with when("extracting anchors"):
+            anchors = extract_parallel_proper_noun_anchors(en, ki)
+
+        with then("no anchors are extracted since nothing matches"):
+            assert_that(len(anchors), is_(equal_to(0)))
 
     def test_compute_csls_penalty_penalizes_hubs(self):
         """CSLS penalty should be higher for hub words that are close to many queries."""

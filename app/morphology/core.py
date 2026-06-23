@@ -38,7 +38,18 @@ def train_morfessor(
     train_data = [(count, word) for word, count in word_counts.items()]
     model.load_data(train_data)
     model.train_batch()
-    logger.info("Morfessor trained on %d unique word types.", len(word_counts))
+
+    # Diagnose segmentation quality: count how many word types were actually split.
+    # If split_pct is near 0 the corpusweight is too low; if near 100 it may be too high.
+    split_count = sum(1 for w in word_counts if len(model.viterbi_segment(w)[0]) > 1)
+    split_pct = 100.0 * split_count / max(len(word_counts), 1)
+    logger.info(
+        "Morfessor trained on %d unique word types — %d split (%.1f%%). "
+        "Target range for Bantu: 20–60%%. If <5%% raise corpusweight.",
+        len(word_counts),
+        split_count,
+        split_pct,
+    )
     return model
 
 
