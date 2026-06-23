@@ -2,18 +2,18 @@
 
 import unittest
 from unittest.mock import MagicMock
-import numpy as np
 
+import numpy as np
 from givenpy import given, then, when
 from hamcrest import assert_that, equal_to, is_
 
 from app.api.embeddings import (
-    get_sentence_embedding,
-    learn_alignment_matrix,
-    iterative_procrustes,
     CrossLingualTranslator,
-    extract_identical_string_dictionary,
     compute_csls_penalty,
+    extract_identical_string_dictionary,
+    get_sentence_embedding,
+    iterative_procrustes,
+    learn_alignment_matrix,
 )
 
 
@@ -237,13 +237,11 @@ class TestCrossLingualAlignmentPipeline(unittest.TestCase):
             # Create 3 targets
             # T0 is a hub (close to everything)
             # T1, T2 are isolated
-            targets = np.array(
-                [
-                    [1.0, 0.0],  # T0
-                    [0.0, 1.0],  # T1
-                    [-1.0, 0.0],  # T2
-                ]
-            )
+            targets = np.array([
+                [1.0, 0.0],  # T0
+                [0.0, 1.0],  # T1
+                [-1.0, 0.0],  # T2
+            ])
             # Create queries that are mostly clustered around T0
             queries = np.array([[0.9, 0.1], [0.8, 0.2], [1.0, -0.1]])
 

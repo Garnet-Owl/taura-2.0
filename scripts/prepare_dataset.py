@@ -1,10 +1,12 @@
 import os
 import sys
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 # Add root directory to sys.path to import app.api.split
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from app.api.preprocessing import normalize_text
 from app.api.split import split_data
 from app.shared import config
 from app.shared.logger import setup_logger
@@ -21,9 +23,7 @@ def main() -> None:
     bible_csv_path = Path("data/processed/bible_parallel.csv")
 
     if bible_csv_path.exists():
-        logger.info(
-            f"Loading high-quality Bible parallel dataset from {bible_csv_path}"
-        )
+        logger.info(f"Loading high-quality Bible parallel dataset from {bible_csv_path}")
         df = pd.read_csv(bible_csv_path)
         if "English" in df.columns and "Kikuyu" in df.columns:
             df = df.dropna(subset=["English", "Kikuyu"])
@@ -49,7 +49,7 @@ def main() -> None:
     )
 
     # Save as TSV files
-    for split_name, split_data_list, file_path in [
+    for _split_name, split_data_list, file_path in [
         ("train", train, config.TRAIN_TSV_PATH),
         ("val", val, config.VAL_TSV_PATH),
         ("test", test, config.TEST_TSV_PATH),
@@ -65,9 +65,7 @@ def main() -> None:
 
     # Also save raw monolingual text files for training FastText embeddings.
     # Use APPEND mode so that any existing large scraped corpora are preserved.
-    from app.api.preprocessing import normalize_text
-
-    for lang, idx, train_lang_path in [
+    for _lang, idx, train_lang_path in [
         ("kikuyu", 0, config.TRAIN_KI_TXT),
         ("english", 1, config.TRAIN_EN_TXT),
     ]:

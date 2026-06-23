@@ -50,6 +50,10 @@ Latest baseline BLEU after recent corpus improvements:
 2. Rebuild training splits after the extraction pass reaches a useful stopping point.
 3. Retrain the FastText baseline and compare metrics before moving toward NLLB work.
 
+## Recent Session Work
+
+Ruff config upgraded (bugbear, isort, PLC0415), preprocessing files excluded from linting; hybrid three-source Procrustes alignment implemented; test suite expanded to 78 tests.
+
 ## Blockers
 
 None.

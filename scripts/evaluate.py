@@ -4,9 +4,10 @@ import csv
 import json
 import os
 from pathlib import Path
-from typing import List, Tuple, Dict
-import numpy as np
+from typing import Dict, List, Tuple
+
 import fasttext
+import numpy as np
 import sacrebleu
 
 from app.api.embeddings import CrossLingualTranslator, get_sentence_embedding
@@ -106,9 +107,7 @@ def main() -> None:
     corpus_en = all_en[:-val_size]
     test_ki = all_ki[-val_size:]
     test_en = all_en[-val_size:]
-    logger.info(
-        "Corpus: %d sentences | Test: %d sentences", len(corpus_ki), len(test_ki)
-    )
+    logger.info("Corpus: %d sentences | Test: %d sentences", len(corpus_ki), len(test_ki))
 
     for path in [
         config.KI_MODEL_PATH,
@@ -167,24 +166,20 @@ def main() -> None:
     metrics_data.setdefault("kikuyu_to_english", {})
     metrics_data.setdefault("english_to_kikuyu", {})
 
-    metrics_data["kikuyu_to_english"].update(
-        {
-            "bleu_retrieval": bleu_ki_en_ret,
-            "chrf_retrieval": chrf_ki_en_ret,
-            "bleu_word_by_word": bleu_ki_en_wbw,
-            "chrf_word_by_word": chrf_ki_en_wbw,
-            **acc_ki_en,
-        }
-    )
-    metrics_data["english_to_kikuyu"].update(
-        {
-            "bleu_retrieval": bleu_en_ki_ret,
-            "chrf_retrieval": chrf_en_ki_ret,
-            "bleu_word_by_word": bleu_en_ki_wbw,
-            "chrf_word_by_word": chrf_en_ki_wbw,
-            **acc_en_ki,
-        }
-    )
+    metrics_data["kikuyu_to_english"].update({
+        "bleu_retrieval": bleu_ki_en_ret,
+        "chrf_retrieval": chrf_ki_en_ret,
+        "bleu_word_by_word": bleu_ki_en_wbw,
+        "chrf_word_by_word": chrf_ki_en_wbw,
+        **acc_ki_en,
+    })
+    metrics_data["english_to_kikuyu"].update({
+        "bleu_retrieval": bleu_en_ki_ret,
+        "chrf_retrieval": chrf_en_ki_ret,
+        "bleu_word_by_word": bleu_en_ki_wbw,
+        "chrf_word_by_word": chrf_en_ki_wbw,
+        **acc_en_ki,
+    })
 
     with open(config.METRICS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(metrics_data, f, indent=2)

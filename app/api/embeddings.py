@@ -1,8 +1,8 @@
 """Cross-lingual word embeddings alignment and translation logic."""
 
 import io
-import sys
 import multiprocessing
+import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from typing import Any
@@ -38,9 +38,7 @@ def extract_identical_string_dictionary(
     return sorted(seed)[:5000]
 
 
-def compute_csls_penalty(
-    embs: np.ndarray, ref_embs: np.ndarray, k: int = 10
-) -> np.ndarray:
+def compute_csls_penalty(embs: np.ndarray, ref_embs: np.ndarray, k: int = 10) -> np.ndarray:
     """Computes the mean cosine similarity of each embedding in `embs` to its `k` nearest neighbors in `ref_embs`."""
     if is_cuda_available:
         import torch
@@ -60,9 +58,7 @@ def compute_csls_penalty(
             logger.warning("PyTorch CSLS failed: %s. Falling back to NumPy.", e)
 
     norm_embs = embs / np.maximum(np.linalg.norm(embs, axis=1, keepdims=True), 1e-8)
-    norm_ref = ref_embs / np.maximum(
-        np.linalg.norm(ref_embs, axis=1, keepdims=True), 1e-8
-    )
+    norm_ref = ref_embs / np.maximum(np.linalg.norm(ref_embs, axis=1, keepdims=True), 1e-8)
     sim = norm_embs @ norm_ref.T
     sim.sort(axis=1)
     topk_sim = sim[:, -min(k, sim.shape[1]) :]
@@ -340,18 +336,18 @@ class CrossLingualTranslator:
 
         if not hasattr(self, "tgt_vocab_words"):
             self.tgt_vocab_words = self.tgt_model.get_words()
-            raw = np.array(
-                [self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words]
-            )
+            raw = np.array([
+                self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words
+            ])
             norms = np.linalg.norm(raw, axis=1, keepdims=True)
             norms[norms < 1e-8] = 1.0
             self.tgt_vocab_embeddings = raw / norms
             self.tgt_vocab_norms = np.ones(len(self.tgt_vocab_words), dtype=np.float32)
 
             src_words = self.src_model.get_words()[:20000]
-            src_vocab_embs = np.array(
-                [self.src_model.get_word_vector(w) for w in src_words]
-            )
+            src_vocab_embs = np.array([
+                self.src_model.get_word_vector(w) for w in src_words
+            ])
             projected_src_vocab = src_vocab_embs @ self.projection_matrix.T
             self.tgt_word_csls_penalty = compute_csls_penalty(
                 self.tgt_vocab_embeddings, projected_src_vocab, k=self.csls_k
@@ -388,17 +384,17 @@ class CrossLingualTranslator:
         # Get target vocabulary words and embeddings if not already cached
         if not hasattr(self, "tgt_vocab_words"):
             self.tgt_vocab_words = self.tgt_model.get_words()
-            self.tgt_vocab_embeddings = np.array(
-                [self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words]
-            )
+            self.tgt_vocab_embeddings = np.array([
+                self.tgt_model.get_word_vector(w) for w in self.tgt_vocab_words
+            ])
             self.tgt_vocab_norms = np.linalg.norm(self.tgt_vocab_embeddings, axis=1)
             self.tgt_vocab_norms[self.tgt_vocab_norms < 1e-8] = 1.0
 
             # Precompute word-level r_S penalty using a sample of source vocabulary to represent the source space
             src_words = self.src_model.get_words()[:20000]
-            src_vocab_embs = np.array(
-                [self.src_model.get_word_vector(w) for w in src_words]
-            )
+            src_vocab_embs = np.array([
+                self.src_model.get_word_vector(w) for w in src_words
+            ])
             projected_src_vocab = src_vocab_embs @ self.projection_matrix.T
             self.tgt_word_csls_penalty = compute_csls_penalty(
                 self.tgt_vocab_embeddings, projected_src_vocab, k=self.csls_k

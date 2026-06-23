@@ -1,40 +1,34 @@
-# Basic linting configuration with only essential rules
-lint.select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-]
-
-# Never enforce certain rules
-lint.ignore = [
-    "E501",  # line too long
-    "E741",  # ambiguous variable name
-]
-
-# Target Python version
+line-length = 92
 target-version = "py312"
+preview = true
 
-# Same line length as Black.
-line-length = 88
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Exclude directories from linting
+# Preprocessing files contain hand-tuned regex patterns and string literals
+# that must not be reformatted or have imports reordered.
 lint.exclude = [
-    "notebooks/**",
+    "app/preprocessing/**",
+    "app/api/preprocessing.py",
+]
+exclude = [
+    "app/preprocessing/**",
+    "app/api/preprocessing.py",
 ]
 
-# Ignore `E402` (import violations) in all `__init__.py` files.
+# E/F: pycodestyle + pyflakes  B: flake8-bugbear
+# I: isort   PLC0415: catches non-top-level imports
+lint.select = ["E", "F", "B", "I", "PLC0415"]
+lint.ignore = ["B904", "B008", "E501"]
+
+[lint.isort]
+known-first-party = ["app"]
+
 [lint.per-file-ignores]
 "__init__.py" = ["E402", "F401"]
+# Optional SDK imports (torch/hnswlib) are guarded by availability checks — must stay inline
+"app/api/embeddings.py" = ["PLC0415"]
 
-# Configure formatter
 [format]
-# Like Black, use double quotes for strings.
 quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
-
-# Like Black, respect magic trailing commas.
-skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"

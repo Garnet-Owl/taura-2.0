@@ -1,13 +1,16 @@
 """Unit tests for offline translation evaluation metrics."""
 
 import io
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 from givenpy import given, then, when
 from hamcrest import assert_that, close_to, equal_to, is_
 
+from app.api.embeddings import CrossLingualTranslator
 from scripts.evaluate import (
     calculate_translation_scores,
     evaluate_retrieval_accuracy,
@@ -19,9 +22,7 @@ from scripts.train_embeddings import save_metrics
 class TestLoadAllParallelCsvs(unittest.TestCase):
     def test_loads_kikuyu_and_english_columns(self):
         """Should parse CSV files with Kikuyu and English columns."""
-        csv_content = (
-            "Reference,Kikuyu,English\n1:1,marigū,Bananas\n1:2,Kūrīma,Ploughing\n"
-        )
+        csv_content = "Reference,Kikuyu,English\n1:1,marigū,Bananas\n1:2,Kūrīma,Ploughing\n"
 
         with given([]) as _:
             mock_path = MagicMock()
@@ -39,10 +40,6 @@ class TestLoadAllParallelCsvs(unittest.TestCase):
                 ),
             ):
                 mock_glob.return_value = [MagicMock(__str__=lambda s: "test.csv")]
-                # Call directly with a real temp CSV via StringIO trick
-                import tempfile
-                from pathlib import Path
-
                 with tempfile.TemporaryDirectory() as tmpdir:
                     p = Path(tmpdir) / "test.csv"
                     p.write_text(csv_content, encoding="utf-8")
@@ -59,8 +56,7 @@ class TestLoadAllParallelCsvs(unittest.TestCase):
         )
 
         with given([]) as _:
-            import tempfile
-            from pathlib import Path
+            pass
 
         with when("loading a CSV that has some empty rows"):
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -120,8 +116,6 @@ class TestEvaluateRetrievalAccuracy(unittest.TestCase):
                 dtype=np.float32,
             )
 
-            from app.api.embeddings import CrossLingualTranslator
-
             translator = CrossLingualTranslator(
                 src_model=mock_src,
                 tgt_model=mock_tgt,
@@ -142,9 +136,7 @@ class TestEvaluateRetrievalAccuracy(unittest.TestCase):
             )
 
         with when("evaluating retrieval accuracy on a perfectly aligned set"):
-            metrics = evaluate_retrieval_accuracy(
-                translator, src_sentences, tgt_sentences
-            )
+            metrics = evaluate_retrieval_accuracy(translator, src_sentences, tgt_sentences)
 
         with then("Top-1, Top-5, and MRR are all 1.0"):
             assert_that(metrics["accuracy_top1"], is_(equal_to(1.0)))
@@ -164,8 +156,6 @@ class TestEvaluateRetrievalAccuracy(unittest.TestCase):
             tgt_sentences = [str(i) for i in range(n)]
             src_sentences = [str(i) for i in range(n)]
 
-            from app.api.embeddings import CrossLingualTranslator
-
             translator = CrossLingualTranslator(
                 src_model=mock_src,
                 tgt_model=mock_tgt,
@@ -178,9 +168,7 @@ class TestEvaluateRetrievalAccuracy(unittest.TestCase):
             mock_src.get_word_vector.side_effect = lambda w: src_vecs[int(w)]
 
         with when("evaluating with misaligned source and target embeddings"):
-            metrics = evaluate_retrieval_accuracy(
-                translator, src_sentences, tgt_sentences
-            )
+            metrics = evaluate_retrieval_accuracy(translator, src_sentences, tgt_sentences)
 
         with then("accuracy is below 0.5"):
             assert_that(metrics["accuracy_top1"] < 0.5, is_(True))
@@ -212,9 +200,7 @@ class TestSaveMetrics(unittest.TestCase):
         with then("both old and new keys are present in the saved data"):
             mock_dump.assert_called_once()
             saved = mock_dump.call_args[0][0]
-            assert_that(
-                saved["kikuyu_to_english"]["bleu_retrieval"], is_(equal_to(15.0))
-            )
+            assert_that(saved["kikuyu_to_english"]["bleu_retrieval"], is_(equal_to(15.0)))
             assert_that(saved["kikuyu_to_english"]["accuracy_top1"], is_(equal_to(0.5)))
             assert_that(
                 saved["english_to_kikuyu"]["chrf_word_by_word"], is_(equal_to(20.0))
