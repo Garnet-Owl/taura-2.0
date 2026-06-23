@@ -10,6 +10,7 @@ belong in handoffs, tests, and code comments.
 ## 2026-06-23 - Bible Corpus Extraction
 - Improved Bible extraction reliability by fixing page-boundary truncation, header bleed, section-heading noise, and verse alignment issues.
 - Added validated aligned corpora for Matthew, Mark, Luke, John, Acts, Romans, and 1 Corinthians; the test suite reached 70 passing tests.
+- Added the 2 Corinthians extractor and aligned corpus with 257 validated verse pairs for the next corpus rebuild.
 
 ## 2026-06-23 - Baseline Quality Check
 - Re-ran offline evaluation after corpus improvements and recorded better baseline BLEU scores: 5.34 for Kikuyu to English and 4.91 for English to Kikuyu.
