@@ -17,12 +17,17 @@ from pydantic import BaseModel, Field
 
 from app.api.embeddings import CrossLingualTranslator, get_sentence_embedding
 from app.shared import config
+from app.shared.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 APP_VERSION = "2.0.0"
 
 
 class TranslationRequest(BaseModel):
-    text: str = Field(..., min_length=1, description="Source text to translate")
+    text: str = Field(
+        ..., min_length=1, max_length=2000, description="Source text to translate"
+    )
     source_lang: str = Field(..., description="Source language code ('ki' or 'en')")
     target_lang: str = Field(..., description="Target language code ('ki' or 'en')")
     method: str = Field(
@@ -38,7 +43,9 @@ class TranslationResponse(BaseModel):
 
 
 class CandidatesRequest(BaseModel):
-    text: str = Field(..., min_length=1, description="Source text to translate")
+    text: str = Field(
+        ..., min_length=1, max_length=2000, description="Source text to translate"
+    )
     source_lang: str = Field(..., description="Source language code ('ki' or 'en')")
     target_lang: str = Field(..., description="Target language code ('ki' or 'en')")
     k: int = Field(5, ge=1, le=20, description="Number of top-K candidates to return")
@@ -89,6 +96,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         config.PROJ_EN_KI_PATH,
     ]
     if not all(os.path.exists(p) for p in required):
+        missing = [p for p in required if not os.path.exists(p)]
+        logger.warning(
+            "Translation models not found (%s). "
+            "Run `uv run python -m scripts.train_embeddings` to train. "
+            "All /translate requests will return 503 until models are loaded.",
+            ", ".join(missing),
+        )
         app.state.translators = None
         yield
         return
@@ -110,6 +124,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if os.path.exists(config.TGT_EMBS_EN_PATH)
         else None
     )
+
+    # Precomputed embeddings cover only training sentences (val rows were held out).
+    # Trim sentence lists to match so retrieval indices are always valid.
+    if tgt_embs_en is not None and len(tgt_embs_en) < len(en_sentences):
+        en_sentences = en_sentences[: len(tgt_embs_en)]
+    if tgt_embs_ki is not None and len(tgt_embs_ki) < len(ki_sentences):
+        ki_sentences = ki_sentences[: len(tgt_embs_ki)]
 
     translator_ki_en = CrossLingualTranslator(
         ki_model,
