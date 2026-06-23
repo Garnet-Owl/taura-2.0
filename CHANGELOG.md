@@ -40,3 +40,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-06-23 - Colossians and 1 Thessalonians Extraction
 - Added the Colossians and 1 Thessalonians extractors and aligned corpus with 95 and 89 validated verse pairs respectively.
+
+## 2026-06-23 - Psalms Extraction
+- Shifted extraction strategy to prioritize the largest Bible books first. Added the Psalms extractor, producing a massive aligned corpus addition with 2,461 validated verse pairs.
