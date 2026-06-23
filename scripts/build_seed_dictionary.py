@@ -12,16 +12,37 @@ logger = logging.getLogger(__name__)
 
 
 def normalize_word(word: str) -> str:
-    word = word.lower().strip(".,!?;:\"'()[]{}")
+    # Lowercase and strip punctuation including curly quotes
+    word = word.lower().strip(".,!?;:\"'()[]{}«»”’“‘")
+    # Transliterate macrons (ī/ū) to tildes (ĩ/ũ)
+    trans = str.maketrans("īū", "ĩũ")
+    word = word.translate(trans)
     return word
 
 
 def build_seed_dictionary(xlsx_path: str, output_csv: str, top_k: int = 1000):
     logger.info(f"Loading dataset from {xlsx_path}")
-    df = pd.read_excel(xlsx_path)
+    if xlsx_path.endswith(".csv"):
+        df = pd.read_csv(xlsx_path)
+        df = df[["English", "Kikuyu"]]
+        logger.info(f"Loaded {len(df)} sentence pairs from CSV.")
+    else:
+        xls = pd.ExcelFile(xlsx_path)
+        dfs = []
+        for sheet in xls.sheet_names:
+            df_sheet = xls.parse(sheet)
+            if "English" in df_sheet.columns and "Kikuyu" in df_sheet.columns:
+                dfs.append(df_sheet[["English", "Kikuyu"]])
 
-    if "English" not in df.columns or "Kikuyu" not in df.columns:
-        raise ValueError("Dataset must contain 'English' and 'Kikuyu' columns.")
+        if not dfs:
+            raise ValueError(
+                "Dataset must contain sheets with 'English' and 'Kikuyu' columns."
+            )
+
+        df = pd.concat(dfs, ignore_index=True)
+        logger.info(
+            f"Loaded {len(df)} sentence pairs across {len(xls.sheet_names)} sheets."
+        )
 
     eng_counts = defaultdict(int)
     kik_counts = defaultdict(int)
@@ -67,24 +88,71 @@ def build_seed_dictionary(xlsx_path: str, output_csv: str, top_k: int = 1000):
     seen_eng = set()
     seen_kik = set()
 
-    # Pre-add manual known pairs provided by the user
+    # Pre-add manual known pairs provided by the user (normalized)
     manual_pairs = [
         ("water", "maĩ"),
         ("god", "ngai"),
         ("hello", "niatia"),
-        ("coffee", "kahūa"),
-        ("tree", "mūtī"),
+        ("coffee", "kahũa"),
+        ("tree", "mũtĩ"),
         ("food", "irio"),
     ]
 
     for ew, kw in manual_pairs:
-        best_matches.append((ew, kw))
-        seen_eng.add(ew)
-        seen_kik.add(kw)
+        # Just in case, normalize manual pairs too
+        ew_norm = normalize_word(ew)
+        kw_norm = normalize_word(kw)
+        best_matches.append((ew_norm, kw_norm))
+        seen_eng.add(ew_norm)
+        seen_kik.add(kw_norm)
+
+    # Common English stopwords to avoid mapping to themselves in Kikuyu space
+    ENGLISH_STOPWORDS = {
+        "and",
+        "the",
+        "for",
+        "with",
+        "that",
+        "this",
+        "not",
+        "but",
+        "you",
+        "your",
+        "his",
+        "her",
+        "their",
+        "they",
+        "them",
+        "from",
+        "are",
+        "was",
+        "were",
+        "been",
+        "have",
+        "has",
+        "had",
+        "will",
+        "would",
+        "shall",
+        "should",
+        "can",
+        "could",
+        "about",
+        "into",
+        "onto",
+        "upon",
+        "than",
+        "then",
+        "them",
+        "more",
+        "most",
+    }
 
     # Add identical strings automatically (e.g. SL-28, Ruiru, numbers)
     for ew in eng_counts:
         if ew in kik_counts and ew not in seen_eng and ew not in seen_kik:
+            if ew in ENGLISH_STOPWORDS:
+                continue
             if re.match(r"^[a-z0-9\-]+$", ew) and eng_counts[ew] >= 2:
                 best_matches.append((ew, ew))
                 seen_eng.add(ew)

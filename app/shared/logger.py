@@ -5,7 +5,7 @@ import os
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
-def setup_logger(name: str = "default"):
+def setup_logger(name: str = "default") -> logging.Logger:
     log_level_str = get_log_level()
     log_level = getattr(logging, log_level_str.upper(), logging.INFO)
     logging.basicConfig(
