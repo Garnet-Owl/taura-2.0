@@ -89,6 +89,9 @@ class LukeExtractor(BaseBibleParser, LukeExtractorBase):
 
             body_text = self.extract_page_body_text(doc[page_idx], lang)
             verse_positions = self._find_verse_positions(body_text, page_verses)
+            self._append_leading_continuation(
+                body_text, verse_positions, lang, parsed_verses
+            )
             self._extract_and_clean_verses(
                 body_text, verse_positions, lang, parsed_verses
             )
