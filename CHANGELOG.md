@@ -146,3 +146,10 @@ All notable changes to this project will be documented in this file.
 - Wired Romans into `app/preprocessing/bible/orchestrator.py` BOOKS list.
 - Extracted `data/parallel/romans_aligned.csv` — 431 aligned verse pairs; 0 Kikuyu missing/empty; 2 English missing (Romans 16:26-27 are placed in a doxology footnote in the WEB translation, not numbered as chapter 16 verses — documented in test).
 - Full test suite: 66/66 passing.
+
+## [Session 2026-06-23 - 1 Corinthians Extractor]
+- Created `app/preprocessing/bible/corinthians1/` with core metadata and extraction service for 1 Corinthians.
+- Wired 1 Corinthians into the Bible preprocessing orchestrator.
+- Added `tests/test_corinthians1_parser.py` with 5 BDD tests covering constants, cleaning, validation, body filtering, and full PDF alignment.
+- Extracted `data/parallel/corinthians1_aligned.csv` with 437 aligned pairs; 0 missing/empty verses on both sides.
+- Verified Ruff and full pytest suite: 70/70 passing.
