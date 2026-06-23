@@ -1125,15 +1125,6 @@ wheels = [
 ]
 
 [[package]]
-name = "morfessor"
-version = "2.0.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/af/5e/760a41def80f7e48e4f95937a8de73057871f655c0ec459f7aff3c1f95a2/Morfessor-2.0.6.tar.gz", hash = "sha256:bb3beac234341724c5f640f65803071f62373a50dba854d5a398567f9aefbab2", size = 34341, upload-time = "2019-07-31T12:35:10.401Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/e6/7afea30be2ee4d29ce9de0fa53acbb033163615f849515c0b1956ad074ee/Morfessor-2.0.6-py3-none-any.whl", hash = "sha256:7215e37909ebd2bafeeec5fdf4e339a25e61aee4895ff99317b9fb44eddab562", size = 35784, upload-time = "2019-07-31T12:35:08.945Z" },
-]
-
-[[package]]
 name = "mpmath"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2454,7 +2445,6 @@ dependencies = [
     { name = "huggingface-hub" },
     { name = "ijson" },
     { name = "jinja2" },
-    { name = "morfessor" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "pandas" },
@@ -2493,7 +2483,6 @@ requires-dist = [
     { name = "huggingface-hub", extras = ["cli"], specifier = ">=1.20.1" },
     { name = "ijson", specifier = ">=3.5.0" },
     { name = "jinja2", specifier = ">=3.1.0" },
-    { name = "morfessor", specifier = ">=2.0.6" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=3.0.3" },
