@@ -45,9 +45,7 @@ class TestMatthewParser(unittest.TestCase):
             cleaned = extractor.clean_english_verse(raw_text)
 
         with then("cross-reference is removed"):
-            assert_that(
-                cleaned, is_(equal_to("This is a verse  with a cross-reference."))
-            )
+            assert_that(cleaned, is_(equal_to("This is a verse  with a cross-reference.")))
 
     def test_validation_logic(self):
         """Should correctly detect missing or empty verses."""

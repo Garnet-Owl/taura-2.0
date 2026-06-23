@@ -21,6 +21,7 @@ from app.api.embeddings import (
     get_sentence_embeddings_parallel,
     iterative_procrustes,
     learn_alignment_matrix,
+    load_morfessor_segment_fn,
 )
 from app.shared import config
 from app.shared.logger import setup_logger
@@ -304,10 +305,13 @@ def main() -> None:
         # Use the training pairs directly as alignment anchors â€” much stronger
         # than loanwords or identical strings alone.
         logger.info(
-            f"Computing sentence embeddings for {len(train_ki_sentences)} training pairs..."
+            f"Computing sentence embeddings for {len(train_ki_segmented)} training pairs..."
         )
+        # Use Morfessor-segmented Kikuyu sentences so the anchor embeddings are
+        # produced from tokens the model actually learned (not n-gram OOV fallback).
+        # This ensures W_ki_en maps the same representation that inference uses.
         ki_sent_embs = np.array([
-            get_sentence_embedding(ki_model, s) for s in train_ki_sentences
+            get_sentence_embedding(ki_model, s) for s in train_ki_segmented
         ])  # (N, dim)
         en_sent_embs = np.array([
             get_sentence_embedding(en_model, s) for s in train_en_sentences
@@ -379,9 +383,18 @@ def main() -> None:
     val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
     val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
 
+    # Load the Morfessor segment function so evaluation BLEU/accuracy reflects
+    # the same pre-processing the deployed server applies to Kikuyu source queries.
+    ki_seg_fn = load_morfessor_segment_fn(morfessor_save_path)
+
     # Translators whose sentence bank IS the val set (required for accuracy/MRR)
     translator_ki_en = CrossLingualTranslator(
-        ki_model, en_model, W_ki_en, val_en, precomputed_tgt_embeddings=val_tgt_en
+        ki_model,
+        en_model,
+        W_ki_en,
+        val_en,
+        precomputed_tgt_embeddings=val_tgt_en,
+        src_segment_fn=ki_seg_fn,
     )
     translator_en_ki = CrossLingualTranslator(
         en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki
