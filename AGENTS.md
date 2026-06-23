@@ -83,6 +83,7 @@ Current milestone state is in `session-details/progress_update_<date>.md` and th
 - Commit locally only. Never push to remote.
 - **Critical:** The agent must commit the changes it makes at the end of *every* agent session.
 - **CRITICAL:** ALWAYS run the test suite FIRST before executing any `git commit`. Never commit untested code.
+- **CRITICAL:** Never commit temporary scratch scripts or scratch data files to git. Keep the git history clean.
 - 1 commit per completed feature (or work session, if continuing).
 - Commit message: short imperative sentence. No AI attribution.
 
