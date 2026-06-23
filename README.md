@@ -38,6 +38,7 @@ The long-term goal is to push translation quality to the point where Taura is ge
 | **3. Agriculture + Proper-Nouns**<br>+3,852 agri pairs; proper-noun anchors; restored default n-grams | Ki→En<br>En→Ki | 23.36<br>34.92 | 44.16<br>51.92 | 6%<br>27% | 32%<br>50% | 0.208<br>0.398 | 4,788 |
 | **4. Expanded Bible Corpus**<br>+Galatians, Ephesians, Philippians, Colossians, 1 Thess (10,255 pairs) | Ki→En<br>En→Ki | 35.27<br>34.38 | 49.10<br>55.18 | 20%<br>22% | 38%<br>41% | 0.305<br>0.320 | 4,859 |
 | **5. Psalms Expansion**<br>+Psalms (12,716 pairs total) | Ki→En<br>En→Ki | 33.18<br>35.96 | 49.02<br>56.75 | 25%<br>22% | 44%<br>46% | 0.345<br>0.342 | 5,654 |
+| **6. Genesis, Proverbs, Ecclesiastes**<br>+2,630 pairs (15,346 pairs total) | Ki→En<br>En→Ki | 34.04<br>37.22 | 48.59<br>55.15 | 18%<br>24% | 34%<br>51% | 0.275<br>0.360 | 6,521 |
 
 The hybrid alignment was the single biggest jump — a **4× BLEU improvement** from baseline.
 The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.

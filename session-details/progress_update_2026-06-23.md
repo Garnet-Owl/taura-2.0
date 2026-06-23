@@ -48,9 +48,10 @@ Current extracted evidence:
 
 Latest baseline BLEU after recent corpus improvements:
 
-- **Kikuyu -> English:** 33.18 BLEU (down from 35.27, but Top-1 accuracy improved from 20% to 25%)
-- **English -> Kikuyu:** 35.96 BLEU (up from 34.38)
-- **Mutual Nearest Neighbors (MNN):** 5,654 (huge jump from 4,859)
+- **Kikuyu -> English:** 34.04 BLEU (up from 33.18)
+- **English -> Kikuyu:** 37.22 BLEU (up from 35.96, breaking 37 for the first time!)
+- **English -> Kikuyu Top-5:** 51% (broke 50% for the first time!)
+- **Mutual Nearest Neighbors (MNN):** 6,521 (massive jump from 5,654)
 
 ## Next Work
 
