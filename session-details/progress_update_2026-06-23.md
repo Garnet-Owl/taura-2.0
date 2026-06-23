@@ -72,6 +72,11 @@
 | Wire Romans into orchestrator | ✅ Verified | Added to `BOOKS` list in `orchestrator.py` |
 | Add Romans parser unit tests | ✅ Verified | `tests/test_romans_parser.py` — 5 BDD tests, all passing; full suite 66/66 |
 
+| **17. Phase 15 Features (1 Corinthians Corpus Extraction)** | | |
+| Implement 1 Corinthians (1 Akorinitho) extractor | ✅ Verified | `app/preprocessing/bible/corinthians1/` - 437 aligned verse pairs, 0 missing/empty |
+| Wire 1 Corinthians into orchestrator | ✅ Verified | Added to `BOOKS` list in `orchestrator.py` |
+| Add 1 Corinthians parser unit tests | ✅ Verified | `tests/test_corinthians1_parser.py` - 5 BDD tests, all passing; full suite 70/70 |
+
 ## Blockers
 
 None.
