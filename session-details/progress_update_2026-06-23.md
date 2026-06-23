@@ -1,81 +1,64 @@
 # Taura 2.0 - Progress Update (2026-06-23)
 
-## Task Board
+This file tracks milestone progress for the current workstream. It is not a
+second changelog. Use `CHANGELOG.md` for detailed per-change history and this
+file for milestone status, current focus, blockers, and next work.
 
-| Task | Status | Notes |
-| :--- | :---: | :--- |
-| **1. Project Scaffolding & Setup** | | |
-| Initialize project with Poetry, Ruff, and Pytest | ✅ Verified | `pyproject.toml` exists with dependencies |
-| Define feature-based directory structure (`app/api`, `app/serve`, `models/`, `data/`) | ✅ Verified | `models/`, `app/serve` created |
-| Set up CI/CD pipelines and contribution guidelines | ✅ Verified | `.github/workflows/ci.yml` and `CONTRIBUTING.md` created |
-| **2. Data Engineering & Preprocessing** | | |
-| Collect and curate Kikuyu-English parallel corpora | ✅ Verified | HF dataset downloaded and preprocessed |
-| Implement robust tokenization and text normalization scripts | ✅ Verified | Implemented in `app/api/preprocessing.py` and verified by unit tests |
-| Prepare train/validation/test splits | ✅ Verified | Implemented in `app/api/split.py` and verified by unit tests |
-| **3. Model Development & Training** | | |
-| Implement FastText embeddings training pipeline | ✅ Verified | Implemented in `scripts/train_embeddings.py` and `app/api/embeddings.py` |
-| Train models for both Kikuyu -> English and English -> Kikuyu | ✅ Verified | Models and alignment projection matrices trained and saved |
-| Evaluate translation quality | ✅ Verified | Top-1, top-5, and MRR metrics computed and saved to JSON |
-| **4. API Service & Integration** | | |
-| Wrap models into a FastAPI service | ✅ Verified | Implemented in `app/serve/main.py` with context lifespan |
-| Implement endpoints for real-time bidirectional translation | ✅ Verified | Bidirectional endpoints support retrieval and word-by-word methods |
-| Write integration tests for API | ✅ Verified | Integration tests implemented in `app/tests/test_api.py` |
-| **5. Phase 2 Features (Evaluation & Web UI)** | | |
-| Build robust offline evaluation pipeline with `sacrebleu` | ✅ Verified | Implemented in `scripts/evaluate.py` calculating BLEU/ChrF |
-| Construct FastAPI single-page web UI layout and controller | ✅ Verified | Designed glassmorphic dark-mode SPA under `/` with template mounting |
-| Implement feedback collection and logging pipeline | ✅ Verified | Log user ratings and feedback suggestions to `data/feedback.jsonl` |
-| **6. Phase 3 Features (uv Packaging Migration)** | | |
-| Migrate pyproject.toml to PEP 621 metadata & Hatchling backend | ✅ Verified | Replaced Poetry with PEP 621 structure using Hatchling |
-| Generate uv.lock and synchronize dependencies | ✅ Verified | Generated uv.lock using `uv lock` and synced with `uv sync` |
-| Migrate CI/CD pipeline to use setup-uv | ✅ Verified | Replaced Snok Poetry action with astral-sh/setup-uv action |
-| Update project documentation (README.md, INSTALL.md, CONTRIBUTING.md) | ✅ Verified | Replaced Poetry commands with uv commands |
-| Align developer instructions (AGENTS.md) with uv toolset | ✅ Verified | Updated developer guidelines to enforce uv |
-| **7. Phase 4 Features (Model Scaling & Optimization)** | | |
-| Clean and normalize unsupervised monolingual corpora | ✅ Verified | Applied text normalization to monolingual corpora exports |
-| Implement automated hyperparameter tuning script | ✅ Verified | Created `scripts/tune_hyperparameters.py` for grid search |
-| Train final models with optimal hyperparameters | ✅ Verified | Updated `scripts/train_embeddings.py` and retrained models |
-| Re-evaluate on test set and verify API test suite | ✅ Verified | Re-evaluated metrics and verified all pytest test suites |
-| **8. Phase 5 & 6 Features (Model Scaling & Optimization)** | | |
-| Expand Parallel Corpora & Retraining | ✅ Verified | Task 195 successfully processed, evaluated and metrics saved |
-| **9. Phase 7 Features (Open Source Release & Documentation)** | | |
-| Fix hyperparameter config (EPOCH=35, MIN_COUNT=2) | ✅ Verified | Corrected `config.py` to match tuned values |
-| Add `/translate/candidates` (top-K) endpoint | ✅ Verified | Implemented with TDD tests in `test_candidates_endpoint.py` |
-| Add `/model/info` metadata endpoint | ✅ Verified | Returns version, hyperparameters, and live evaluation metrics |
-| Update README with metrics and new endpoints | ✅ Verified | Added performance table and new API examples |
-| **10. Phase 8 Features (Alignment Refinement)** | | |
-| Implement `iterative_procrustes` in `app/api/embeddings.py` | ✅ Verified | 2 TDD tests pass; function refines W over N SVD iterations |
-| Create `scripts/refine_alignment.py` | ✅ Verified | Loads models, runs 5-iteration refinement, saves matrices, re-evaluates |
-| **11. Phase 9 Features (Subword Tokenization)** | | |
-| Add `SubwordTokenizer` to `app/api/preprocessing.py` | ✅ Verified | SentencePiece BPE wrapper with encode/decode; 3 TDD tests pass |
-| Add `build_subword_vocabulary` to `scripts/prepare_dataset.py` | ✅ Verified | Trains shared BPE model over Kikuyu+English corpora as final prep step |
-| Add `SP_MODEL_PATH`, `SP_VOCAB_SIZE` to `app/api/config.py` | ✅ Verified | Centralised config; vocab_size=8000 |
-| Train FastText on SP-tokenized corpora | ✅ Verified | Updated `scripts/train_embeddings.py` and retrained models; Top-1 accuracy improved |
-| **12. Phase 10 Features (Bible Corpus & Co-occurrence Matching)** | | |
-| Refactor Bible parser and parallel alignment pipeline | ✅ Verified | Cleaned verse extraction and aligned 9.4k sentence pairs |
-| Extract statistical co-occurrence seed dictionary | ✅ Verified | Generated `seed_dictionary.csv` using Dice coefficient matching |
-| Expand Kikuyu/English monolingual training corpora | ✅ Verified | Expanded monolingual sets from Bible parsing to 74K/137K sentences |
-| **13. Phase 11 Features (Type Safety & Evaluation Verification)** | | |
-| Validate model translation nearest-neighbors | ✅ Verified | Verified Named Entity translation mappings and alignments |
-| Resolve strict type check and linter warnings | ✅ Verified | Fixed all Mypy type-annotation warnings and Ruff formatting issues |
-| Re-evaluate translation quality on clean split | ✅ Verified | Evaluated Kikuyu<->English translation BLEU scores (5.34 / 4.91) |
-| **14. Phase 12 Features (Modular Bible Preprocessing & Matthew Feature)** | | |
-| Package Matthew extraction as a modular feature | ✅ Verified | Core and Service structure inside `matthew/` feature directory |
-| Implement CLI orchestrator runner | ✅ Verified | Created `app/preprocessing/bible/orchestrator.py` |
-| Add comprehensive parser unit tests | ✅ Verified | Created `tests/test_matthew_parser.py` (all tests passing) |
-| Fix propagation shift on missing/empty verses | ✅ Verified | Robust slicing logic implemented and tested with 1070 aligned verses |
-| **15. Phase 13 Features (Acts Corpus Extraction)** | | |
-| Implement Acts (Atũmwo) extractor | ✅ Verified | `app/preprocessing/bible/acts/` — 1007 aligned verse pairs, 0 missing/empty |
-| Wire Acts into orchestrator | ✅ Verified | Added to `BOOKS` list in `orchestrator.py` |
-| Add Acts parser unit tests | ✅ Verified | `tests/test_acts_parser.py` — 5 BDD tests, all passing; full suite 61/61 |
-| **16. Phase 14 Features (Romans Corpus Extraction)** | | |
-| Implement Romans (Aroma) extractor | ✅ Verified | `app/preprocessing/bible/romans/` — 431 aligned verse pairs; 0 Kikuyu missing/empty; 2 English missing (known WEB versification gap at 16:26-27) |
-| Wire Romans into orchestrator | ✅ Verified | Added to `BOOKS` list in `orchestrator.py` |
-| Add Romans parser unit tests | ✅ Verified | `tests/test_romans_parser.py` — 5 BDD tests, all passing; full suite 66/66 |
+## Milestone Status
 
-| **17. Phase 15 Features (1 Corinthians Corpus Extraction)** | | |
-| Implement 1 Corinthians (1 Akorinitho) extractor | ✅ Verified | `app/preprocessing/bible/corinthians1/` - 437 aligned verse pairs, 0 missing/empty |
-| Wire 1 Corinthians into orchestrator | ✅ Verified | Added to `BOOKS` list in `orchestrator.py` |
-| Add 1 Corinthians parser unit tests | ✅ Verified | `tests/test_corinthians1_parser.py` - 5 BDD tests, all passing; full suite 70/70 |
+| Milestone | Status | Evidence |
+|---|---|---|
+| 0 - Project Foundation | Complete | `uv`, Ruff, pytest, CI, contributor docs, package structure |
+| 1 - FastText Baseline | Complete | embeddings, alignment matrices, retrieval metrics, versioned model runs |
+| 2 - API, Evaluation, and Demo UI | Complete | FastAPI translation service, candidates endpoint, model info endpoint, feedback UI, BLEU/ChrF evaluation |
+| 3 - Corpus Expansion and Quality Control | In progress | seed dictionary, Bible extraction phase, monolingual corpus expansion, improved baseline metrics |
+| 4 - NLLB Fine-Tuning Readiness | Not started | roadmap exists; golden split and training workflow still pending |
+| 5 - NLLB Training and Evaluation | Not started | no NLLB adapter trained yet |
+| 6 - Release Packaging | In progress | public README and dataset/model hosting notes are improving |
+
+## Milestone 3 - Current Phase
+
+**Phase:** Bible corpus extraction and validation.
+
+Purpose: extract high-quality aligned Kikuyu-English scripture pairs as one
+data-processing phase within the broader corpus-expansion milestone.
+
+Current evidence:
+- Modular Bible parser architecture exists under `app/preprocessing/bible/`.
+- `BaseBibleParser` handles page ranges, header parsing, body extraction,
+  page-boundary continuation, and English footnote cleanup.
+- Extracted and validated books so far:
+  - Matthew: 1,070 aligned pairs.
+  - Mark: aligned corpus generated.
+  - Luke: aligned corpus generated.
+  - John: 879 aligned pairs.
+  - Acts: 1,007 aligned pairs.
+  - Romans: 431 aligned pairs; known WEB versification gap for Romans 16:26-27.
+  - 1 Corinthians: 437 aligned pairs.
+- Latest full test evidence after 1 Corinthians: 70 passing tests.
+
+## Current Quality Snapshot
+
+Latest recorded FastText baseline after clean Bible corpus improvements:
+
+| Direction | BLEU |
+|---|---:|
+| Kikuyu to English | 5.34 |
+| English to Kikuyu | 4.91 |
+
+These are baseline retrieval metrics, not final sequence-to-sequence quality.
+The target NLLB path is still required for stronger contextual translation.
+
+## Next Work
+
+1. Continue the Bible extraction phase with 2 Corinthians.
+2. Keep extractor details in `CHANGELOG.md` and handoffs unless they change the
+   milestone status.
+3. After the New Testament extraction pass reaches a useful stopping point,
+   rebuild the parallel splits, retrain the FastText baseline, and compare
+   metrics.
+4. Start Milestone 4 by defining a golden evaluation split and NLLB fine-tuning
+   workflow.
 
 ## Blockers
 
