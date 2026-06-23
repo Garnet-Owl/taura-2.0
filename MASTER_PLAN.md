@@ -107,6 +107,7 @@ Phases:
 5. Rebuild splits, retrain baseline, and compare metrics.
 
 Bible extraction is a phase within this milestone, not a milestone per book.
+**New Strategy:** Instead of extracting books in canonical order, we prioritize extracting the largest books in the entire Bible (OT + NT) first (e.g., Psalms, Genesis, Jeremiah, Isaiah). This maximizes parallel corpus growth efficiently.
 Individual book extractors are implementation details and should be recorded in
 the changelog or handoff notes unless they change milestone status.
 

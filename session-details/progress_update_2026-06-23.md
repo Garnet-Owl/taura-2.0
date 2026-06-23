@@ -41,6 +41,7 @@ Current extracted evidence:
 | Philippians | Extracted with 104 aligned verse pairs. |
 | Colossians | Extracted with 95 aligned verse pairs. |
 | 1 Thessalonians | Extracted with 89 aligned verse pairs. |
+| Psalms | Extracted with 2,461 aligned verse pairs. |
 
 Latest baseline BLEU after recent corpus improvements:
 
@@ -50,7 +51,7 @@ Latest baseline BLEU after recent corpus improvements:
 
 ## Next Work
 
-1. Continue the Bible extraction phase with 2 Thessalonians.
+1. Continue the Bible extraction phase with Psalms (the largest book in the Bible), followed by other large books (Genesis, Jeremiah, Isaiah) to maximize corpus growth.
 2. Rebuild training splits after the extraction pass reaches a useful stopping point.
 3. Retrain the FastText baseline and compare metrics before moving toward NLLB work.
 
