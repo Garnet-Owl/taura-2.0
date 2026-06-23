@@ -3,12 +3,13 @@ Implementation of the Book of Matthew (Mathayo) extractor.
 """
 
 import re
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple, Union
 import pandas as pd
 import fitz
 
 from app.preprocessing.bible.base.core import (
     BaseBibleParser,
+    PatternConfig,
     VERSE_TO_IDX,
     ALL_VERSES_SEQ,
 )
@@ -23,24 +24,54 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
     """
 
     def __init__(self):
-        BaseBibleParser.__init__(self)
+        MatthewExtractorBase.__init__(self)
+        self.pattern_config = PatternConfig(self._default_patterns())
+        BaseBibleParser.__init__(self, self.pattern_config)
+
+    @staticmethod
+    def _default_patterns() -> (
+        Dict[str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]]
+    ):
+        """Define default patterns with their respective converters."""
+        return {
+            "verse_marker_strict": {
+                "pattern": re.compile(
+                    r"^\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+                )
+            },
+            "footnote_measurement": {
+                "pattern": re.compile(
+                    r"""^(?:
+                      (?:grams?|kg|kilograms?|ounces?|oz|pounds?|lb|liters?|litres?|
+                         milliliters?|ml|inches?|in|centimeters?|cm|kilometers?|km|miles?|
+                         cubits?|seah|ephah|hin|shekel)\s+(?:or|is|about|=|≈).*
+                    | [*†‡§;,]\s*\d[\d:,;\s*†‡§]*  # footnote-only content
+                    )$""",
+                    re.VERBOSE | re.IGNORECASE,
+                )
+            },
+            "english_cross_ref": {
+                "pattern": [
+                    re.compile(r"[*†‡§]\s*\d+:\d+"),
+                    re.compile(r"[*†‡§]\s*\d+"),
+                    re.compile(r"(?:^|\s)[;,]\s*\d+:\d+"),
+                    re.compile(r"^\)\s*\.\s*"),
+                ]
+            },
+        }
 
     def parse_book_verses(self, pdf_path: str, lang: str) -> Dict[int, Dict[int, str]]:
         """
         Parses pages of the PDF corresponding to Matthew.
-        Returns:
-            Dict of {chapter_no: {verse_no: verse_text}}
         """
         start_page = (
             self.KIKUYU_START_PAGE if lang == "kikuyu" else self.ENGLISH_START_PAGE
         )
         end_page = self.KIKUYU_END_PAGE if lang == "kikuyu" else self.ENGLISH_END_PAGE
 
-        # Build page ranges specifically for Matthew
         page_ranges = self.build_page_ranges(pdf_path, lang, start_page, end_page)
         doc = fitz.open(pdf_path)
         parsed_verses = {}
-
         target_book = "Matthew"
 
         for page_idx in range(start_page, end_page + 1):
@@ -48,122 +79,158 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
             if not r_range:
                 continue
 
-            start_ref, end_ref = r_range
-
-            # Clamp the start and end refs to Matthew to prevent leakage
-            start_ref_clamped = start_ref
-            if start_ref[0] != target_book:
-                start_ref_clamped = (target_book, 1, 1)
-            end_ref_clamped = end_ref
-            if end_ref[0] != target_book:
-                end_ref_clamped = (target_book, 28, 20)
-
-            if (
-                start_ref_clamped not in VERSE_TO_IDX
-                or end_ref_clamped not in VERSE_TO_IDX
-            ):
+            clamped_range = self._get_clamped_page_range(r_range, target_book)
+            if not clamped_range:
                 continue
 
-            start_idx = VERSE_TO_IDX[start_ref_clamped]
-            end_idx = VERSE_TO_IDX[end_ref_clamped]
-
-            page_verses = [
-                ref
-                for ref in ALL_VERSES_SEQ[start_idx : end_idx + 1]
-                if ref[0] == target_book
-            ]
-
+            start_ref_clamped, end_ref_clamped = clamped_range
+            page_verses = self._get_page_verses(
+                start_ref_clamped, end_ref_clamped, target_book
+            )
             if not page_verses:
                 continue
 
-            page = doc[page_idx]
-            body_text = self.extract_page_body_text(page)
-
-            current_pos = 0
-            verse_positions = []
-
-            for bname, ch_no, v_no in page_verses:
-                match = None
-                if v_no == 1:
-                    # Chapter start pattern:
-                    # e.g., "2 1 Now when..." or "26 1 Rĩrĩa..." or "1 1 The book..."
-                    pattern_strict = re.compile(
-                        rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
-                    )
-                    pattern_relaxed = re.compile(
-                        rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)"
-                    )
-                    pattern_one = re.compile(
-                        r"(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
-                    )
-                    pattern_one_relaxed = re.compile(r"(?<!\d)1(?!\d)")
-
-                    candidates = []
-                    for pat in [
-                        pattern_strict,
-                        pattern_relaxed,
-                        pattern_one,
-                        pattern_one_relaxed,
-                    ]:
-                        m = pat.search(body_text, current_pos)
-                        if m:
-                            candidates.append(m)
-                    if candidates:
-                        match = min(candidates, key=lambda x: x.start())
-                else:
-                    match = self.find_next_verse_pos(body_text, v_no, current_pos)
-
-                if match:
-                    verse_positions.append(
-                        {
-                            "ref": (ch_no, v_no),
-                            "start_pos": match.end(),
-                            "marker_pos": match.start(),
-                        }
-                    )
-                    current_pos = match.end()
-                else:
-                    verse_positions.append(
-                        {
-                            "ref": (ch_no, v_no),
-                            "start_pos": current_pos,
-                            "marker_pos": current_pos,
-                            "missing": True,
-                        }
-                    )
-
-            # Set end_pos and yield text
-            for idx in range(len(verse_positions)):
-                curr = verse_positions[idx]
-                if curr.get("missing"):
-                    curr["start_pos"] = 0
-                    curr["end_pos"] = 0
-                else:
-                    # Find the next actually matched verse to determine where this one ends
-                    next_matched = None
-                    for next_curr in verse_positions[idx + 1 :]:
-                        if not next_curr.get("missing"):
-                            next_matched = next_curr
-                            break
-
-                    if next_matched:
-                        curr["end_pos"] = next_matched["marker_pos"]
-                    else:
-                        curr["end_pos"] = len(body_text)
-
-                ch_no, v_no = curr["ref"]
-                v_text = body_text[curr["start_pos"] : curr["end_pos"]].strip()
-
-                if lang == "english":
-                    v_text = self.clean_english_verse(v_text)
-                    if self.is_footnote_only(v_text):
-                        v_text = ""
-
-                if ch_no not in parsed_verses:
-                    parsed_verses[ch_no] = {}
-                parsed_verses[ch_no][v_no] = v_text
+            body_text = self.extract_page_body_text(doc[page_idx])
+            verse_positions = self._find_verse_positions(body_text, page_verses)
+            self._extract_and_clean_verses(
+                body_text, verse_positions, lang, parsed_verses
+            )
 
         return parsed_verses
+
+    def _get_clamped_page_range(
+        self,
+        r_range: Tuple[Tuple[str, int, int], Tuple[str, int, int]],
+        target_book: str,
+    ) -> Optional[Tuple[Tuple[str, int, int], Tuple[str, int, int]]]:
+        """Clamps the page range boundaries to prevent leakage from other books."""
+        start_ref, end_ref = r_range
+        start_ref_clamped = start_ref
+        if start_ref[0] != target_book:
+            start_ref_clamped = (target_book, 1, 1)
+
+        end_ref_clamped = end_ref
+        if end_ref[0] != target_book:
+            end_ref_clamped = (target_book, 28, 20)
+
+        if start_ref_clamped not in VERSE_TO_IDX or end_ref_clamped not in VERSE_TO_IDX:
+            return None
+
+        return start_ref_clamped, end_ref_clamped
+
+    def _get_page_verses(
+        self,
+        start_ref: Tuple[str, int, int],
+        end_ref: Tuple[str, int, int],
+        target_book: str,
+    ) -> List[Tuple[str, int, int]]:
+        """Gets target book verses within the specified index boundaries."""
+        start_idx = VERSE_TO_IDX[start_ref]
+        end_idx = VERSE_TO_IDX[end_ref]
+        return [
+            ref
+            for ref in ALL_VERSES_SEQ[start_idx : end_idx + 1]
+            if ref[0] == target_book
+        ]
+
+    def _find_verse_positions(
+        self, body_text: str, page_verses: List[Tuple[str, int, int]]
+    ) -> List[dict]:
+        """Locates matches and positions for target book verses on the page body."""
+        current_pos = 0
+        verse_positions = []
+
+        for bname, ch_no, v_no in page_verses:
+            if v_no == 1:
+                match = self._locate_verse_one(body_text, ch_no, current_pos)
+            else:
+                match = self.find_next_verse_pos(body_text, v_no, current_pos)
+
+            if match:
+                verse_positions.append(
+                    {
+                        "ref": (ch_no, v_no),
+                        "start_pos": match.end(),
+                        "marker_pos": match.start(),
+                    }
+                )
+                current_pos = match.end()
+            else:
+                verse_positions.append(
+                    {
+                        "ref": (ch_no, v_no),
+                        "start_pos": current_pos,
+                        "marker_pos": current_pos,
+                        "missing": True,
+                    }
+                )
+        return verse_positions
+
+    def _locate_verse_one(
+        self, body_text: str, ch_no: int, current_pos: int
+    ) -> Optional[re.Match]:
+        """Applies chapter-start patterns to locate the first verse of a chapter."""
+        pattern_strict = re.compile(
+            rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+        )
+        pattern_relaxed = re.compile(
+            rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)"
+        )
+        pattern_one = re.compile(
+            r"(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+        )
+        pattern_one_relaxed = re.compile(r"(?<!\d)1(?!\d)")
+
+        candidates = []
+        for pat in [
+            pattern_strict,
+            pattern_relaxed,
+            pattern_one,
+            pattern_one_relaxed,
+        ]:
+            m = pat.search(body_text, current_pos)
+            if m:
+                candidates.append(m)
+        if candidates:
+            return min(candidates, key=lambda x: x.start())
+        return None
+
+    def _extract_and_clean_verses(
+        self,
+        body_text: str,
+        verse_positions: List[dict],
+        lang: str,
+        parsed_verses: dict,
+    ) -> None:
+        """Slices verse text, cleans cross-references, and stores results."""
+        for idx in range(len(verse_positions)):
+            curr = verse_positions[idx]
+            if curr.get("missing"):
+                curr["start_pos"] = 0
+                curr["end_pos"] = 0
+            else:
+                next_matched = None
+                for next_curr in verse_positions[idx + 1 :]:
+                    if not next_curr.get("missing"):
+                        next_matched = next_curr
+                        break
+
+                if next_matched:
+                    curr["end_pos"] = next_matched["marker_pos"]
+                else:
+                    curr["end_pos"] = len(body_text)
+
+            ch_no, v_no = curr["ref"]
+            v_text = body_text[curr["start_pos"] : curr["end_pos"]].strip()
+
+            if lang == "english":
+                v_text = self.clean_english_verse(v_text)
+                if self.is_footnote_only(v_text):
+                    v_text = ""
+
+            if ch_no not in parsed_verses:
+                parsed_verses[ch_no] = {}
+            parsed_verses[ch_no][v_no] = v_text
 
     def find_next_verse_pos(
         self, body_text: str, v_no: int, current_pos: int
@@ -179,14 +246,18 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
             return matches[0]
 
         first_match = matches[0]
-        # If the match is close to current position, it is very likely the verse number
         if first_match.start() - current_pos < 300:
             return first_match
 
-        # Match starting with capital letters, quotes, etc.
-        strict_suffix = re.compile(
-            r"^\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+        strict_pattern_info = (
+            self.config.patterns.get("verse_marker_strict") if self.config else None
         )
+        strict_suffix = (
+            strict_pattern_info.get("pattern")
+            if strict_pattern_info
+            else re.compile(r"^\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]")
+        )
+
         for m in matches:
             if strict_suffix.match(body_text[m.end() :]):
                 return m
@@ -201,7 +272,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         kik_data = self.parse_book_verses(kikuyu_pdf_path, "kikuyu")
         eng_data = self.parse_book_verses(english_pdf_path, "english")
 
-        # Run validation
         kik_missing, kik_empty = self.validate_extracted_verses(kik_data)
         eng_missing, eng_empty = self.validate_extracted_verses(eng_data)
 
@@ -217,7 +287,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
                 k_text = k_ch.get(v, "").strip()
                 e_text = e_ch.get(v, "").strip()
 
-                # Align if both exist and are not empty
                 if k_text and e_text:
                     ref = f"Matthew {ch}:{v}"
                     aligned_verses.append((ref, k_text, e_text))
