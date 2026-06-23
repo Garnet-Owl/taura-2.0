@@ -3,6 +3,10 @@
 Short history of what changed and why it matters. Detailed technical notes
 belong in handoffs, tests, and code comments.
 
+## 2026-06-23 - Swahili NLP Improvements and Galatians Extraction
+- Implemented Swahili NLP techniques (parallel proper-noun anchors and Morfessor diagnostics) resulting in a massive improvement to retrieval BLEU (from ~5 to ~21).
+- Added the Galatians extractor and aligned corpus with 149 validated verse pairs.
+
 ## 2026-06-23 - Planning and Tracking Cleanup
 - Reworked planning docs so `MASTER_PLAN.md` explains milestones, progress updates show milestone status, and this changelog stays short.
 - Updated agent instructions so future changelog entries use 1-2 plain-language bullets instead of long technical task lists.
