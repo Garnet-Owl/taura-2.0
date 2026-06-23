@@ -132,12 +132,41 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if tgt_embs_ki is not None and len(tgt_embs_ki) < len(ki_sentences):
         ki_sentences = ki_sentences[: len(tgt_embs_ki)]
 
+    # Load the Morfessor model saved during training so Kikuyu inference queries
+    # are pre-segmented with the same morpheme boundaries as the training corpus.
+    ki_segment_fn = None
+    if os.path.exists(config.MORFESSOR_KI_PATH):
+        try:
+            import morfessor as _morfessor
+
+            _morph_model = _morfessor.MorfessorIO().read_binary_file(
+                config.MORFESSOR_KI_PATH
+            )
+
+            def ki_segment_fn(sentence: str) -> str:  # type: ignore[misc]
+                words = sentence.split()
+                segmented = []
+                for word in words:
+                    try:
+                        morphemes, _ = _morph_model.viterbi_segment(word.lower())
+                        segmented.append(" ".join(morphemes))
+                    except Exception:
+                        segmented.append(word)
+                return " ".join(segmented)
+
+            logger.info(
+                "Morfessor model loaded — Kikuyu queries will be pre-segmented at inference."
+            )
+        except Exception as e:
+            logger.warning("Could not load Morfessor model: %s — queries will be raw.", e)
+
     translator_ki_en = CrossLingualTranslator(
         ki_model,
         en_model,
         W_ki_en,
         en_sentences,
         precomputed_tgt_embeddings=tgt_embs_en,
+        src_segment_fn=ki_segment_fn,
     )
     translator_en_ki = CrossLingualTranslator(
         en_model,
@@ -302,11 +331,14 @@ def translate_candidates(request: CandidatesRequest) -> CandidatesResponse:
 def _retrieve_top_k(
     translator: CrossLingualTranslator, src_sentence: str, k: int
 ) -> list[TranslationCandidate]:
-    """Computes cosine similarity scores and returns the top-K target candidates."""
+    """Computes CSLS-adjusted similarity scores and returns the top-K target candidates."""
     if not translator.tgt_sentences:
         return []
 
-    src_emb = get_sentence_embedding(translator.src_model, src_sentence)
+    # Mirror translate_sentence_retrieval: apply source segmentation then CSLS
+    segment_fn = getattr(translator, "src_segment_fn", None)
+    sentence_to_embed = segment_fn(src_sentence) if segment_fn is not None else src_sentence
+    src_emb = get_sentence_embedding(translator.src_model, sentence_to_embed)
     projected = translator.projection_matrix @ src_emb
 
     norm_projected = np.linalg.norm(projected)
@@ -317,6 +349,9 @@ def _retrieve_top_k(
     norms_tgt[norms_tgt < 1e-8] = 1.0
 
     scores = np.dot(translator.tgt_embeddings, projected) / (norms_tgt * norm_projected)
+    if hasattr(translator, "tgt_csls_penalty"):
+        scores = 2 * scores - translator.tgt_csls_penalty
+
     top_k_indices = np.argsort(scores)[::-1][: min(k, len(translator.tgt_sentences))]
 
     return [
