@@ -49,10 +49,10 @@ Current extracted evidence:
 
 Latest baseline BLEU after recent corpus improvements:
 
-- **Kikuyu -> English:** 38.67 BLEU (huge jump up from 33.18)
-- **English -> Kikuyu:** 38.53 BLEU (huge jump up from 35.96)
-- **Kikuyu -> English Top-5:** 44% (recovered 10 points after fixing alignment!)
-- **Mutual Nearest Neighbors (MNN):** 6,571 (massive jump from 5,654)
+- **Kikuyu -> English:** 39.18 BLEU (up from 38.67)
+- **English -> Kikuyu:** 38.73 BLEU (up from 38.53)
+- **Kikuyu -> English Top-1:** 20% (up from 18%)
+- **Mutual Nearest Neighbors (MNN):** 7,109 (broke 7k! up from 6,571)
 
 ## Next Work
 
