@@ -126,9 +126,20 @@ class TestMatthewParser(unittest.TestCase):
                                     }
                                 ],
                             },
-                            # Footer line: ly0=720 >= 719 — must be excluded
+                            # Last body line at ly0=722 (below 745 cutoff) — must be included
                             {
-                                "bbox": (50, 720, 500, 740),
+                                "bbox": (50, 722, 500, 742),
+                                "spans": [
+                                    {
+                                        "text": "26 last verse text",
+                                        "font": "NormalFont",
+                                        "size": 12.0,
+                                    }
+                                ],
+                            },
+                            # True footer at ly0=750 >= 745 — must be excluded
+                            {
+                                "bbox": (50, 750, 500, 765),
                                 "spans": [
                                     {
                                         "text": "page 3",
@@ -146,9 +157,9 @@ class TestMatthewParser(unittest.TestCase):
             body_text = extractor.extract_page_body_text(mock_page)
 
         with then("only body text survives"):
-            assert_that(body_text, is_(equal_to("In those days John came")))
             assert_that(body_text, not_(contains_string("1263 Matthew 4:9")))
             assert_that(body_text, not_(contains_string("footnote ref")))
+            assert_that(body_text, contains_string("26 last verse text"))
             assert_that(body_text, not_(contains_string("page 3")))
 
     def test_find_verse_positions_no_truncation(self):

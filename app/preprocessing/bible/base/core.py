@@ -369,7 +369,7 @@ class BaseBibleParser:
                 ly0, ly1 = line["bbox"][1], line["bbox"][3]
                 if ly1 < 71:
                     continue
-                if ly0 >= 719:
+                if ly0 >= 745:
                     continue
                 if ly0 > 650:
                     has_main_text = any(
