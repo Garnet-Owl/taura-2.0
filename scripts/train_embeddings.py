@@ -23,8 +23,6 @@ from app.api.embeddings import (
     iterative_procrustes,
     learn_alignment_matrix,
 )
-from app.morphology.core import load_segment_fn as load_morfessor_segment_fn
-from app.morphology.service import segment_corpus as segment_kikuyu_corpus
 from app.shared import config
 from app.shared.logger import setup_logger
 from scripts.evaluate import calculate_translation_scores, evaluate_retrieval_accuracy
@@ -206,27 +204,10 @@ def main() -> None:
         f"Split: {len(train_ki_sentences)} train / {len(val_ki)} val sentence pairs"
     )
 
-    # Apply Morfessor morphological segmentation to Kikuyu before FastText training.
-    # The trained Morfessor model is saved alongside the run artifacts so the server
-    # can reload it and apply the same segmentation to inference-time queries.
-    logger.info("Applying Morfessor segmentation to Kikuyu training sentences...")
-    morfessor_save_path = os.path.join(config.LATEST_RUN_DIR, "morfessor_ki.bin")
-    train_ki_segmented = segment_kikuyu_corpus(
-        train_ki_sentences, save_path=morfessor_save_path
-    )
-
-    total_words = sum(len(s.split()) for s in train_ki_sentences)
-    total_morphemes = sum(len(s.split()) for s in train_ki_segmented)
-    splits_per_word = (total_morphemes / total_words) if total_words > 0 else 1.0
-    logger.info(
-        f"Morfessor diagnostics: {total_words} words split into {total_morphemes} morphemes "
-        f"({splits_per_word:.2f} morphemes/word average)."
-    )
-
     # Write monolingual train files into the run directory so each run is self-contained
     train_ki_path = os.path.join(config.LATEST_RUN_DIR, "train.kikuyu")
     train_en_path = os.path.join(config.LATEST_RUN_DIR, "train.english")
-    write_monolingual_txt(train_ki_segmented, train_ki_path)
+    write_monolingual_txt(train_ki_sentences, train_ki_path)
     write_monolingual_txt(train_en_sentences, train_en_path)
 
     if args.quick_test:
@@ -264,13 +245,10 @@ def main() -> None:
         # Use the training pairs directly as alignment anchors - much stronger
         # than loanwords or identical strings alone.
         logger.info(
-            f"Computing sentence embeddings for {len(train_ki_segmented)} training pairs..."
+            f"Computing sentence embeddings for {len(train_ki_sentences)} training pairs..."
         )
-        # Use Morfessor-segmented Kikuyu sentences so the anchor embeddings are
-        # produced from tokens the model actually learned (not n-gram OOV fallback).
-        # This ensures W_ki_en maps the same representation that inference uses.
         ki_sent_embs = np.array([
-            get_sentence_embedding(ki_model, s) for s in train_ki_segmented
+            get_sentence_embedding(ki_model, s) for s in train_ki_sentences
         ])  # (N, dim)
         en_sent_embs = np.array([
             get_sentence_embedding(en_model, s) for s in train_en_sentences
@@ -311,14 +289,7 @@ def main() -> None:
             train_en_sentences, train_ki_sentences
         )
         if proper_noun_words:
-            morfessor_path = os.path.join(config.LATEST_RUN_DIR, "morfessor_ki.bin")
-            ki_seg_fn_anchor = load_morfessor_segment_fn(morfessor_path)
-            pn_ki = np.array([
-                ki_model.get_word_vector(
-                    ki_seg_fn_anchor(w).split()[0] if ki_seg_fn_anchor else w
-                )
-                for w in proper_noun_words
-            ])
+            pn_ki = np.array([ki_model.get_word_vector(w) for w in proper_noun_words])
             pn_en = np.array([en_model.get_word_vector(w) for w in proper_noun_words])
             ki_sent_embs = np.vstack([ki_sent_embs, pn_ki])
             en_sent_embs = np.vstack([en_sent_embs, pn_en])
@@ -366,15 +337,7 @@ def main() -> None:
 
     val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
 
-    # Load the Morfessor segment function now so we can:
-    #   1. Segment val_ki before computing target embeddings — keeps them in the
-    #      same morpheme-aware space that W_en_ki was trained to map into.
-    #   2. Pass src_segment_fn to translator_ki_en for source-side segmentation.
-    ki_seg_fn = load_morfessor_segment_fn(morfessor_save_path)
-    val_ki_for_embs = [ki_seg_fn(s) for s in val_ki] if ki_seg_fn else val_ki
-    val_tgt_ki = get_sentence_embeddings_parallel(
-        config.KI_MODEL_PATH, val_ki_for_embs, dim=dim
-    )
+    val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
 
     # Translators whose sentence bank IS the val set (required for accuracy/MRR)
     translator_ki_en = CrossLingualTranslator(
@@ -383,7 +346,6 @@ def main() -> None:
         W_ki_en,
         val_en,
         precomputed_tgt_embeddings=val_tgt_en,
-        src_segment_fn=ki_seg_fn,
     )
     translator_en_ki = CrossLingualTranslator(
         en_model, ki_model, W_en_ki, val_ki, precomputed_tgt_embeddings=val_tgt_ki

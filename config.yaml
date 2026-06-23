@@ -28,10 +28,10 @@ training:
   fasttext_lr: 0.1
   fasttext_ws: 8
   fasttext_min_count: 2
-  # n-gram range: minn=2 captures Kikuyu's 1-2 char prefixes (a-, u-, mu-)
-  # maxn=7 captures longer suffixes common in Bantu verb conjugation
-  fasttext_minn: 2
-  fasttext_maxn: 7
+  # Using default FastText n-gram range (3-6) for both languages.
+  # Experiments showed that using 2-7 degraded alignment performance significantly.
+  fasttext_minn: 3
+  fasttext_maxn: 6
   alignment_refinement_iters: 5
 
   # Sentence pairs held out from training for evaluation

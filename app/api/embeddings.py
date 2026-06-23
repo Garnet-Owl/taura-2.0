@@ -5,7 +5,7 @@ import multiprocessing
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
-from typing import Any, Callable
+from typing import Any
 
 import fasttext
 import numpy as np
@@ -305,7 +305,6 @@ class CrossLingualTranslator:
         tgt_sentences: list[str],
         precomputed_tgt_embeddings: np.ndarray | None = None,
         csls_k: int = 10,
-        src_segment_fn: Callable[[str], str] | None = None,
     ) -> None:
         self._vocab_hnsw_index: Any = None  # set via build_vocab_hnsw_index()
         self.src_model = src_model
@@ -313,10 +312,6 @@ class CrossLingualTranslator:
         self.projection_matrix = projection_matrix
         self.tgt_sentences = tgt_sentences
         self.csls_k = csls_k
-        # Optional pre-segmentation applied to source queries at inference time.
-        # Set to a Morfessor-based function when the source language was trained
-        # on morpheme-segmented text, so inference queries match the training vocab.
-        self.src_segment_fn = src_segment_fn
 
         if precomputed_tgt_embeddings is not None:
             self.tgt_embeddings = precomputed_tgt_embeddings
@@ -344,12 +339,7 @@ class CrossLingualTranslator:
         if not self.tgt_sentences:
             return ""
 
-        sentence_to_embed = (
-            self.src_segment_fn(src_sentence)
-            if self.src_segment_fn is not None
-            else src_sentence
-        )
-        src_emb = get_sentence_embedding(self.src_model, sentence_to_embed)
+        src_emb = get_sentence_embedding(self.src_model, src_sentence)
         projected = self.projection_matrix @ src_emb
 
         # Compute cosine similarities
@@ -448,18 +438,7 @@ class CrossLingualTranslator:
 
         translated_words = []
         for token in tokens:
-            # Segment the token into morphemes if a segmenter is available,
-            # then average the morpheme vectors — mirrors the training-time representation.
-            if self.src_segment_fn is not None:
-                morphemes = [m for m in self.src_segment_fn(token).split() if m]
-                morph_vecs = [self.src_model.get_word_vector(m) for m in morphemes]
-                v_src = (
-                    np.mean(morph_vecs, axis=0).astype(np.float32)
-                    if morph_vecs
-                    else self.src_model.get_word_vector(token)
-                )
-            else:
-                v_src = self.src_model.get_word_vector(token)
+            v_src = self.src_model.get_word_vector(token)
 
             norm_v = np.linalg.norm(v_src)
             if norm_v < 1e-8:

@@ -19,7 +19,6 @@ from app.api.embeddings import (
     CrossLingualTranslator,
     get_sentence_embedding,
 )
-from app.morphology.core import load_segment_fn as load_morfessor_segment_fn
 from app.shared import config
 from app.shared.logger import setup_logger
 
@@ -136,26 +135,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if tgt_embs_ki is not None and len(tgt_embs_ki) < len(ki_sentences):
         ki_sentences = ki_sentences[: len(tgt_embs_ki)]
 
-    # Load the Morfessor model saved during training so Kikuyu inference queries
-    # are pre-segmented with the same morpheme boundaries as the training corpus.
-    ki_segment_fn = load_morfessor_segment_fn(config.MORFESSOR_KI_PATH)
-    if ki_segment_fn is not None:
-        logger.info(
-            "Morfessor model loaded — Kikuyu queries will be pre-segmented at inference."
-        )
-    elif os.path.exists(config.MORFESSOR_KI_PATH) is False:
-        logger.warning(
-            "No Morfessor model found at %s — Kikuyu queries will be raw.",
-            config.MORFESSOR_KI_PATH,
-        )
-
     translator_ki_en = CrossLingualTranslator(
         ki_model,
         en_model,
         W_ki_en,
         en_sentences,
         precomputed_tgt_embeddings=tgt_embs_en,
-        src_segment_fn=ki_segment_fn,
     )
     translator_en_ki = CrossLingualTranslator(
         en_model,
