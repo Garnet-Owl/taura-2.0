@@ -90,10 +90,10 @@ Current milestone state is in `session-details/progress_update_<date>.md` and th
 
 ## Progress Tracking
 
-- After every code change: append 3–5 bullets to `CHANGELOG.md`. Never overwrite — always append.
+- After every change: append 1–2 concise bullets to `CHANGELOG.md`. Write for a normal user: what changed and why it matters. Never overwrite — always append.
 - Do **not** duplicate every change in `session-details/progress_update_<date>.md`.
 - Progress updates are milestone snapshots: update them only when a milestone status, phase status, metric, blocker, or next milestone focus changes.
-- Fine-grained implementation details belong in `CHANGELOG.md` and the latest handoff.
+- Fine-grained implementation details belong in the latest handoff, not the changelog.
 
 ---
 
