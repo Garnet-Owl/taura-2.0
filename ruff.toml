@@ -27,6 +27,8 @@ known-first-party = ["app"]
 "__init__.py" = ["E402", "F401"]
 # Optional SDK imports guarded by try/except ImportError — must stay inline
 "app/api/embeddings.py" = ["PLC0415"]
+"app/morphology/core.py" = ["PLC0415"]
+"app/morphology/service.py" = ["PLC0415"]
 "app/serve/main.py" = ["PLC0415"]
 "scripts/train_embeddings.py" = ["PLC0415"]
 

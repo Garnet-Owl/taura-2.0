@@ -25,40 +25,6 @@ except Exception:
     pass
 
 
-def load_morfessor_segment_fn(model_path: str) -> "Callable[[str], str] | None":
-    """Loads a persisted Morfessor model and returns a sentence segmentation callable.
-
-    The returned function splits each whitespace-delimited token into morphemes and
-    rejoins them with spaces — exactly the transformation applied during training.
-    Returns None if the model file is missing or morfessor is not installed.
-    """
-    import os
-
-    if not os.path.exists(model_path):
-        return None
-    try:
-        import morfessor
-
-        morph_model = morfessor.MorfessorIO().read_binary_file(model_path)
-        logger.info("Morfessor model loaded from %s.", model_path)
-
-        def _segment(text: str) -> str:
-            words = text.split()
-            result = []
-            for word in words:
-                try:
-                    morphemes, _ = morph_model.viterbi_segment(word.lower())
-                    result.append(" ".join(morphemes))
-                except Exception:
-                    result.append(word)
-            return " ".join(result)
-
-        return _segment
-    except Exception as e:
-        logger.warning("Could not load Morfessor model from %s: %s", model_path, e)
-        return None
-
-
 def extract_identical_string_dictionary(
     src_words: list[str], tgt_words: list[str]
 ) -> list[str]:
