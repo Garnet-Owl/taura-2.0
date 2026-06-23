@@ -14,6 +14,8 @@ from app.preprocessing.bible.romans.service import RomansExtractor
 from app.preprocessing.bible.corinthians1.service import Corinthians1Extractor
 from app.preprocessing.bible.corinthians2.service import Corinthians2Extractor
 from app.preprocessing.bible.galatians.service import GalatiansExtractor
+from app.preprocessing.bible.ephesians.service import EphesiansExtractor
+from app.preprocessing.bible.philippians.service import PhilippiansExtractor
 
 BOOKS = [
     ("Matthew", MatthewExtractor, "matthew_aligned.csv"),
@@ -25,6 +27,8 @@ BOOKS = [
     ("1 Corinthians", Corinthians1Extractor, "corinthians1_aligned.csv"),
     ("2 Corinthians", Corinthians2Extractor, "corinthians2_aligned.csv"),
     ("Galatians", GalatiansExtractor, "galatians_aligned.csv"),
+    ("Ephesians", EphesiansExtractor, "ephesians_aligned.csv"),
+    ("Philippians", PhilippiansExtractor, "philippians_aligned.csv"),
 ]
 
 

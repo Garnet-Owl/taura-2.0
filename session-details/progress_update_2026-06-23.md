@@ -36,6 +36,9 @@ Current extracted evidence:
 | Romans | Extracted with 431 aligned verse pairs; two English verses are a known source-text versification gap. |
 | 1 Corinthians | Extracted with 437 aligned verse pairs. |
 | 2 Corinthians | Extracted with 257 aligned verse pairs. |
+| Galatians | Extracted with 149 aligned verse pairs. |
+| Ephesians | Extracted with 155 aligned verse pairs. |
+| Philippians | Extracted with 104 aligned verse pairs. |
 
 Latest baseline BLEU after recent corpus improvements:
 
@@ -46,7 +49,7 @@ Latest baseline BLEU after recent corpus improvements:
 
 ## Next Work
 
-1. Continue the Bible extraction phase with Galatians.
+1. Continue the Bible extraction phase with Colossians.
 2. Rebuild training splits after the extraction pass reaches a useful stopping point.
 3. Retrain the FastText baseline and compare metrics before moving toward NLLB work.
 
