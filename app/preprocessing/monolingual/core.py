@@ -11,7 +11,7 @@ Appends to existing monolingual files — safe to run multiple times.
 import fitz  # PyMuPDF
 from pathlib import Path
 
-from app.api import config
+from app.shared import config
 from app.api.preprocessing import normalize_text
 from app.shared.logger import setup_logger
 

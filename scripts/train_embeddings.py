@@ -13,13 +13,13 @@ import fasttext
 import numpy as np
 
 from app.api.embeddings import (
+    get_sentence_embedding,
     get_sentence_embeddings_parallel,
     learn_alignment_matrix,
     iterative_procrustes,
     CrossLingualTranslator,
-    extract_identical_string_dictionary,
 )
-from app.api import config
+from app.shared import config
 from app.shared.logger import setup_logger
 from scripts.evaluate import calculate_translation_scores, evaluate_retrieval_accuracy
 
@@ -101,9 +101,11 @@ def train_monolingual(
 
 
 def save_metrics(
-    metrics: dict[str, dict[str, float]], metrics_path: str = config.METRICS_JSON_PATH
+    metrics: dict[str, dict[str, float]], metrics_path: str | None = None
 ) -> None:
     """Saves metrics, merging with existing data to preserve offline evaluation scores."""
+    if metrics_path is None:
+        metrics_path = config.METRICS_JSON_PATH
     if os.path.exists(metrics_path):
         try:
             with open(metrics_path, "r", encoding="utf-8") as f:
@@ -226,7 +228,7 @@ def main() -> None:
         state["steps"].append("train_english")
         save_state(state_file, state)
 
-    # 2. Learn Cross-Lingual Alignment (SVD + iterative Procrustes refinement)
+    # 2. Learn Cross-Lingual Alignment
     if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(
         config.PROJ_EN_KI_PATH
     ):
@@ -234,43 +236,54 @@ def main() -> None:
         W_ki_en = np.load(config.PROJ_KI_EN_PATH)
         W_en_ki = np.load(config.PROJ_EN_KI_PATH)
     else:
-        seed_dict_path = Path("data/processed/seed_dictionary.csv")
-
-        # Always fetch word lists — needed for iterative Procrustes regardless of
-        # which seed-dictionary strategy is used.
         ki_words = ki_model.get_words()
         en_words = en_model.get_words()
 
+        # ── Supervised Procrustes from parallel sentence embeddings ──────────
+        # Use the training pairs directly as alignment anchors — much stronger
+        # than loanwords or identical strings alone.
+        logger.info(
+            f"Computing sentence embeddings for {len(train_ki_sentences)} training pairs..."
+        )
+        ki_sent_embs = np.array(
+            [get_sentence_embedding(ki_model, s) for s in train_ki_sentences]
+        )  # (N, dim)
+        en_sent_embs = np.array(
+            [get_sentence_embedding(en_model, s) for s in train_en_sentences]
+        )  # (N, dim)
+
+        # Optionally mix in seed dictionary pairs if one exists
+        seed_dict_path = Path(config.SEED_DICTIONARY_PATH)
         if seed_dict_path.exists():
             import pandas as pd
 
-            logger.info(f"Loading seed dictionary from {seed_dict_path}")
+            logger.info(
+                f"Augmenting anchors with seed dictionary from {seed_dict_path}"
+            )
             df_seed = pd.read_csv(seed_dict_path)
             seed_pairs = list(zip(df_seed["Kikuyu"], df_seed["English"]))
-            logger.info(
-                f"Loaded {len(seed_pairs)} translation pairs to use as anchor dictionary."
+            seed_ki = np.array(
+                [ki_model.get_word_vector(str(k)) for k, _ in seed_pairs]
             )
-            X = np.array([ki_model.get_word_vector(str(k)) for k, e in seed_pairs]).T
-            Y = np.array([en_model.get_word_vector(str(e)) for k, e in seed_pairs]).T
-        else:
-            seed_words = extract_identical_string_dictionary(ki_words, en_words)
-            logger.info(
-                f"Extracted {len(seed_words)} identical strings to use as anchor dictionary."
+            seed_en = np.array(
+                [en_model.get_word_vector(str(e)) for _, e in seed_pairs]
             )
-            X = np.array([ki_model.get_word_vector(w) for w in seed_words]).T
-            Y = np.array([en_model.get_word_vector(w) for w in seed_words]).T
+            ki_sent_embs = np.vstack([ki_sent_embs, seed_ki])
+            en_sent_embs = np.vstack([en_sent_embs, seed_en])
+            logger.info(f"Total anchor pairs after augmentation: {len(ki_sent_embs)}")
 
-        if "precompute_embeddings" not in state["steps"]:
-            # We skip precomputing huge corpus embeddings for serving right here since we aren't using parallel sentences
-            state["steps"].append("precompute_embeddings")
-            save_state(state_file, state)
+        X = ki_sent_embs.T  # (dim, N)
+        Y = en_sent_embs.T  # (dim, N)
 
-        logger.info("Learning initial alignment matrices...")
+        logger.info("Learning initial alignment matrices from supervised anchors...")
         W_ki_en_init = learn_alignment_matrix(X, Y)
         W_en_ki_init = learn_alignment_matrix(Y, X)
 
+        del ki_sent_embs, en_sent_embs, X, Y
+        gc.collect()
+
+        # ── Iterative Procrustes refinement with MNN + CSLS ──────────────────
         logger.info("Refining matrices via iterative Procrustes with CSLS...")
-        # Get top 20,000 words for mutual nearest neighbor iterative alignment
         ki_top_words = ki_words[:20000]
         en_top_words = en_words[:20000]
         X_all = np.array([ki_model.get_word_vector(w) for w in ki_top_words]).T
@@ -283,12 +296,7 @@ def main() -> None:
             Y_all, X_all, W_en_ki_init, n_iters=config.ALIGNMENT_REFINEMENT_ITERS
         )
 
-        del X
-        del Y
-        del X_all
-        del Y_all
-        del W_ki_en_init
-        del W_en_ki_init
+        del X_all, Y_all, W_ki_en_init, W_en_ki_init
         gc.collect()
 
         np.save(config.PROJ_KI_EN_PATH, W_ki_en)

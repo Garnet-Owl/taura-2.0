@@ -6,7 +6,7 @@ from pathlib import Path
 # Add root directory to sys.path to import app.api.split
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.split import split_data
-from app.api import config
+from app.shared import config
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
