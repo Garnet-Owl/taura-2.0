@@ -138,3 +138,11 @@ All notable changes to this project will be documented in this file.
 - Fixed page-end verse truncation issue by matching coordinate filtering at the block level rather than the line level.
 - Added `test_find_verse_positions_no_truncation` unit test to `tests/test_matthew_parser.py` to ensure verse 1 text is not truncated.
 - Verified that the full test suite passes successfully and aligned verses count returns to exactly 1,070 with correct text contents.
+
+## [Session 2026-06-23 - Romans Extractor]
+- Created `app/preprocessing/bible/romans/core.py` with `RomansExtractor` base: 16 chapters, 433 total verses, KIKUYU_START_PAGE=1350, KIKUYU_END_PAGE=1367, ENGLISH_START_PAGE=1434, ENGLISH_END_PAGE=1449.
+- Created `app/preprocessing/bible/romans/service.py` with full extraction/alignment logic mirroring the Acts extractor pattern.
+- Created `tests/test_romans_parser.py` with 5 BDD tests covering constants, cleaning, validation, header filtering, and full PDF alignment (all passing).
+- Wired Romans into `app/preprocessing/bible/orchestrator.py` BOOKS list.
+- Extracted `data/parallel/romans_aligned.csv` — 431 aligned verse pairs; 0 Kikuyu missing/empty; 2 English missing (Romans 16:26-27 are placed in a doxology footnote in the WEB translation, not numbered as chapter 16 verses — documented in test).
+- Full test suite: 66/66 passing.

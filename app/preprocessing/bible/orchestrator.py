@@ -10,6 +10,7 @@ from app.preprocessing.bible.mark.service import MarkExtractor
 from app.preprocessing.bible.luke.service import LukeExtractor
 from app.preprocessing.bible.john.service import JohnExtractor
 from app.preprocessing.bible.acts.service import ActsExtractor
+from app.preprocessing.bible.romans.service import RomansExtractor
 
 BOOKS = [
     ("Matthew", MatthewExtractor, "matthew_aligned.csv"),
@@ -17,6 +18,7 @@ BOOKS = [
     ("Luke", LukeExtractor, "luke_aligned.csv"),
     ("John", JohnExtractor, "john_aligned.csv"),
     ("Acts", ActsExtractor, "acts_aligned.csv"),
+    ("Romans", RomansExtractor, "romans_aligned.csv"),
 ]
 
 
