@@ -37,3 +37,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-06-23 - Ephesians and Philippians Extraction
 - Added the Ephesians and Philippians extractors and aligned corpus with 155 and 104 validated verse pairs respectively.
+
+## 2026-06-23 - Colossians and 1 Thessalonians Extraction
+- Added the Colossians and 1 Thessalonians extractors and aligned corpus with 95 and 89 validated verse pairs respectively.

@@ -39,6 +39,8 @@ Current extracted evidence:
 | Galatians | Extracted with 149 aligned verse pairs. |
 | Ephesians | Extracted with 155 aligned verse pairs. |
 | Philippians | Extracted with 104 aligned verse pairs. |
+| Colossians | Extracted with 95 aligned verse pairs. |
+| 1 Thessalonians | Extracted with 89 aligned verse pairs. |
 
 Latest baseline BLEU after recent corpus improvements:
 
@@ -49,7 +51,7 @@ Latest baseline BLEU after recent corpus improvements:
 
 ## Next Work
 
-1. Continue the Bible extraction phase with Colossians.
+1. Continue the Bible extraction phase with 2 Thessalonians.
 2. Rebuild training splits after the extraction pass reaches a useful stopping point.
 3. Retrain the FastText baseline and compare metrics before moving toward NLLB work.
 
