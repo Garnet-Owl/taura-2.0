@@ -1,39 +1,81 @@
 """Unit tests for offline translation evaluation metrics."""
 
+import io
 import unittest
 from unittest.mock import MagicMock, patch
+
+import numpy as np
 from givenpy import given, then, when
-from hamcrest import assert_that, equal_to, is_
+from hamcrest import assert_that, close_to, equal_to, is_
 
-# We will import the evaluation functions from scripts.evaluate
-# Since scripts.evaluate does not exist yet, this test will fail on import
-from scripts.evaluate import calculate_translation_scores, load_test_data
+from scripts.evaluate import (
+    calculate_translation_scores,
+    evaluate_retrieval_accuracy,
+    load_all_parallel_csvs,
+)
+from scripts.train_embeddings import save_metrics
 
 
-class TestEvaluation(unittest.TestCase):
-    def test_load_test_data(self):
-        """Should parse a TSV file with Kikuyu and English sentence pairs."""
+class TestLoadAllParallelCsvs(unittest.TestCase):
+    def test_loads_kikuyu_and_english_columns(self):
+        """Should parse CSV files with Kikuyu and English columns."""
+        csv_content = (
+            "Reference,Kikuyu,English\n1:1,marigū,Bananas\n1:2,Kūrīma,Ploughing\n"
+        )
+
         with given([]) as _:
-            # Mock file content
-            mock_tsv_content = "kikuyu\tenglish\nmarigū\tBananas\nKūrīma\tPloughing\n"
-            mock_open = MagicMock()
-            mock_open.return_value.__enter__.return_value = (
-                mock_tsv_content.splitlines()
+            mock_path = MagicMock()
+            mock_path.glob.return_value = [mock_path / "test.csv"]
+            mock_path.__truediv__ = lambda self, other: MagicMock(
+                __str__=lambda s: "test.csv"
             )
 
-        with when("loading the test data"):
+        with when("loading parallel CSVs from a directory"):
             with (
-                patch("builtins.open", mock_open),
-                patch("os.path.exists", return_value=True),
+                patch("pathlib.Path.glob") as mock_glob,
+                patch(
+                    "builtins.open",
+                    return_value=io.StringIO(csv_content),
+                ),
             ):
-                ki_sentences, en_sentences = load_test_data("dummy_path.tsv")
+                mock_glob.return_value = [MagicMock(__str__=lambda s: "test.csv")]
+                # Call directly with a real temp CSV via StringIO trick
+                import tempfile
+                from pathlib import Path
 
-        with then("it parses into two aligned lists of sentences"):
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    p = Path(tmpdir) / "test.csv"
+                    p.write_text(csv_content, encoding="utf-8")
+                    ki_sentences, en_sentences = load_all_parallel_csvs(tmpdir)
+
+        with then("it parses into two aligned lists"):
             assert_that(ki_sentences, is_(equal_to(["marigū", "Kūrīma"])))
             assert_that(en_sentences, is_(equal_to(["Bananas", "Ploughing"])))
 
-    def test_calculate_translation_scores(self):
-        """Should compute BLEU and ChrF scores using sacrebleu."""
+    def test_skips_rows_with_empty_fields(self):
+        """Rows with empty Kikuyu or English should be silently skipped."""
+        csv_content = (
+            "Reference,Kikuyu,English\n1:1,,Bananas\n1:2,Kūrīma,\n1:3,marigū,Figs\n"
+        )
+
+        with given([]) as _:
+            import tempfile
+            from pathlib import Path
+
+        with when("loading a CSV that has some empty rows"):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                p = Path(tmpdir) / "data.csv"
+                p.write_text(csv_content, encoding="utf-8")
+                ki_sentences, en_sentences = load_all_parallel_csvs(tmpdir)
+
+        with then("only fully-populated rows are returned"):
+            assert_that(len(ki_sentences), is_(equal_to(1)))
+            assert_that(ki_sentences[0], is_(equal_to("marigū")))
+
+
+class TestCalculateTranslationScores(unittest.TestCase):
+    def test_perfect_match_returns_high_scores(self):
+        """Identical hypotheses and references should return BLEU and ChrF near 100."""
         with given([]) as _:
             translations = ["Bananas", "Ploughing"]
             references = ["Bananas", "Ploughing"]
@@ -58,22 +100,107 @@ class TestEvaluation(unittest.TestCase):
             patched_bleu.assert_called_once_with(translations, [references])
             patched_chrf.assert_called_once_with(translations, [references])
 
-    def test_save_metrics_merges_data(self):
-        """Should merge new metrics with existing metrics without overwriting unrelated keys."""
-        from scripts.train_embeddings import save_metrics
 
+class TestEvaluateRetrievalAccuracy(unittest.TestCase):
+    def test_perfect_alignment_gives_top1_of_one(self):
+        """When projection is identity and embeddings are perfectly aligned, Top-1 should be 1.0."""
+        with given([]) as _:
+            mock_src = MagicMock()
+            mock_tgt = MagicMock()
+            W = np.eye(3)
+
+            # Three sentence pairs with distinct, well-separated embeddings
+            tgt_sentences = ["a", "b", "c"]
+            tgt_embs = np.array(
+                [
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [0.0, 0.0, 1.0],
+                ],
+                dtype=np.float32,
+            )
+
+            from app.api.embeddings import CrossLingualTranslator
+
+            translator = CrossLingualTranslator(
+                src_model=mock_src,
+                tgt_model=mock_tgt,
+                projection_matrix=W,
+                tgt_sentences=tgt_sentences,
+                precomputed_tgt_embeddings=tgt_embs,
+            )
+
+            # Source embeddings match the target embeddings exactly
+            src_sentences = ["x", "y", "z"]
+            src_embs = {
+                "x": np.array([1.0, 0.0, 0.0], dtype=np.float32),
+                "y": np.array([0.0, 1.0, 0.0], dtype=np.float32),
+                "z": np.array([0.0, 0.0, 1.0], dtype=np.float32),
+            }
+            mock_src.get_word_vector.side_effect = lambda w: src_embs.get(
+                w, np.zeros(3, dtype=np.float32)
+            )
+
+        with when("evaluating retrieval accuracy on a perfectly aligned set"):
+            metrics = evaluate_retrieval_accuracy(
+                translator, src_sentences, tgt_sentences
+            )
+
+        with then("Top-1, Top-5, and MRR are all 1.0"):
+            assert_that(metrics["accuracy_top1"], is_(equal_to(1.0)))
+            assert_that(metrics["accuracy_top5"], is_(equal_to(1.0)))
+            assert_that(metrics["mrr"], is_(close_to(1.0, delta=1e-6)))
+
+    def test_random_alignment_gives_low_accuracy(self):
+        """Random projection should give near-zero Top-1 accuracy on non-trivial data."""
+        with given([]) as _:
+            np.random.seed(99)
+            mock_src = MagicMock()
+            mock_tgt = MagicMock()
+            W = np.eye(4)
+
+            n = 20
+            tgt_embs = np.random.randn(n, 4).astype(np.float32)
+            tgt_sentences = [str(i) for i in range(n)]
+            src_sentences = [str(i) for i in range(n)]
+
+            from app.api.embeddings import CrossLingualTranslator
+
+            translator = CrossLingualTranslator(
+                src_model=mock_src,
+                tgt_model=mock_tgt,
+                projection_matrix=W,
+                tgt_sentences=tgt_sentences,
+                precomputed_tgt_embeddings=tgt_embs,
+            )
+            # Each source sentence gets a completely different random vector
+            src_vecs = np.random.randn(n, 4).astype(np.float32)
+            mock_src.get_word_vector.side_effect = lambda w: src_vecs[int(w)]
+
+        with when("evaluating with misaligned source and target embeddings"):
+            metrics = evaluate_retrieval_accuracy(
+                translator, src_sentences, tgt_sentences
+            )
+
+        with then("accuracy is below 0.5"):
+            assert_that(metrics["accuracy_top1"] < 0.5, is_(True))
+            assert_that(0.0 <= metrics["mrr"] <= 1.0, is_(True))
+
+
+class TestSaveMetrics(unittest.TestCase):
+    def test_merges_without_overwriting_existing_keys(self):
+        """Should merge new metrics with existing metrics without overwriting unrelated keys."""
         with given([]) as _:
             existing_data = {
                 "kikuyu_to_english": {"bleu_retrieval": 15.0},
                 "english_to_kikuyu": {"chrf_word_by_word": 20.0},
             }
-
             new_metrics = {
                 "kikuyu_to_english": {"accuracy_top1": 0.5},
                 "english_to_kikuyu": {"accuracy_top1": 0.6},
             }
 
-        with when("saving new metrics"):
+        with when("saving new metrics over existing ones"):
             with (
                 patch("os.path.exists", return_value=True),
                 patch("builtins.open", MagicMock()),
@@ -82,20 +209,14 @@ class TestEvaluation(unittest.TestCase):
             ):
                 save_metrics(new_metrics, "dummy_metrics.json")
 
-        with then("it merges both metrics"):
+        with then("both old and new keys are present in the saved data"):
             mock_dump.assert_called_once()
-            saved_data = mock_dump.call_args[0][0]
-
+            saved = mock_dump.call_args[0][0]
             assert_that(
-                saved_data["kikuyu_to_english"]["bleu_retrieval"], is_(equal_to(15.0))
+                saved["kikuyu_to_english"]["bleu_retrieval"], is_(equal_to(15.0))
             )
+            assert_that(saved["kikuyu_to_english"]["accuracy_top1"], is_(equal_to(0.5)))
             assert_that(
-                saved_data["kikuyu_to_english"]["accuracy_top1"], is_(equal_to(0.5))
+                saved["english_to_kikuyu"]["chrf_word_by_word"], is_(equal_to(20.0))
             )
-            assert_that(
-                saved_data["english_to_kikuyu"]["chrf_word_by_word"],
-                is_(equal_to(20.0)),
-            )
-            assert_that(
-                saved_data["english_to_kikuyu"]["accuracy_top1"], is_(equal_to(0.6))
-            )
+            assert_that(saved["english_to_kikuyu"]["accuracy_top1"], is_(equal_to(0.6)))

@@ -12,6 +12,10 @@ belong in handoffs, tests, and code comments.
 - Added validated aligned corpora for Matthew, Mark, Luke, John, Acts, Romans, and 1 Corinthians; the test suite reached 70 passing tests.
 - Added the 2 Corinthians extractor and aligned corpus with 257 validated verse pairs for the next corpus rebuild.
 
+## 2026-06-23 - Hybrid Alignment and Test Coverage
+- Training now uses three anchor sources for Procrustes alignment: parallel sentence embeddings, seed dictionary word pairs, and identical-string vocabulary pairs — combining sentence-level precision with vocabulary-level breadth.
+- Updated and expanded unit tests to cover CSV loading, retrieval accuracy (Top-1/Top-5/MRR), and metrics merging; all 78 tests pass.
+
 ## 2026-06-23 - Baseline Quality Check
 - Re-ran offline evaluation after corpus improvements and recorded better baseline BLEU scores: 5.34 for Kikuyu to English and 4.91 for English to Kikuyu.
 - Cleaned type and lint issues so the project stayed safe to build on before the next corpus pass.

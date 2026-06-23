@@ -18,6 +18,7 @@ from app.api.embeddings import (
     learn_alignment_matrix,
     iterative_procrustes,
     CrossLingualTranslator,
+    extract_identical_string_dictionary,
 )
 from app.shared import config
 from app.shared.logger import setup_logger
@@ -252,7 +253,7 @@ def main() -> None:
             [get_sentence_embedding(en_model, s) for s in train_en_sentences]
         )  # (N, dim)
 
-        # Optionally mix in seed dictionary pairs if one exists
+        # ── Source 2: seed dictionary word pairs (explicit translations) ────
         seed_dict_path = Path(config.SEED_DICTIONARY_PATH)
         if seed_dict_path.exists():
             import pandas as pd
@@ -270,7 +271,21 @@ def main() -> None:
             )
             ki_sent_embs = np.vstack([ki_sent_embs, seed_ki])
             en_sent_embs = np.vstack([en_sent_embs, seed_en])
-            logger.info(f"Total anchor pairs after augmentation: {len(ki_sent_embs)}")
+            logger.info(f"After seed dictionary: {len(ki_sent_embs)} anchor pairs")
+
+        # ── Source 3: identical-string word pairs (vocabulary breadth) ────────
+        # Same surface form in both vocabularies (shared proper nouns, numbers,
+        # loanwords). Each model embeds them differently, so they carry real signal.
+        identical_words = extract_identical_string_dictionary(ki_words, en_words)
+        if identical_words:
+            id_ki = np.array([ki_model.get_word_vector(w) for w in identical_words])
+            id_en = np.array([en_model.get_word_vector(w) for w in identical_words])
+            ki_sent_embs = np.vstack([ki_sent_embs, id_ki])
+            en_sent_embs = np.vstack([en_sent_embs, id_en])
+            logger.info(
+                f"After identical strings: {len(ki_sent_embs)} total anchor pairs"
+                f" ({len(identical_words)} identical-string pairs added)"
+            )
 
         X = ki_sent_embs.T  # (dim, N)
         Y = en_sent_embs.T  # (dim, N)
