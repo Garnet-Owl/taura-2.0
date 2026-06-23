@@ -1,38 +1,41 @@
 # Taura 2.0 - Progress Update (2026-06-20)
 
-This is a milestone snapshot, not a changelog. Detailed implementation history
-belongs in `CHANGELOG.md`.
+Progress updates are milestone snapshots. They should explain where the project
+stands, not repeat the changelog.
 
-## Milestone Status
+## Overall Status
 
-| Milestone | Status | Evidence |
+The project has a working FastText baseline and a usable API foundation. The
+main work is moving from "it runs" to "the data and metrics are strong enough to
+trust."
+
+## Milestones
+
+| Milestone | Status | What this means |
 |---|---|---|
-| 0 - Project Foundation | Complete | `uv`, Ruff, pytest, CI workflow, contributor docs, project directories |
-| 1 - FastText Baseline | Complete | preprocessing, split generation, embedding training, alignment matrices, saved metrics |
-| 2 - API, Evaluation, and Demo UI | In progress | FastAPI service and UI present; offline evaluation pipeline added |
-| 3 - Corpus Expansion and Quality Control | Not started | Bible extraction and larger corpus work not yet organized as a milestone |
-| 4 - NLLB Fine-Tuning Readiness | Not started | No sequence-to-sequence training workflow yet |
-| 5 - NLLB Training and Evaluation | Not started | No trained NLLB adapter yet |
-| 6 - Release Packaging | In progress | README/setup docs exist but still evolving |
+| Project foundation | Complete | The repo can be installed, tested, and developed with `uv`, Ruff, pytest, and CI. |
+| FastText baseline | Complete | The first bidirectional translation baseline can train and produce metrics. |
+| API and demo UI | In progress | Translation service exists; evaluation and user-facing docs still need polish. |
+| Corpus expansion | Not started | The project still needs more trusted Kikuyu-English data. |
+| NLLB fine-tuning | Not started | The future sequence-to-sequence model path is not ready yet. |
+| Release packaging | In progress | Basic docs exist, but public release material is still being improved. |
 
 ## Current Focus
 
-Stabilize the FastText baseline and make the API/evaluation surface usable
-enough to compare future corpus and model changes.
+Stabilize the baseline and make the service/evaluation flow understandable for
+future contributors.
 
 ## Recent Evidence
 
-- Core project scaffolding and CI are in place.
-- Text normalization and train/validation/test splitting are implemented.
-- FastText embedding training and alignment are implemented.
-- FastAPI translation endpoints and integration tests are present.
-- Offline BLEU/ChrF evaluation has been introduced.
+- Preprocessing, splitting, FastText training, and alignment are implemented.
+- FastAPI can serve translation requests.
+- Offline BLEU/ChrF evaluation has started.
 
-## Next Milestone Work
+## Next Work
 
-1. Finish API/evaluation documentation.
-2. Improve corpus quality and quantity.
-3. Re-evaluate the baseline after each meaningful corpus change.
+1. Finish documenting the API and evaluation flow.
+2. Start expanding and cleaning the training data.
+3. Compare model quality after each meaningful data improvement.
 
 ## Blockers
 

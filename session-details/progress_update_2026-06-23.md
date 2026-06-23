@@ -1,64 +1,53 @@
 # Taura 2.0 - Progress Update (2026-06-23)
 
-This file tracks milestone progress for the current workstream. It is not a
-second changelog. Use `CHANGELOG.md` for detailed per-change history and this
-file for milestone status, current focus, blockers, and next work.
+Progress updates are milestone snapshots. They should explain where the project
+stands, not repeat the changelog.
 
-## Milestone Status
+## Overall Status
 
-| Milestone | Status | Evidence |
+The project is in the corpus-expansion milestone. The active phase is extracting
+clean Bible-aligned Kikuyu-English sentence pairs, then using that data to judge
+whether the baseline model improves.
+
+## Milestones
+
+| Milestone | Status | What this means |
 |---|---|---|
-| 0 - Project Foundation | Complete | `uv`, Ruff, pytest, CI, contributor docs, package structure |
-| 1 - FastText Baseline | Complete | embeddings, alignment matrices, retrieval metrics, versioned model runs |
-| 2 - API, Evaluation, and Demo UI | Complete | FastAPI translation service, candidates endpoint, model info endpoint, feedback UI, BLEU/ChrF evaluation |
-| 3 - Corpus Expansion and Quality Control | In progress | seed dictionary, Bible extraction phase, monolingual corpus expansion, improved baseline metrics |
-| 4 - NLLB Fine-Tuning Readiness | Not started | roadmap exists; golden split and training workflow still pending |
-| 5 - NLLB Training and Evaluation | Not started | no NLLB adapter trained yet |
-| 6 - Release Packaging | In progress | public README and dataset/model hosting notes are improving |
+| Project foundation | Complete | The repo is ready for normal development and testing. |
+| FastText baseline | Complete | A measurable baseline exists and can be retrained. |
+| API and demo UI | Complete | Users can call the model, inspect candidates, and try the UI. |
+| Corpus expansion | In progress | Bible extraction and corpus cleanup are the active work. |
+| NLLB fine-tuning readiness | Not started | Golden evaluation data and training workflow are still pending. |
+| NLLB training | Not started | No fine-tuned NLLB adapter exists yet. |
+| Release packaging | In progress | Public docs and dataset/model hosting notes still need refinement. |
 
-## Milestone 3 - Current Phase
+## Current Phase
 
-**Phase:** Bible corpus extraction and validation.
+Bible corpus extraction is one phase inside the larger data milestone. Individual
+books are implementation details; progress is measured by validated corpus
+coverage and model-quality impact.
 
-Purpose: extract high-quality aligned Kikuyu-English scripture pairs as one
-data-processing phase within the broader corpus-expansion milestone.
+Current extracted evidence:
 
-Current evidence:
-- Modular Bible parser architecture exists under `app/preprocessing/bible/`.
-- `BaseBibleParser` handles page ranges, header parsing, body extraction,
-  page-boundary continuation, and English footnote cleanup.
-- Extracted and validated books so far:
-  - Matthew: 1,070 aligned pairs.
-  - Mark: aligned corpus generated.
-  - Luke: aligned corpus generated.
-  - John: 879 aligned pairs.
-  - Acts: 1,007 aligned pairs.
-  - Romans: 431 aligned pairs; known WEB versification gap for Romans 16:26-27.
-  - 1 Corinthians: 437 aligned pairs.
-- Latest full test evidence after 1 Corinthians: 70 passing tests.
+| Book set | Status |
+|---|---|
+| Matthew, Mark, Luke, John | Extracted and validated enough to support the current corpus work. |
+| Acts | Extracted with 1,007 aligned verse pairs. |
+| Romans | Extracted with 431 aligned verse pairs; two English verses are a known source-text versification gap. |
+| 1 Corinthians | Extracted with 437 aligned verse pairs. |
 
-## Current Quality Snapshot
-
-Latest recorded FastText baseline after clean Bible corpus improvements:
+Latest baseline BLEU after recent corpus improvements:
 
 | Direction | BLEU |
 |---|---:|
 | Kikuyu to English | 5.34 |
 | English to Kikuyu | 4.91 |
 
-These are baseline retrieval metrics, not final sequence-to-sequence quality.
-The target NLLB path is still required for stronger contextual translation.
-
 ## Next Work
 
 1. Continue the Bible extraction phase with 2 Corinthians.
-2. Keep extractor details in `CHANGELOG.md` and handoffs unless they change the
-   milestone status.
-3. After the New Testament extraction pass reaches a useful stopping point,
-   rebuild the parallel splits, retrain the FastText baseline, and compare
-   metrics.
-4. Start Milestone 4 by defining a golden evaluation split and NLLB fine-tuning
-   workflow.
+2. Rebuild training splits after the extraction pass reaches a useful stopping point.
+3. Retrain the FastText baseline and compare metrics before moving toward NLLB work.
 
 ## Blockers
 
