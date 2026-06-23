@@ -4,6 +4,8 @@ Machine translation model and API service for translating between Kikuyu and Eng
 
 The name "taura" is derived from the Kikuyu word "Taũra", which means "Translate".
 
+![Taura 2.0 Web UI](data/assets/taura-iu-screenshot.png)
+
 ---
 
 ## Features
