@@ -372,7 +372,7 @@ class BaseBibleParser:
             block_lines = []
             for line in b["lines"]:
                 ly0, ly1 = line["bbox"][1], line["bbox"][3]
-                if ly1 < 71:
+                if ly1 < 75:
                     continue
                 if ly0 >= 745:
                     continue
@@ -455,6 +455,46 @@ class BaseBibleParser:
         if measurement_re.match(stripped):
             return True
         return False
+
+    def _append_leading_continuation(
+        self,
+        body_text: str,
+        verse_positions: List[dict],
+        lang: str,
+        parsed_verses: Dict[int, Dict[int, str]],
+    ) -> None:
+        """
+        Appends text that appears before the first verse marker on a page to the
+        last already-extracted verse.  This recovers verse text that straddles a
+        page boundary: the PDF page header says the page starts at verse N, but
+        the actual body still begins with the tail of verse N-1.
+        """
+        if not parsed_verses:
+            return
+        first_found = next(
+            (vp for vp in verse_positions if not vp.get("missing")), None
+        )
+        if first_found is None or first_found.get("marker_pos", 0) == 0:
+            return
+
+        leading_text = body_text[: first_found["marker_pos"]].strip()
+        if not leading_text:
+            return
+
+        last_ch = max(parsed_verses.keys())
+        last_v = max(parsed_verses[last_ch].keys())
+
+        if lang == "english":
+            leading_text = self.clean_english_verse(leading_text)
+
+        if not leading_text:
+            return
+
+        existing = parsed_verses[last_ch].get(last_v, "").strip()
+        if existing:
+            parsed_verses[last_ch][last_v] = existing + " " + leading_text
+        else:
+            parsed_verses[last_ch][last_v] = leading_text
 
     def align_verses(
         self, kikuyu_dict: Dict, english_dict: Dict

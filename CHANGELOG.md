@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Fixed page-boundary verse truncation across all 5 books: added `_append_leading_continuation` to `BaseBibleParser`; leading text at the top of each page (belonging to the previous page's last verse) is now appended before verse extraction. Fixed 7 truncated Kikuyu verses in Acts (1:22, 4:7, 9:5, 12:3, 13:31, 17:26, 26:22) and additional cases in Matthew, Mark, Luke, John.
+- Fixed header-bleed bug in `extract_page_body_text`: raised header exclusion threshold from `ly1 < 71` to `ly1 < 75` to catch pages where the header's bottom edge falls at y≈74 (e.g. Matthew 2:14, John 18:17). No body text is affected (body lines begin at y0≈73.7+).
 - Added Book of Acts (Atũmwo) extractor: 1007 aligned verse pairs, 0 missing/empty on both sides (Kikuyu pages 1312–1349, English pages 1395–1433).
 - Wired ActsExtractor into `app/preprocessing/bible/orchestrator.py` BOOKS registry.
 - Added `tests/test_acts_parser.py` with 5 BDD-style tests; full suite now at 61 tests, all passing.
