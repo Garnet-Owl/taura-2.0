@@ -117,3 +117,4 @@ Write a handoff to `session-details/handoffs/YYYY-MM-DD_HHMM_handoff.md`:
 ```
 
 Delete all but the 3 most recent handoff files after writing.
+- **CRITICAL:** Missing verses are unacceptable without strict investigation! If a verse is missing, it implies that the matching of the other verses might be misaligned. Always verify PDF integrity.
