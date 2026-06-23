@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Added Book of Acts (Atũmwo) extractor: 1007 aligned verse pairs, 0 missing/empty on both sides (Kikuyu pages 1312–1349, English pages 1395–1433).
+- Wired ActsExtractor into `app/preprocessing/bible/orchestrator.py` BOOKS registry.
+- Added `tests/test_acts_parser.py` with 5 BDD-style tests; full suite now at 61 tests, all passing.
 - Added Book of John (Johana) extractor: 879 aligned verse pairs, 0 missing/empty on both sides.
 - Fixed Pericope Adulterae page-range mismatch: PDF pages 1375-1377 have headers referencing "John 7:x" but contain John 8 content; patched ranges directly in JohnExtractor.
 - Extended `extract_page_body_text` to accept a `lang` parameter; italic font filter now only applied for Kikuyu (English italic marks disputed passages, not section headings).
