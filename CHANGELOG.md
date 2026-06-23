@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Added Book of John (Johana) extractor: 879 aligned verse pairs, 0 missing/empty on both sides.
+- Fixed Pericope Adulterae page-range mismatch: PDF pages 1375-1377 have headers referencing "John 7:x" but contain John 8 content; patched ranges directly in JohnExtractor.
+- Extended `extract_page_body_text` to accept a `lang` parameter; italic font filter now only applied for Kikuyu (English italic marks disputed passages, not section headings).
+- Added `tests/test_john_parser.py` with 5 BDD-style tests; full suite at 56 tests, all passing.
 - Created `app/api/config.py` to centralize project configuration, file paths, and hyperparameters, and refactored scripts to import from it.
 - Fixed shallow merge bug in `scripts/train_embeddings.py` by extracting metric preservation logic into `save_metrics` to retain offline evaluation scores.
 - Added `test_save_metrics_merges_data` unit test to `app/tests/unit/test_evaluation.py` to guarantee metrics merge logic correctness.
