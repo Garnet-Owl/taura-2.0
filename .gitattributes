@@ -1,10 +1,12 @@
 # Git Attributes configuration for Taura 2.0
 
-# Prevent tracking of large model and package files by binding them to check-size filter
+# Large files — NOT tracked by git or LFS.
+# PDFs and model files are hosted on Hugging Face; see README for download links.
 *.bin filter=check-size
 *.vec filter=check-size
 *.npy filter=check-size
 *.whl filter=check-size
+*.pdf -text -diff
 
 # Ensure code and text files have consistent LF line endings
 *.py text eol=lf

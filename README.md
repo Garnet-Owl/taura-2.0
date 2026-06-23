@@ -2,7 +2,7 @@
 
 > *"Taũra"* is Kikuyu for *"Translate."*
 
-**Taura** is an open-source machine translation engine for **Kikuyu ↔ English**, one of the first of its kind for this low-resource Bantu language spoken by over 8 million people in Kenya.
+**Taura** is an open-source machine translation engine for **Kikuyu ↔ English**, one of the first of its kind for this low-resource Bantu language. The Kikuyu are Kenya's largest ethnic group, with 9 to 10 million speakers making up roughly 17 to 20% of the country's population.
 
 Modern translation tools largely ignore Kikuyu. Taura exists to change that, starting with strong linguistic foundations: curated parallel corpora, subword tokenization tuned to Kikuyu morphology, and cross-lingual embedding alignment using Orthogonal Procrustes mapping.
 
@@ -41,7 +41,7 @@ cd taura-2.0
 uv sync
 ```
 
-> **Data & models** are not bundled (size limits). Download from Google Drive and place in `data/` and `models/` before running the pipeline.
+> **Data & models** are not bundled. Download the source Bible PDFs from [Hugging Face Datasets](https://huggingface.co/datasets/Garnet-Owl/taura-bible-corpus) and place them in `data/`. Parallel CSV files are already included in the repo.
 
 ```bash
 # 1. Prepare dataset
