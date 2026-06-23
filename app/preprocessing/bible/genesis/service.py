@@ -59,6 +59,11 @@ class GenesisExtractor(BaseBibleParser, GenesisExtractorBase):
         end_page = self.KIKUYU_END_PAGE if lang == "kikuyu" else self.ENGLISH_END_PAGE
 
         page_ranges = self.build_page_ranges(pdf_path, lang, start_page, end_page)
+        if lang == "english":
+            # The English PDF has corrupt headers on pages 60 and 61 which misreport Chapter 50 verses as Chapter 49
+            page_ranges[60] = (("Genesis", 49, 18), ("Genesis", 50, 9))
+            page_ranges[61] = (("Genesis", 50, 10), ("Genesis", 50, 26))
+
         doc = fitz.open(pdf_path)
         parsed_verses = {}
         target_book = "Genesis"
