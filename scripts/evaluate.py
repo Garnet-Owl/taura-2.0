@@ -69,8 +69,11 @@ def evaluate_retrieval_accuracy(
     norms_tgt = np.linalg.norm(tgt_embs, axis=1)
     norms_tgt[norms_tgt < 1e-8] = 1.0
 
+    segment_fn = getattr(translator, "src_segment_fn", None)
+
     for i, src_s in enumerate(src_sentences):
-        src_emb = get_sentence_embedding(translator.src_model, src_s)
+        query = segment_fn(src_s) if segment_fn is not None else src_s
+        src_emb = get_sentence_embedding(translator.src_model, query)
         projected = translator.projection_matrix @ src_emb
 
         norm_projected = np.linalg.norm(projected)

@@ -48,9 +48,7 @@ class TestLukeParser(unittest.TestCase):
             cleaned = extractor.clean_english_verse(raw_text)
 
         with then("cross-reference is removed"):
-            assert_that(
-                cleaned, is_(equal_to("For with God nothing  will be impossible."))
-            )
+            assert_that(cleaned, is_(equal_to("For with God nothing  will be impossible.")))
 
     def test_validation_logic(self):
         """Should correctly detect missing and empty verses."""

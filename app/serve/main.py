@@ -15,7 +15,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from app.api.embeddings import CrossLingualTranslator, get_sentence_embedding
+from app.api.embeddings import (
+    CrossLingualTranslator,
+    get_sentence_embedding,
+    load_morfessor_segment_fn,
+)
 from app.shared import config
 from app.shared.logger import setup_logger
 
@@ -134,31 +138,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Load the Morfessor model saved during training so Kikuyu inference queries
     # are pre-segmented with the same morpheme boundaries as the training corpus.
-    ki_segment_fn = None
-    if os.path.exists(config.MORFESSOR_KI_PATH):
-        try:
-            import morfessor as _morfessor
-
-            _morph_model = _morfessor.MorfessorIO().read_binary_file(
-                config.MORFESSOR_KI_PATH
-            )
-
-            def ki_segment_fn(sentence: str) -> str:  # type: ignore[misc]
-                words = sentence.split()
-                segmented = []
-                for word in words:
-                    try:
-                        morphemes, _ = _morph_model.viterbi_segment(word.lower())
-                        segmented.append(" ".join(morphemes))
-                    except Exception:
-                        segmented.append(word)
-                return " ".join(segmented)
-
-            logger.info(
-                "Morfessor model loaded — Kikuyu queries will be pre-segmented at inference."
-            )
-        except Exception as e:
-            logger.warning("Could not load Morfessor model: %s — queries will be raw.", e)
+    ki_segment_fn = load_morfessor_segment_fn(config.MORFESSOR_KI_PATH)
+    if ki_segment_fn is not None:
+        logger.info(
+            "Morfessor model loaded — Kikuyu queries will be pre-segmented at inference."
+        )
+    elif os.path.exists(config.MORFESSOR_KI_PATH) is False:
+        logger.warning(
+            "No Morfessor model found at %s — Kikuyu queries will be raw.",
+            config.MORFESSOR_KI_PATH,
+        )
 
     translator_ki_en = CrossLingualTranslator(
         ki_model,
