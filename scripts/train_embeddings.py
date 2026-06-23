@@ -21,8 +21,9 @@ from app.api.embeddings import (
     get_sentence_embeddings_parallel,
     iterative_procrustes,
     learn_alignment_matrix,
-    load_morfessor_segment_fn,
 )
+from app.morphology.core import load_segment_fn as load_morfessor_segment_fn
+from app.morphology.service import segment_corpus as segment_kikuyu_corpus
 from app.shared import config
 from app.shared.logger import setup_logger
 from scripts.evaluate import calculate_translation_scores, evaluate_retrieval_accuracy
@@ -69,63 +70,6 @@ def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
         f"Loaded {len(ki_list)} sentence pairs from {len(csv_files)} CSV files in {parallel_dir}"
     )
     return ki_list, en_list
-
-
-def segment_kikuyu_with_morfessor(
-    sentences: list[str], save_path: str | None = None
-) -> list[str]:
-    """Pre-segments Kikuyu sentences into morpheme tokens using Morfessor.
-
-    Morfessor (unsupervised morphological segmentation) learns prefix/suffix
-    boundaries from raw text. For Kikuyu's agglutinative morphology this means
-    verb conjugation prefixes like 'a-', 'mũ-', 'ũ-' are split out, giving
-    FastText cleaner subword units to learn from.
-    Returns the original sentences unchanged if morfessor is not installed.
-    If `save_path` is given the trained model is persisted there so inference
-    can reuse the same segmentation boundaries as training.
-    """
-    try:
-        import morfessor
-    except ImportError:
-        logger.warning("morfessor not installed — skipping morphological segmentation.")
-        return sentences
-
-    # corpusweight > 1 penalises long morpheme sequences in the corpus, so the
-    # model prefers more splits (shorter, reusable morphemes). Default (1.0)
-    # balances corpus vs lexicon cost; for agglutinative Bantu morphology 4.0
-    # gives meaningful prefix/suffix splits (e.g. mũ-, a-, -ire, -gũ).
-    # load_data + train_batch() (no-arg) is the documented two-step API.
-    model = morfessor.BaselineModel(corpusweight=4.0)
-
-    # Build word-frequency list from the corpus
-    word_counts: dict[str, int] = {}
-    for sent in sentences:
-        for word in sent.lower().split():
-            word_counts[word] = word_counts.get(word, 0) + 1
-
-    train_data = [(count, word) for word, count in word_counts.items()]
-    model.load_data(train_data)
-    model.train_batch()
-    logger.info("Morfessor trained on %d unique Kikuyu word types.", len(word_counts))
-
-    if save_path:
-        try:
-            morfessor.MorfessorIO().write_binary_file(save_path, model)
-            logger.info("Morfessor model saved to %s", save_path)
-        except Exception as e:
-            logger.warning("Could not save Morfessor model: %s", e)
-
-    segmented: list[str] = []
-    for sent in sentences:
-        tokens = []
-        for word in sent.split():
-            try:
-                morphemes, _ = model.viterbi_segment(word.lower())
-                tokens.append(" ".join(morphemes))
-            except Exception:
-                tokens.append(word)
-        segmented.append(" ".join(tokens))
-    return segmented
 
 
 def write_monolingual_txt(sentences: list[str], path: str) -> None:
@@ -266,7 +210,7 @@ def main() -> None:
     # can reload it and apply the same segmentation to inference-time queries.
     logger.info("Applying Morfessor segmentation to Kikuyu training sentences...")
     morfessor_save_path = os.path.join(config.LATEST_RUN_DIR, "morfessor_ki.bin")
-    train_ki_segmented = segment_kikuyu_with_morfessor(
+    train_ki_segmented = segment_kikuyu_corpus(
         train_ki_sentences, save_path=morfessor_save_path
     )
 

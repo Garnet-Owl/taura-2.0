@@ -18,8 +18,8 @@ from pydantic import BaseModel, Field
 from app.api.embeddings import (
     CrossLingualTranslator,
     get_sentence_embedding,
-    load_morfessor_segment_fn,
 )
+from app.morphology.core import load_segment_fn as load_morfessor_segment_fn
 from app.shared import config
 from app.shared.logger import setup_logger
 
