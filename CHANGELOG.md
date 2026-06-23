@@ -108,3 +108,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Mypy type annotation and assignment mismatch issues in `app/shared/logger.py` and `app/api/embeddings.py` to ensure 100% type safety.
 - Fixed lint and formatting violations across `scripts/preprocessing/bible_parser.py`, `scripts/build_seed_dictionary.py`, and `scripts/verify_semantic_nn.py`.
 - Ran the offline evaluation pipeline (`scripts/evaluate.py`) for the new models, recording BLEU improvements to 5.34 (Kikuyu->English) and 4.91 (English->Kikuyu).
+- Added translation web UI screenshot to the main section of the `README.md`.
