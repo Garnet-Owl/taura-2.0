@@ -90,11 +90,12 @@ def segment_kikuyu_with_morfessor(
         logger.warning("morfessor not installed — skipping morphological segmentation.")
         return sentences
 
-    # corpusweight < 1.0 penalises large lexicons, forcing the model to split
-    # words into reusable morphemes rather than keeping each word-form intact.
-    # Default (1.0) converges to the trivial all-unsegmented solution for small
-    # corpora. 0.1 produces meaningful Bantu prefix/suffix splits.
-    model = morfessor.BaselineModel(corpusweight=0.1)
+    # corpusweight > 1 penalises long morpheme sequences in the corpus, so the
+    # model prefers more splits (shorter, reusable morphemes). Default (1.0)
+    # balances corpus vs lexicon cost; for agglutinative Bantu morphology 4.0
+    # gives meaningful prefix/suffix splits (e.g. mũ-, a-, -ire, -gũ).
+    # load_data + train_batch() (no-arg) is the documented two-step API.
+    model = morfessor.BaselineModel(corpusweight=4.0)
 
     # Build word-frequency list from the corpus
     word_counts: dict[str, int] = {}
@@ -103,7 +104,8 @@ def segment_kikuyu_with_morfessor(
             word_counts[word] = word_counts.get(word, 0) + 1
 
     train_data = [(count, word) for word, count in word_counts.items()]
-    model.train_batch(train_data)
+    model.load_data(train_data)
+    model.train_batch()
     logger.info("Morfessor trained on %d unique Kikuyu word types.", len(word_counts))
 
     if save_path:
@@ -154,7 +156,6 @@ def train_monolingual(
         minCount=config.FASTTEXT_MIN_COUNT,
         minn=config.FASTTEXT_MINN,
         maxn=config.FASTTEXT_MAXN,
-        seed=config.FASTTEXT_SEED,
         thread=max(1, multiprocessing.cpu_count()),
     )
     model.save_model(model_path)
