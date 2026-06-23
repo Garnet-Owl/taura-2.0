@@ -111,3 +111,10 @@ All notable changes to this project will be documented in this file.
 - Added translation web UI screenshot to the main section of the `README.md`.
 - Untracked `MASTER_PLAN.md` from `.gitignore` and committed its baseline version.
 - Rewrote `MASTER_PLAN.md` to contain a detailed NLLB-200 sequence-to-sequence fine-tuning recipe and step-by-step procedures.
+- Implemented modular Bible preprocessing structure by packaging Matthew extraction as a feature.
+- Created base parser class `BaseBibleParser` supporting strict book boundary control via `end_page` parameter and optional verse filters.
+- Implemented `MatthewExtractor` defining specific page limits, chapter verse mapping, and robust verse-alignment logic.
+- Built CLI extractor orchestrator `app/preprocessing/bible/orchestrator.py` to run parser and align verses.
+- Created unit tests in `tests/test_matthew_parser.py` validating cleaning, alignment, extraction, and validation logic.
+- Fixed verse parsing off-by-one/propagation shift bug to correctly handle missing or empty verses.
+- Updated project `README.md` with experimental status and contributor invite, and cleaned up temporary diagnostic scripts.

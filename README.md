@@ -4,6 +4,11 @@ Machine translation model and API service for translating between Kikuyu and Eng
 
 The name "taura" is derived from the Kikuyu word "Taũra", which means "Translate".
 
+> [!IMPORTANT]
+> **Experimental Status:** This project is currently in active development and experimentation. We are building a high-fidelity Bible extraction and alignment pipeline (beginning with the Book of Matthew) to curate clean parallel datasets between Kikuyu and English.
+>
+> 🤝 **Contributor Invite:** We welcome contributions from the community! If you are interested in machine translation for low-resource languages, bilingual text alignment, or Kikuyu-English translation, please join us. Feel free to open issues or submit pull requests.
+
 ![Taura 2.0 Web UI](data/assets/taura-iu-screenshot.png)
 
 ---
