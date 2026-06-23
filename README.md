@@ -13,7 +13,7 @@ Modern translation tools largely ignore Kikuyu. Taura exists to change that, sta
 
 Taura is not just a translation API. It is a full pipeline:
 
-- **Corpus curation:** parallel sentence pairs from the Bible (Matthew, Mark, Luke, John, Acts, Romans, 1–2 Corinthians) and agriculture sector data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado) — over 9,700 curated pairs and growing
+- **Corpus curation:** parallel sentence pairs from the Bible (Matthew, Mark, Luke, John, Acts, Romans, 1–2 Corinthians) and agriculture sector data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado): over 9,700 curated pairs and growing
 - **Cross-lingual alignment:** monolingual FastText embeddings aligned via iterative Orthogonal Procrustes with three anchor sources (parallel sentence embeddings, seed dictionary, and identical-string vocabulary pairs) and CSLS-based refinement
 - **Translation API:** FastAPI service with retrieval and word-by-word modes, top-K candidates, and a lightweight web UI
 
@@ -33,18 +33,18 @@ The long-term goal is to push translation quality to the point where Taura is ge
 
 | Run | Direction | BLEU | chrF | Top-1 | Top-5 | MRR | MNN |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1. Baseline**<br>Raw FastText + simple Procrustes | Ki→En<br>En→Ki | 5.34<br>4.91 | —<br>— | —<br>— | —<br>— | —<br>— | — |
-| **2. Hybrid alignment**<br>Sentence anchors + seed dict + identical strings; iterative Procrustes with MNN+CSLS | Ki→En<br>En→Ki | 21.00<br>35.09 | —<br>— | —<br>— | —<br>— | —<br>— | 3,007 |
+| **1. Baseline**<br>Raw FastText + simple Procrustes | Ki→En<br>En→Ki | 5.34<br>4.91 | -<br>- | -<br>- | -<br>- | -<br>- | - |
+| **2. Hybrid alignment**<br>Sentence anchors + seed dict + identical strings; iterative Procrustes with MNN+CSLS | Ki→En<br>En→Ki | 21.00<br>35.09 | -<br>- | -<br>- | -<br>- | -<br>- | 3,007 |
 | **3. Agriculture + Proper-Nouns**<br>+3,852 agri pairs; proper-noun anchors; restored default n-grams | Ki→En<br>En→Ki | 23.36<br>34.92 | 44.16<br>51.92 | 6%<br>27% | 32%<br>50% | 0.208<br>0.398 | 4,788 |
 | **4. Expanded Bible Corpus**<br>+Galatians, Ephesians, Philippians, Colossians, 1 Thess (10,255 pairs) | Ki→En<br>En→Ki | 35.27<br>34.38 | 49.10<br>55.18 | 20%<br>22% | 38%<br>41% | 0.305<br>0.320 | 4,859 |
 | **5. Psalms Expansion**<br>+Psalms (12,716 pairs total) | Ki→En<br>En→Ki | 33.18<br>35.96 | 49.02<br>56.75 | 25%<br>22% | 44%<br>46% | 0.345<br>0.342 | 5,654 |
 | **6. Genesis, Proverbs, Ecclesiastes**<br>+2,670 pairs (15,386 pairs total) | Ki→En<br>En→Ki | 38.67<br>38.53 | 56.04<br>58.76 | 18%<br>20% | 44%<br>48% | 0.299<br>0.328 | 6,571 |
 
-The hybrid alignment was the single biggest jump — a **4× BLEU improvement** from baseline.
+The hybrid alignment was the single biggest jump: a **4× BLEU improvement** from baseline.
 The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.
 
-**What drove the 5 → 21 BLEU jump:**
-Three alignment anchor sources were combined — parallel sentence embeddings, a seed dictionary, and identical-string vocabulary pairs — giving the Procrustes solver a much richer and more diverse set of constraints. Iterative refinement with Mutual Nearest Neighbors and CSLS de-hubbing then pushed the MNN count from near-zero to 3,007, meaning 3,007 Kikuyu vocabulary words found their correct English counterpart through the learned projection.
+**What drove the 5 to 21 BLEU jump:**
+Three alignment anchor sources were combined (parallel sentence embeddings, a seed dictionary, and identical-string vocabulary pairs), giving the Procrustes solver a much richer and more diverse set of constraints. Iterative refinement with Mutual Nearest Neighbors and CSLS de-hubbing then pushed the MNN count from near-zero to 3,007, meaning 3,007 Kikuyu vocabulary words found their correct English counterpart through the learned projection.
 
 **What the literature says for similar low-resource Bantu scenarios:**
 - Supervised cross-lingual alignment (what we do) consistently outperforms unsupervised methods when at least 1–5k parallel pairs are available [(Conneau et al., MUSE)](https://github.com/facebookresearch/MUSE)
@@ -102,7 +102,7 @@ curl http://localhost:8000/model/info
 uv run pytest
 ```
 
-78 tests covering unit, integration, and BDD-style parser tests.
+
 
 
 ## Contributing
