@@ -1,30 +1,31 @@
 """
-Implementation of the Book of Matthew (Mathayo) extractor.
+Implementation of the Book of John (Johana) extractor.
 """
 
 import re
 from typing import Dict, List, Optional, Tuple, Union
-import pandas as pd
+
 import fitz
+import pandas as pd
 
 from app.preprocessing.bible.base.core import (
+    ALL_VERSES_SEQ,
     BaseBibleParser,
     PatternConfig,
     VERSE_TO_IDX,
-    ALL_VERSES_SEQ,
 )
-from app.preprocessing.bible.matthew.core import (
-    MatthewExtractor as MatthewExtractorBase,
-)
+from app.preprocessing.bible.john.core import JohnExtractor as JohnExtractorBase
+
+_UPPER = r"[\"''" "A-ZĨŨÀ-ÞĀ-ſ]"
 
 
-class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
+class JohnExtractor(BaseBibleParser, JohnExtractorBase):
     """
-    Extractor to parse, clean, and align the Book of Matthew.
+    Extractor to parse, clean, and align the Book of John.
     """
 
     def __init__(self):
-        MatthewExtractorBase.__init__(self)
+        JohnExtractorBase.__init__(self)
         self.pattern_config = PatternConfig(
             self._default_patterns(), ignored_fonts=["Italic"]
         )
@@ -34,20 +35,16 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
     def _default_patterns() -> (
         Dict[str, Dict[str, Union[re.Pattern, callable, List[re.Pattern]]]]
     ):
-        """Define default patterns with their respective converters."""
+        upper = _UPPER
         return {
-            "verse_marker_strict": {
-                "pattern": re.compile(
-                    r"^\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
-                )
-            },
+            "verse_marker_strict": {"pattern": re.compile(r"^\s*" + upper)},
             "footnote_measurement": {
                 "pattern": re.compile(
                     r"""^(?:
                       (?:grams?|kg|kilograms?|ounces?|oz|pounds?|lb|liters?|litres?|
                          milliliters?|ml|inches?|in|centimeters?|cm|kilometers?|km|miles?|
-                         cubits?|seah|ephah|hin|shekel)\s+(?:or|is|about|=|≈).*
-                    | [*†‡§;,]\s*\d[\d:,;\s*†‡§]*  # footnote-only content
+                         cubits?|seah|ephah|hin|shekel)\s+(?:or|is|about|=|approx).*
+                    | [*†‡§;,]\s*\d[\d:,;\s*†‡§]*
                     )$""",
                     re.VERBOSE | re.IGNORECASE,
                 )
@@ -63,35 +60,38 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         }
 
     def parse_book_verses(self, pdf_path: str, lang: str) -> Dict[int, Dict[int, str]]:
-        """
-        Parses pages of the PDF corresponding to Matthew.
-        """
         start_page = (
             self.KIKUYU_START_PAGE if lang == "kikuyu" else self.ENGLISH_START_PAGE
         )
         end_page = self.KIKUYU_END_PAGE if lang == "kikuyu" else self.ENGLISH_END_PAGE
 
         page_ranges = self.build_page_ranges(pdf_path, lang, start_page, end_page)
+
+        if lang == "english":
+            # Running headers for the Pericope Adulterae section (John 7:53–8:11) and the
+            # John 8 main discourse label these pages as "John 7:x", causing build_page_ranges
+            # to assign wrong ranges.  Patch the three affected PDF pages directly.
+            page_ranges[1375] = (("John", 7, 29), ("John", 8, 9))
+            page_ranges[1376] = (("John", 8, 10), ("John", 8, 39))
+            page_ranges[1377] = (("John", 8, 40), ("John", 9, 10))
+
         doc = fitz.open(pdf_path)
         parsed_verses = {}
-        target_book = "Matthew"
+        target_book = "John"
 
         for page_idx in range(start_page, end_page + 1):
             r_range = page_ranges.get(page_idx)
             if not r_range:
                 continue
-
             clamped_range = self._get_clamped_page_range(r_range, target_book)
             if not clamped_range:
                 continue
-
             start_ref_clamped, end_ref_clamped = clamped_range
             page_verses = self._get_page_verses(
                 start_ref_clamped, end_ref_clamped, target_book
             )
             if not page_verses:
                 continue
-
             body_text = self.extract_page_body_text(doc[page_idx], lang)
             verse_positions = self._find_verse_positions(body_text, page_verses)
             self._extract_and_clean_verses(
@@ -105,19 +105,15 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         r_range: Tuple[Tuple[str, int, int], Tuple[str, int, int]],
         target_book: str,
     ) -> Optional[Tuple[Tuple[str, int, int], Tuple[str, int, int]]]:
-        """Clamps the page range boundaries to prevent leakage from other books."""
         start_ref, end_ref = r_range
-        start_ref_clamped = start_ref
-        if start_ref[0] != target_book:
-            start_ref_clamped = (target_book, 1, 1)
-
-        end_ref_clamped = end_ref
-        if end_ref[0] != target_book:
-            end_ref_clamped = (target_book, 28, 20)
-
+        start_ref_clamped = (
+            start_ref if start_ref[0] == target_book else (target_book, 1, 1)
+        )
+        end_ref_clamped = (
+            end_ref if end_ref[0] == target_book else (target_book, 21, 25)
+        )
         if start_ref_clamped not in VERSE_TO_IDX or end_ref_clamped not in VERSE_TO_IDX:
             return None
-
         return start_ref_clamped, end_ref_clamped
 
     def _get_page_verses(
@@ -126,7 +122,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         end_ref: Tuple[str, int, int],
         target_book: str,
     ) -> List[Tuple[str, int, int]]:
-        """Gets target book verses within the specified index boundaries."""
         start_idx = VERSE_TO_IDX[start_ref]
         end_idx = VERSE_TO_IDX[end_ref]
         return [
@@ -138,7 +133,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
     def _find_verse_positions(
         self, body_text: str, page_verses: List[Tuple[str, int, int]]
     ) -> List[dict]:
-        """Locates matches and positions for target book verses on the page body."""
         current_pos = 0
         verse_positions = []
 
@@ -154,7 +148,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
                     start_pos = match.start() + r_idx + 1
                 else:
                     start_pos = match.end()
-
                 verse_positions.append(
                     {
                         "ref": (ch_no, v_no),
@@ -177,25 +170,18 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
     def _locate_verse_one(
         self, body_text: str, ch_no: int, current_pos: int
     ) -> Optional[re.Match]:
-        """Applies chapter-start patterns to locate the first verse of a chapter."""
+        upper = _UPPER
         pattern_strict = re.compile(
-            rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
+            rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)\s*{upper}"
         )
         pattern_relaxed = re.compile(
             rf"(?<!\d){ch_no}(?!\d)[^0-9]{{1,100}}(?<!\d)1(?!\d)"
         )
-        pattern_one = re.compile(
-            r"(?<!\d)1(?!\d)\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]"
-        )
+        pattern_one = re.compile(rf"(?<!\d)1(?!\d)\s*{upper}")
         pattern_one_relaxed = re.compile(r"(?<!\d)1(?!\d)")
 
         candidates = []
-        for pat in [
-            pattern_strict,
-            pattern_relaxed,
-            pattern_one,
-            pattern_one_relaxed,
-        ]:
+        for pat in [pattern_strict, pattern_relaxed, pattern_one, pattern_one_relaxed]:
             m = pat.search(body_text, current_pos)
             if m:
                 candidates.append(m)
@@ -210,7 +196,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         lang: str,
         parsed_verses: dict,
     ) -> None:
-        """Slices verse text, cleans cross-references, and stores results."""
         for idx in range(len(verse_positions)):
             curr = verse_positions[idx]
             if curr.get("missing"):
@@ -222,11 +207,9 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
                     if not next_curr.get("missing"):
                         next_matched = next_curr
                         break
-
-                if next_matched:
-                    curr["end_pos"] = next_matched["marker_pos"]
-                else:
-                    curr["end_pos"] = len(body_text)
+                curr["end_pos"] = (
+                    next_matched["marker_pos"] if next_matched else len(body_text)
+                )
 
             ch_no, v_no = curr["ref"]
             v_text = body_text[curr["start_pos"] : curr["end_pos"]].strip()
@@ -243,9 +226,6 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
     def find_next_verse_pos(
         self, body_text: str, v_no: int, current_pos: int
     ) -> Optional[re.Match]:
-        """
-        Regex logic to locate a verse marker on the page body.
-        """
         pattern = re.compile(rf"(?<!\d){v_no}(?!\d)")
         matches = list(pattern.finditer(body_text, current_pos))
         if not matches:
@@ -263,9 +243,8 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
         strict_suffix = (
             strict_pattern_info.get("pattern")
             if strict_pattern_info
-            else re.compile(r"^\s*[“\"'\‘\“A-Z\u0128\u0168\u00C0-\u00DE\u0100-\u017F]")
+            else re.compile(r"^\s*" + _UPPER)
         )
-
         for m in matches:
             if strict_suffix.match(body_text[m.end() :]):
                 return m
@@ -274,16 +253,13 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
     def extract_and_align(
         self, kikuyu_pdf_path: str, english_pdf_path: str
     ) -> pd.DataFrame:
-        """
-        Extracts verses from both PDFs and aligns them.
-        """
         kik_data = self.parse_book_verses(kikuyu_pdf_path, "kikuyu")
         eng_data = self.parse_book_verses(english_pdf_path, "english")
 
         kik_missing, kik_empty = self.validate_extracted_verses(kik_data)
         eng_missing, eng_empty = self.validate_extracted_verses(eng_data)
 
-        print("Extraction Validation for Matthew:")
+        print("Extraction Validation for John:")
         print(f"Kikuyu missing verses: {len(kik_missing)} / empty: {len(kik_empty)}")
         print(f"English missing verses: {len(eng_missing)} / empty: {len(eng_empty)}")
 
@@ -294,10 +270,8 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
             for v in range(1, verses + 1):
                 k_text = k_ch.get(v, "").strip()
                 e_text = e_ch.get(v, "").strip()
-
                 if k_text and e_text:
-                    ref = f"Matthew {ch}:{v}"
+                    ref = f"John {ch}:{v}"
                     aligned_verses.append((ref, k_text, e_text))
 
-        df = pd.DataFrame(aligned_verses, columns=["Reference", "Kikuyu", "English"])
-        return df
+        return pd.DataFrame(aligned_verses, columns=["Reference", "Kikuyu", "English"])

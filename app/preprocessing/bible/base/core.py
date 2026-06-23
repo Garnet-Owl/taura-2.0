@@ -348,18 +348,23 @@ class BaseBibleParser:
 
         return page_ranges
 
-    def extract_page_body_text(self, page: fitz.Page) -> str:
+    def extract_page_body_text(self, page: fitz.Page, lang: str = "kikuyu") -> str:
         """
         Extracts body text from a page, filtering at the line level:
           - Header lines (ly1 < 71) are discarded.
-          - Footer lines (ly0 >= 719) are discarded.
+          - Footer lines (ly0 >= 745) are discarded.
           - Bottom-region lines (ly0 > 650) with no span whose font size >= 10.0
             are discarded (main body is 12pt; footnotes/cross-refs are ~9pt).
-          - Spans whose font name matches an ignored_fonts entry are dropped.
+          - Spans whose font name matches an ignored_fonts entry are dropped
+            (only applied for Kikuyu; English italic marks disputed passages).
         """
         blocks = page.get_text("dict")["blocks"]
         body_blocks = []
-        ignored_fonts = self.config.ignored_fonts if self.config else []
+        ignored_fonts = (
+            (self.config.ignored_fonts if self.config else [])
+            if lang == "kikuyu"
+            else []
+        )
 
         for b in blocks:
             if "lines" not in b:

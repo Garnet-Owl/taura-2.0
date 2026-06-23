@@ -8,11 +8,13 @@ from pathlib import Path
 from app.preprocessing.bible.matthew.service import MatthewExtractor
 from app.preprocessing.bible.mark.service import MarkExtractor
 from app.preprocessing.bible.luke.service import LukeExtractor
+from app.preprocessing.bible.john.service import JohnExtractor
 
 BOOKS = [
     ("Matthew", MatthewExtractor, "matthew_aligned.csv"),
     ("Mark", MarkExtractor, "mark_aligned.csv"),
     ("Luke", LukeExtractor, "luke_aligned.csv"),
+    ("John", JohnExtractor, "john_aligned.csv"),
 ]
 
 
