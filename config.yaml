@@ -1,0 +1,31 @@
+paths:
+  # Directory containing aligned parallel CSV files (*.csv)
+  parallel_data_dir: data/parallel
+
+  # Root directory where training run sub-folders are created
+  models_dir: models
+
+  # Directory where monolingual .txt files are written before FastText training
+  monolingual_dir: data/monolingual
+
+  # Seed dictionary CSV with columns "Kikuyu" and "English"
+  seed_dictionary: data/processed/seed_dictionary.csv
+
+  # Translation feedback log
+  feedback_file: data/feedback.jsonl
+
+training:
+  embedding_dim: 150
+  fasttext_model_type: skipgram
+  fasttext_epoch: 35
+  fasttext_lr: 0.1
+  fasttext_ws: 8
+  fasttext_min_count: 2
+  alignment_refinement_iters: 5
+
+  # Sentence pairs held out from training for evaluation
+  val_size: 100
+
+datasets:
+  repo_cgiar: CGIAR/KikuyuEnglish_translation
+  repo_mich: michsethowusu/english-kikuyu_sentence-pairs
