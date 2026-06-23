@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import fitz  # PyMuPDF
 
-from scripts.preprocessing.structure.bible_structure import (
+from app.preprocessing.bible.base.structure import (
     BIBLE_BOOKS,
     kikuyu_to_english_book_name,
 )
