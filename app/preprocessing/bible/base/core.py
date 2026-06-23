@@ -350,49 +350,48 @@ class BaseBibleParser:
 
     def extract_page_body_text(self, page: fitz.Page) -> str:
         """
-        Extracts body text from a page, excluding headers (y0 < 71) and footers (y1 > 719).
-        If the configuration has ignored_fonts, filters text spans based on their font name.
+        Extracts body text from a page, filtering at the line level:
+          - Header lines (ly1 < 71) are discarded.
+          - Footer lines (ly0 >= 719) are discarded.
+          - Bottom-region lines (ly0 > 650) with no span whose font size >= 10.0
+            are discarded (main body is 12pt; footnotes/cross-refs are ~9pt).
+          - Spans whose font name matches an ignored_fonts entry are dropped.
         """
-        # If there are ignored fonts, extract text via page.get_text("dict") to filter by font
-        if self.config and self.config.ignored_fonts:
-            blocks = page.get_text("dict")["blocks"]
-            body_blocks = []
-            for b in blocks:
-                if "lines" not in b:
-                    continue
-                # Filter out headers and footers using block bounding box coordinates
-                by0, by1 = b["bbox"][1], b["bbox"][3]
-                if by1 >= 71 and by0 < 719:
-                    block_lines = []
-                    for l in b["lines"]:
-                        line_spans = []
-                        for s in l["spans"]:
-                            font_name = s["font"]
-                            text = s["text"]
-                            # Skip if font_name contains any ignored font substring (case-insensitive)
-                            is_ignored = any(
-                                ignored.lower() in font_name.lower()
-                                for ignored in self.config.ignored_fonts
-                            )
-                            if not is_ignored:
-                                line_spans.append(text)
-                        if line_spans:
-                            block_lines.append("".join(line_spans))
-
-                    if block_lines:
-                        # Join lines of the same block with standard newlines
-                        body_blocks.append("\n".join(block_lines))
-
-            body_text = " ".join(body_blocks)
-            return re.sub(r"\s+", " ", body_text).strip()
-
-        # Fallback to standard fast blocks extraction if no ignored_fonts configured
-        blocks = page.get_text("blocks")
+        blocks = page.get_text("dict")["blocks"]
         body_blocks = []
+        ignored_fonts = self.config.ignored_fonts if self.config else []
+
         for b in blocks:
-            x0, y0, x1, y1, text, block_no, block_type = b
-            if y1 >= 71 and y0 < 719:
-                body_blocks.append(text)
+            if "lines" not in b:
+                continue
+            block_lines = []
+            for line in b["lines"]:
+                ly0, ly1 = line["bbox"][1], line["bbox"][3]
+                if ly1 < 71:
+                    continue
+                if ly0 >= 719:
+                    continue
+                if ly0 > 650:
+                    has_main_text = any(
+                        s["size"] >= 10.0 and re.search(r"[A-Za-z0-9]", s["text"])
+                        for s in line["spans"]
+                    )
+                    if not has_main_text:
+                        continue
+                line_spans = []
+                for s in line["spans"]:
+                    if ignored_fonts:
+                        font_name = s["font"]
+                        if any(
+                            ign.lower() in font_name.lower() for ign in ignored_fonts
+                        ):
+                            continue
+                    line_spans.append(s["text"])
+                if line_spans:
+                    block_lines.append("".join(line_spans))
+            if block_lines:
+                body_blocks.append("\n".join(block_lines))
+
         body_text = " ".join(body_blocks)
         return re.sub(r"\s+", " ", body_text).strip()
 

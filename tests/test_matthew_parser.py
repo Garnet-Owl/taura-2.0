@@ -1,8 +1,10 @@
 """Unit tests for the Book of Matthew parser/extractor."""
 
 import unittest
+from unittest.mock import MagicMock
+
 from givenpy import given, then, when
-from hamcrest import assert_that, equal_to, is_
+from hamcrest import assert_that, contains_string, equal_to, is_, not_
 
 from app.preprocessing.bible.matthew.service import MatthewExtractor
 
@@ -81,6 +83,73 @@ class TestMatthewParser(unittest.TestCase):
         with then("marker is found correctly"):
             assert_that(match is not None, is_(True))
             assert_that(match.group(), is_(equal_to("2")))
+
+    def test_extract_page_body_text_filters_headers_and_footnotes(self):
+        """Should exclude header lines (ly1<71), footer lines (ly0>=719), and bottom-region small-font lines."""
+        with given([]) as _:
+            extractor = MatthewExtractor()
+            mock_page = MagicMock()
+            mock_page.get_text.return_value = {
+                "blocks": [
+                    {
+                        "lines": [
+                            # Header line: ly1=60 < 71 — must be excluded
+                            {
+                                "bbox": (50, 40, 500, 60),
+                                "spans": [
+                                    {
+                                        "text": "1263 Matthew 4:9",
+                                        "font": "NormalFont",
+                                        "size": 12.0,
+                                    }
+                                ],
+                            },
+                            # Body line — must be included
+                            {
+                                "bbox": (50, 80, 500, 100),
+                                "spans": [
+                                    {
+                                        "text": "In those days John came",
+                                        "font": "NormalFont",
+                                        "size": 12.0,
+                                    }
+                                ],
+                            },
+                            # Bottom-region, small font (9pt) — must be excluded
+                            {
+                                "bbox": (50, 660, 500, 675),
+                                "spans": [
+                                    {
+                                        "text": "footnote ref 7:7",
+                                        "font": "NormalFont",
+                                        "size": 9.0,
+                                    }
+                                ],
+                            },
+                            # Footer line: ly0=720 >= 719 — must be excluded
+                            {
+                                "bbox": (50, 720, 500, 740),
+                                "spans": [
+                                    {
+                                        "text": "page 3",
+                                        "font": "NormalFont",
+                                        "size": 12.0,
+                                    }
+                                ],
+                            },
+                        ]
+                    }
+                ]
+            }
+
+        with when("extracting body text"):
+            body_text = extractor.extract_page_body_text(mock_page)
+
+        with then("only body text survives"):
+            assert_that(body_text, is_(equal_to("In those days John came")))
+            assert_that(body_text, not_(contains_string("1263 Matthew 4:9")))
+            assert_that(body_text, not_(contains_string("footnote ref")))
+            assert_that(body_text, not_(contains_string("page 3")))
 
     def test_find_verse_positions_no_truncation(self):
         """Should find start_pos of verse 1 immediately after the marker to prevent first-letter truncation."""

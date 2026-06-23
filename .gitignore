@@ -154,3 +154,4 @@ data/temp/
 
 # Generated monolingual corpora — large, rebuilt by build_monolingual_corpus.py
 data/monolingual/
+/CLAUDE.md
