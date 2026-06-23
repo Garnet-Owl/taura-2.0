@@ -201,9 +201,9 @@ def main() -> None:
         f"Split: {len(train_ki_sentences)} train / {len(val_ki)} val sentence pairs"
     )
 
-    # Write monolingual train files for FastText
-    train_ki_path = config.TRAIN_KI_TXT
-    train_en_path = config.TRAIN_EN_TXT
+    # Write monolingual train files into the run directory so each run is self-contained
+    train_ki_path = os.path.join(config.LATEST_RUN_DIR, "train.kikuyu")
+    train_en_path = os.path.join(config.LATEST_RUN_DIR, "train.english")
     write_monolingual_txt(train_ki_sentences, train_ki_path)
     write_monolingual_txt(train_en_sentences, train_en_path)
 
