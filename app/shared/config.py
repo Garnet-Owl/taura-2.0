@@ -49,6 +49,7 @@ FASTTEXT_MIN_COUNT: int = int(_train["fasttext_min_count"])
 ALIGNMENT_REFINEMENT_ITERS: int = int(_train["alignment_refinement_iters"])
 FASTTEXT_MINN: int = int(_train.get("fasttext_minn", 3))
 FASTTEXT_MAXN: int = int(_train.get("fasttext_maxn", 6))
+FASTTEXT_SEED: int = int(_train.get("fasttext_seed", 42))
 VAL_SIZE: int = int(_train["val_size"])
 
 # ── HuggingFace repos ─────────────────────────────────────────────────────

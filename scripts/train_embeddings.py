@@ -90,7 +90,11 @@ def segment_kikuyu_with_morfessor(
         logger.warning("morfessor not installed — skipping morphological segmentation.")
         return sentences
 
-    model = morfessor.BaselineModel()
+    # corpusweight < 1.0 penalises large lexicons, forcing the model to split
+    # words into reusable morphemes rather than keeping each word-form intact.
+    # Default (1.0) converges to the trivial all-unsegmented solution for small
+    # corpora. 0.1 produces meaningful Bantu prefix/suffix splits.
+    model = morfessor.BaselineModel(corpusweight=0.1)
 
     # Build word-frequency list from the corpus
     word_counts: dict[str, int] = {}
@@ -150,6 +154,7 @@ def train_monolingual(
         minCount=config.FASTTEXT_MIN_COUNT,
         minn=config.FASTTEXT_MINN,
         maxn=config.FASTTEXT_MAXN,
+        seed=config.FASTTEXT_SEED,
         thread=max(1, multiprocessing.cpu_count()),
     )
     model.save_model(model_path)
@@ -381,11 +386,16 @@ def main() -> None:
     logger.info(f"Evaluating on {len(val_ki)} validation sentences...")
 
     val_tgt_en = get_sentence_embeddings_parallel(config.EN_MODEL_PATH, val_en, dim=dim)
-    val_tgt_ki = get_sentence_embeddings_parallel(config.KI_MODEL_PATH, val_ki, dim=dim)
 
-    # Load the Morfessor segment function so evaluation BLEU/accuracy reflects
-    # the same pre-processing the deployed server applies to Kikuyu source queries.
+    # Load the Morfessor segment function now so we can:
+    #   1. Segment val_ki before computing target embeddings — keeps them in the
+    #      same morpheme-aware space that W_en_ki was trained to map into.
+    #   2. Pass src_segment_fn to translator_ki_en for source-side segmentation.
     ki_seg_fn = load_morfessor_segment_fn(morfessor_save_path)
+    val_ki_for_embs = [ki_seg_fn(s) for s in val_ki] if ki_seg_fn else val_ki
+    val_tgt_ki = get_sentence_embeddings_parallel(
+        config.KI_MODEL_PATH, val_ki_for_embs, dim=dim
+    )
 
     # Translators whose sentence bank IS the val set (required for accuracy/MRR)
     translator_ki_en = CrossLingualTranslator(
