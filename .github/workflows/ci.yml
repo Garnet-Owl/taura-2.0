@@ -9,6 +9,7 @@ on:
       - 'scripts/**'
       - 'pyproject.toml'
       - 'uv.lock'
+      - 'ruff.toml'
       - '.github/workflows/**'
   pull_request:
     branches: [main]
@@ -40,7 +41,7 @@ jobs:
         run: uv sync --all-groups
 
       - name: Lint with Ruff
-        run: uv run ruff check --select E,F --ignore E501,E741 .
+        run: uv run ruff check .
 
       - name: Format check with Ruff
         run: uv run ruff format --check .
