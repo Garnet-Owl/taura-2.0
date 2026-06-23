@@ -41,7 +41,7 @@ cd taura-2.0
 uv sync
 ```
 
-> **Data & models** are not bundled. Download the source Bible PDFs from [Hugging Face Datasets](https://huggingface.co/datasets/Garnet-Owl/taura-bible-corpus) and place them in `data/`. Parallel CSV files are already included in the repo.
+> **Data & models** are not bundled. Download source files from [Garnet-Owl/taura-datasets](https://huggingface.co/datasets/Garnet-Owl/taura-datasets) on Hugging Face and place them in `data/`. Parallel CSV files are already included in the repo.
 
 ```bash
 # 1. Prepare dataset
