@@ -122,3 +122,10 @@ All notable changes to this project will be documented in this file.
 - Centralized all regex pattern compilation and lambda converters in a default patterns mapping.
 - Simplified extraction method structure to keep individual helper methods short, modular, and single-purpose.
 - Verified that all unit tests pass (39/39) and the aligned Matthew corpus yields exactly 1,070 verses.
+
+## [Session 2026-06-23 - Subheadings & Truncation Fixes]
+- Implemented font-based filtering in `BaseBibleParser` using PyMuPDF's dictionary extraction mode to strip italic subheadings from the Kikuyu Bible.
+- Fixed first-letter truncation in chapter-opening verse 1 of Matthew by correcting the `start_pos` calculation in `_find_verse_positions`.
+- Fixed page-end verse truncation issue by matching coordinate filtering at the block level rather than the line level.
+- Added `test_find_verse_positions_no_truncation` unit test to `tests/test_matthew_parser.py` to ensure verse 1 text is not truncated.
+- Verified that the full test suite passes successfully and aligned verses count returns to exactly 1,070 with correct text contents.

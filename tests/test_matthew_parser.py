@@ -81,3 +81,19 @@ class TestMatthewParser(unittest.TestCase):
         with then("marker is found correctly"):
             assert_that(match is not None, is_(True))
             assert_that(match.group(), is_(equal_to("2")))
+
+    def test_find_verse_positions_no_truncation(self):
+        """Should find start_pos of verse 1 immediately after the marker to prevent first-letter truncation."""
+        with given([]) as _:
+            extractor = MatthewExtractor()
+            # body text has chapter start and verse 1
+            body_text = "Mathayo 1 1 Maya nĩ maandĩko"
+            page_verses = [("Mathayo", 1, 1)]
+
+        with when("finding verse positions"):
+            positions = extractor._find_verse_positions(body_text, page_verses)
+
+        with then("start_pos starts right after marker 1"):
+            assert_that(positions[0]["start_pos"], is_(equal_to(11)))
+            sliced = body_text[positions[0]["start_pos"] :].strip()
+            assert_that(sliced, is_(equal_to("Maya nĩ maandĩko")))

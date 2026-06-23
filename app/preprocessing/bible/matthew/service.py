@@ -25,7 +25,9 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
 
     def __init__(self):
         MatthewExtractorBase.__init__(self)
-        self.pattern_config = PatternConfig(self._default_patterns())
+        self.pattern_config = PatternConfig(
+            self._default_patterns(), ignored_fonts=["Italic"]
+        )
         BaseBibleParser.__init__(self, self.pattern_config)
 
     @staticmethod
@@ -147,10 +149,16 @@ class MatthewExtractor(BaseBibleParser, MatthewExtractorBase):
                 match = self.find_next_verse_pos(body_text, v_no, current_pos)
 
             if match:
+                if v_no == 1:
+                    r_idx = match.group().rfind("1")
+                    start_pos = match.start() + r_idx + 1
+                else:
+                    start_pos = match.end()
+
                 verse_positions.append(
                     {
                         "ref": (ch_no, v_no),
-                        "start_pos": match.end(),
+                        "start_pos": start_pos,
                         "marker_pos": match.start(),
                     }
                 )

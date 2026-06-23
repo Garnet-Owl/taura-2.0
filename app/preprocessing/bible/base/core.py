@@ -180,7 +180,11 @@ def parse_header_text(
 
 
 class PatternConfig:
-    def __init__(self, patterns: Dict[str, Dict[str, Union[re.Pattern, callable]]]):
+    def __init__(
+        self,
+        patterns: Dict[str, Dict[str, Union[re.Pattern, callable]]],
+        ignored_fonts: Optional[List[str]] = None,
+    ):
         """
         Initialize PatternConfig with a dictionary of patterns.
         Each pattern is a dictionary with:
@@ -188,6 +192,7 @@ class PatternConfig:
             - 'converter': a callable that converts/modifies matches (optional)
         """
         self.patterns = patterns
+        self.ignored_fonts = ignored_fonts or []
 
 
 class BaseBibleParser:
@@ -346,7 +351,42 @@ class BaseBibleParser:
     def extract_page_body_text(self, page: fitz.Page) -> str:
         """
         Extracts body text from a page, excluding headers (y0 < 71) and footers (y1 > 719).
+        If the configuration has ignored_fonts, filters text spans based on their font name.
         """
+        # If there are ignored fonts, extract text via page.get_text("dict") to filter by font
+        if self.config and self.config.ignored_fonts:
+            blocks = page.get_text("dict")["blocks"]
+            body_blocks = []
+            for b in blocks:
+                if "lines" not in b:
+                    continue
+                # Filter out headers and footers using block bounding box coordinates
+                by0, by1 = b["bbox"][1], b["bbox"][3]
+                if by1 >= 71 and by0 < 719:
+                    block_lines = []
+                    for l in b["lines"]:
+                        line_spans = []
+                        for s in l["spans"]:
+                            font_name = s["font"]
+                            text = s["text"]
+                            # Skip if font_name contains any ignored font substring (case-insensitive)
+                            is_ignored = any(
+                                ignored.lower() in font_name.lower()
+                                for ignored in self.config.ignored_fonts
+                            )
+                            if not is_ignored:
+                                line_spans.append(text)
+                        if line_spans:
+                            block_lines.append("".join(line_spans))
+
+                    if block_lines:
+                        # Join lines of the same block with standard newlines
+                        body_blocks.append("\n".join(block_lines))
+
+            body_text = " ".join(body_blocks)
+            return re.sub(r"\s+", " ", body_text).strip()
+
+        # Fallback to standard fast blocks extraction if no ignored_fonts configured
         blocks = page.get_text("blocks")
         body_blocks = []
         for b in blocks:
