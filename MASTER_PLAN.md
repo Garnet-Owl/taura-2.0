@@ -1,56 +1,73 @@
-# Taura 2.0 — Master Plan
+# Taura 2.0 — Machine Translation Master Plan & Recipe
 
-## Project Overview
-**Taura 2.0** is an open-source machine translation project designed to translate between Kikuyu and English. The name "Taura" is derived from the Kikuyu word "Taũra", which means "Translate".
-This project focuses on providing high-quality translations using FastText-based word embeddings, packaged into a clean, feature-based API structure for community contributions and broad usage.
+This document serves as the authoritative blueprint for building a bidirectional (Kikuyu ↔ English) machine translation system capable of handling complex morpho-syntactic structures and semantic context variations.
 
-**Timeline:** The project initially started in April 2025, ran for two months, and paused. Resumed in June 2026. A first working version (v1.0) is targeted for the end of July 2026, with overall Phase 1 completion by September 2026.
+---
 
-## Goals & Objectives
-1. **Core Translation Model:** Build reliable bidirectional translation capabilities (Kikuyu ↔ English) using FastText embeddings.
-2. **Community Driven:** Maintain a clean, modular, and maintainable codebase that encourages open-source contributions.
-3. **Performant API:** Serve the translation model efficiently via a FastAPI backend.
-4. **Reproducibility & Testing:** Provide comprehensive data preprocessing pipelines, reproducible training scripts, and robust automated tests.
+## 1. Scientific & Linguistic Context
 
-## Architecture & Tech Stack
-- **Language:** Python 3.12+
-- **Dependency Management:** Poetry
-- **API Framework:** FastAPI
-- **Model Engine:** FastText
-- **Code Quality:** Ruff (linting & formatting), Pytest (testing)
+Kikuyu (Gĩkũyũ) is a morphologically rich, agglutinative Bantu language. Translation challenges include:
+*   **Agglutination:** Single words consist of a root verb combined with subject prefixes, tense markers, object infixes, and aspect suffixes (e.g., *nĩndamũrũrire* $\rightarrow$ "I looked at him"). Standard word-by-word mapping fails.
+*   **Noun Classes:** 18 grammatical noun classes govern strict concord (agreement) across verbs, adjectives, and pronouns.
+*   **Semantic Variation:** Homographs change meaning based on context (e.g., tone and surrounding tokens).
 
-## Project Structure
-- `app/api/`: Core API and feature implementation (e.g., embed vectors, preprocessing, model loading).
-- `app/serve/`: FastAPI application setup and endpoint routing.
-- `app/tests/`: Comprehensive unit and integration test suite.
-- `models/`: Storage for serialized FastText models and embeddings.
-- `data/`: Raw and processed datasets for training and evaluation.
-- `notebooks/`: Exploratory Data Analysis (EDA) and experimental code.
-- `scripts/`: Utility scripts for training, evaluation, and data management.
+To resolve these, we must use a context-aware sequence-to-sequence model rather than static bilingual word projection.
 
-## Milestones (Phase 1)
+---
 
-### 1. Project Scaffolding & Setup
-- Initialize project with Poetry, Ruff, and Pytest.
-- Define feature-based directory structure (`app/api`, `app/serve`, `models/`, `data/`).
-- Set up CI/CD pipelines and contribution guidelines.
+## 2. High-Accuracy Translation Recipe
 
-### 2. Data Engineering & Preprocessing
-- Collect and curate Kikuyu-English parallel corpora.
-- Implement robust tokenization and text normalization scripts.
-- Prepare train/validation/test splits.
+Our goal is to achieve **70–75%+ translation accuracy** (equivalent to a BLEU score of $25.0+$ and ChrF score of $50.0+$ on low-resource test splits) using transfer learning on pre-trained multilingual models.
 
-### 3. Model Development & Training
-- Implement FastText embeddings training pipeline.
-- Train models for both Kikuyu → English and English → Kikuyu.
-- Evaluate translation quality using relevant metrics (e.g., BLEU score equivalents for word/phrase embeddings) and store metrics.
+```mermaid
+graph TD
+    A[Raw Parallel Datasets] --> B[Advanced Data Cleaning & Filter Pipeline]
+    B --> C[Clean parallel corpus]
+    D[Pre-trained NLLB-200-distilled-600M] --> E[Parameter-Efficient Fine-Tuning LoRA]
+    C --> E
+    E --> F[Context-Aware Fine-Tuned Model]
+    F --> G[FastAPI Service / Translation UI]
+```
 
-### 4. API Service & Integration
-- Wrap models into a FastAPI service (`app/serve`).
-- Implement endpoints for real-time bidirectional translation.
-- Write extensive integration tests for the API.
+### Recipe Blueprint
 
-### 5. Open Source Release & Documentation
-- Document API usage and model training instructions.
-- Ensure `README.md`, `INSTALL.md`, and contribution guides are up-to-date.
-- Finalize first working release (v1.0) by end of July 2026, and complete Phase 1 by September 2026.
+| Ingredient | Description | Purpose |
+| :--- | :--- | :--- |
+| **Base Model** | `facebook/nllb-200-distilled-600M` | Distilled, fast, handles `kik_Latn` and `eng_Latn` natively. |
+| **Vocabulary** | NLLB SentencePiece Tokenizer (256K vocabulary) | Captures subwords, morphemes, and prevents Out-of-Vocabulary (OOV) errors. |
+| **Fine-Tuning Method** | LoRA (Low-Rank Adaptation) on attention projection layers ($W_q, W_v$) | Prevents catastrophic forgetting; allows training on 8GB VRAM. |
+| **Data Regularization** | Label Smoothing ($0.1$) & Dropout ($0.2$) | Combats overfitting on small low-resource sets. |
+
+---
+
+## 3. Step-by-Step Implementation Procedures
+
+### Step 1: Establish the Evaluation Pipeline (Run first!)
+Before training any model, we must establish a standalone evaluation suite to run on a golden test split of 500 hand-verified parallel sentences:
+1.  **ChrF/ChrF++ (Character F-score):** Primary metric. Essential for Bantu languages to evaluate prefix/suffix alignment.
+2.  **BLEU (n-gram precision):** Standard corpus-level fluency metric.
+3.  **COMET/BLEURT (Neural Similarity):** Uses cross-lingual embeddings to capture semantic similarity even if translation uses synonyms.
+
+### Step 2: Advanced Dataset Filtering
+1.  **Language Identification:** Filter Hugging Face datasets using a pre-trained FastText LangID model to remove non-Kikuyu languages (e.g. Indonesian, Tamil).
+2.  **Script/Character Filtering:** Remove rows containing non-Latin alphabets or missing Kikuyu-specific character markers (`ĩ` and `ũ`).
+3.  **Similarity Thresholding:** Drop parallel pairs with similarity scores below $1.15$ in mined corpora.
+
+### Step 3: Kaggle Remote GPU Fine-Tuning
+1.  **Draft training script** utilizing Hugging Face `Seq2SeqTrainer` with support for mixed precision (`fp16`).
+2.  **Export training configurations** and datasets to Kaggle using the Kaggle API.
+3.  **Execute LoRA fine-tuning** using Kaggle's free Tesla T4 GPU (30+ hours/week).
+4.  **Save & Download** the LoRA weights (`adapter_model.bin`) back to the `models/` folder.
+
+### Step 4: Bidirectional Service Integration
+1.  Extend the FastAPI service (`app/serve/main.py`) to support the fine-tuned NLLB model.
+2.  Maintain the existing retrieval mode as a fallback/hybrid system for exact phrase matching.
+
+---
+
+## 4. Timeline & Milestones
+
+*   **Milestone 1: Evaluation Pipeline Setup** — Create evaluation test harness (`scripts/evaluate_seq2seq.py`) and golden test dataset.
+*   **Milestone 2: Data Cleaning & Normalization** — Write script to filter noisy Hugging Face corpora.
+*   **Milestone 3: LoRA Training Deployment** — Train NLLB-200 model on Kaggle remote GPU.
+*   **Milestone 4: API & Web UI Integration** — Port the model weights to the live FastAPI server.
