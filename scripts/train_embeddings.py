@@ -7,18 +7,20 @@ import gc
 import json
 import multiprocessing
 import os
+import tempfile
 from pathlib import Path
 
 import fasttext
 import numpy as np
+import pandas as pd
 
 from app.api.embeddings import (
-    get_sentence_embedding,
-    get_sentence_embeddings_parallel,
-    learn_alignment_matrix,
-    iterative_procrustes,
     CrossLingualTranslator,
     extract_identical_string_dictionary,
+    get_sentence_embedding,
+    get_sentence_embeddings_parallel,
+    iterative_procrustes,
+    learn_alignment_matrix,
 )
 from app.shared import config
 from app.shared.logger import setup_logger
@@ -207,8 +209,6 @@ def main() -> None:
 
     if args.quick_test:
         logger.info("Running in QUICK TEST mode — using first 200 pairs, 5 epochs")
-        import tempfile
-
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
         train_en_path = os.path.join(temp_dir, "test_en.txt")
@@ -230,9 +230,7 @@ def main() -> None:
         save_state(state_file, state)
 
     # 2. Learn Cross-Lingual Alignment
-    if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(
-        config.PROJ_EN_KI_PATH
-    ):
+    if os.path.exists(config.PROJ_KI_EN_PATH) and os.path.exists(config.PROJ_EN_KI_PATH):
         logger.info("Projection matrices already exist. Resuming and loading them.")
         W_ki_en = np.load(config.PROJ_KI_EN_PATH)
         W_en_ki = np.load(config.PROJ_EN_KI_PATH)
@@ -246,29 +244,21 @@ def main() -> None:
         logger.info(
             f"Computing sentence embeddings for {len(train_ki_sentences)} training pairs..."
         )
-        ki_sent_embs = np.array(
-            [get_sentence_embedding(ki_model, s) for s in train_ki_sentences]
-        )  # (N, dim)
-        en_sent_embs = np.array(
-            [get_sentence_embedding(en_model, s) for s in train_en_sentences]
-        )  # (N, dim)
+        ki_sent_embs = np.array([
+            get_sentence_embedding(ki_model, s) for s in train_ki_sentences
+        ])  # (N, dim)
+        en_sent_embs = np.array([
+            get_sentence_embedding(en_model, s) for s in train_en_sentences
+        ])  # (N, dim)
 
         # ── Source 2: seed dictionary word pairs (explicit translations) ────
         seed_dict_path = Path(config.SEED_DICTIONARY_PATH)
         if seed_dict_path.exists():
-            import pandas as pd
-
-            logger.info(
-                f"Augmenting anchors with seed dictionary from {seed_dict_path}"
-            )
+            logger.info(f"Augmenting anchors with seed dictionary from {seed_dict_path}")
             df_seed = pd.read_csv(seed_dict_path)
-            seed_pairs = list(zip(df_seed["Kikuyu"], df_seed["English"]))
-            seed_ki = np.array(
-                [ki_model.get_word_vector(str(k)) for k, _ in seed_pairs]
-            )
-            seed_en = np.array(
-                [en_model.get_word_vector(str(e)) for _, e in seed_pairs]
-            )
+            seed_pairs = list(zip(df_seed["Kikuyu"], df_seed["English"], strict=False))
+            seed_ki = np.array([ki_model.get_word_vector(str(k)) for k, _ in seed_pairs])
+            seed_en = np.array([en_model.get_word_vector(str(e)) for _, e in seed_pairs])
             ki_sent_embs = np.vstack([ki_sent_embs, seed_ki])
             en_sent_embs = np.vstack([en_sent_embs, seed_en])
             logger.info(f"After seed dictionary: {len(ki_sent_embs)} anchor pairs")

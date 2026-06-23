@@ -6,9 +6,10 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator, Optional
-import numpy as np
+
 import fasttext
-from fastapi import FastAPI, HTTPException, status, Request
+import numpy as np
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates

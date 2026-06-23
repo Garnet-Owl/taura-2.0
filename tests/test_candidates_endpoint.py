@@ -1,6 +1,7 @@
 """Tests for the /translate/candidates and /model/info API endpoints."""
 
 import unittest
+
 from fastapi.testclient import TestClient
 from givenpy import given, then, when
 from hamcrest import assert_that, equal_to, has_key, instance_of, is_

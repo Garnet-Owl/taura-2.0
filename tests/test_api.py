@@ -1,6 +1,7 @@
 """Integration tests for the translation API endpoints."""
 
 import unittest
+
 from fastapi.testclient import TestClient
 from givenpy import given, then, when
 from hamcrest import assert_that, equal_to, has_key, is_
@@ -162,6 +163,4 @@ class TestTranslationAPI(unittest.TestCase):
             assert_that(response.status_code, is_(equal_to(200)))
             data = response.json()
             assert_that(data["status"], is_(equal_to("success")))
-            assert_that(
-                data["message"], is_(equal_to("Feedback submitted successfully."))
-            )
+            assert_that(data["message"], is_(equal_to("Feedback submitted successfully.")))
