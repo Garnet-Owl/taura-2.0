@@ -6,6 +6,12 @@ import argparse
 from pathlib import Path
 
 from app.preprocessing.bible.matthew.service import MatthewExtractor
+from app.preprocessing.bible.mark.service import MarkExtractor
+
+BOOKS = [
+    ("Matthew", MatthewExtractor, "matthew_aligned.csv"),
+    ("Mark", MarkExtractor, "mark_aligned.csv"),
+]
 
 
 def main():
@@ -30,21 +36,32 @@ def main():
         default="data/parallel",
         help="Directory to save extracted parallel datasets",
     )
+    parser.add_argument(
+        "--book",
+        type=str,
+        default=None,
+        help="Extract a single book by name (e.g. Matthew, Mark). Omit to run all.",
+    )
     args = parser.parse_args()
 
-    # Create output directory
     output_path = Path(args.output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    print("Starting Book of Matthew Extraction...")
-    extractor = MatthewExtractor()
-    df = extractor.extract_and_align(args.kikuyu_pdf, args.english_pdf)
+    books_to_run = [
+        (name, cls, fname)
+        for name, cls, fname in BOOKS
+        if args.book is None or args.book.lower() == name.lower()
+    ]
 
-    # Save to CSV
-    csv_file = output_path / "matthew_aligned.csv"
-    df.to_csv(csv_file, index=False, encoding="utf-8")
-    print(f"Saved aligned Matthew verses to: {csv_file}")
-    print(f"Total aligned verses: {len(df)}")
+    for book_name, ExtractorClass, csv_name in books_to_run:
+        print(f"\nStarting Book of {book_name} Extraction...")
+        extractor = ExtractorClass()
+        df = extractor.extract_and_align(args.kikuyu_pdf, args.english_pdf)
+
+        csv_file = output_path / csv_name
+        df.to_csv(csv_file, index=False, encoding="utf-8")
+        print(f"Saved aligned {book_name} verses to: {csv_file}")
+        print(f"Total aligned verses: {len(df)}")
 
 
 if __name__ == "__main__":
