@@ -127,7 +127,6 @@ data/embeddings/*
 *.pdf
 
 # AI coding
-AGENTS.md
 session-details/handoffs/
 
 
