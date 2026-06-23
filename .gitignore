@@ -128,7 +128,7 @@ data/embeddings/*
 
 # AI coding
 AGENTS.md
-/session-details
+session-details/handoffs/
 
 
 # Local wheel packages
