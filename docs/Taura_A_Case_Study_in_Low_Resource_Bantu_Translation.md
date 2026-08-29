@@ -69,5 +69,6 @@ Domain shifts often decouple evaluation metrics. Injecting prophetic, poetic tex
 
 ## 6. Future Work
 
+- **Corpus Expansion:** Exodus and Isaiah were extracted and fully verse-validated (2,505 pairs, corpus now 19,255 pairs). A FastText retraining pass on the expanded corpus is pending so its effect on the metrics can be recorded.
 - **Sequence-to-Sequence Modeling:** Utilizing the FastText retrieval engine as a diagnostic baseline, the next phase involves LoRA fine-tuning on the `facebook/nllb-200-distilled-600M` model.
 - **Multilingual Transfer:** Exploring zero-shot or few-shot transfer using Swahili as an intermediary high-resource Bantu language.
