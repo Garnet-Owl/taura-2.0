@@ -400,6 +400,16 @@ class BaseBibleParser:
         body_text = " ".join(body_blocks)
         return re.sub(r"\s+", " ", body_text).strip()
 
+    @staticmethod
+    def _strip_trailing_page_number(text: str) -> str:
+        """Remove a bare page number that bled from the PDF footer into verse text.
+
+        Page numbers appear as a standalone 1-3 digit integer at the very end of
+        the extracted text, separated from the verse content by whitespace.  They
+        are never a legitimate part of a Bible verse.
+        """
+        return re.sub(r"\s+\d{1,3}$", "", text)
+
     def clean_english_verse(self, text: str) -> str:
         """Strip footnote markers and measurement stubs from an English verse."""
         if self.config and "english_cross_ref" in self.config.patterns:
@@ -413,7 +423,7 @@ class BaseBibleParser:
                 text = pattern.sub("", text)
             if converter:
                 text = converter(text)
-            return text.strip()
+            return self._strip_trailing_page_number(text.strip())
 
         # Remove inline cross-reference markers like * 7:7  † 12:3  ‡ 9:4
         text = re.sub(r"[*†‡§]\s*\d+:\d+", "", text)
@@ -422,7 +432,7 @@ class BaseBibleParser:
         text = re.sub(r"(?:^|\s)[;,]\s*\d+:\d+", "", text)
         # Remove parenthetical commentary that starts with a close paren
         text = re.sub(r"^\)\s*\.\s*", "", text.strip())
-        return text.strip()
+        return self._strip_trailing_page_number(text.strip())
 
     def is_footnote_only(self, text: str) -> bool:
         """Return True if the text looks like a footnote stub, not a verse."""
@@ -481,6 +491,10 @@ class BaseBibleParser:
         if not leading_text:
             return
 
+        # A bare page number at the top of the body is never verse content.
+        if re.match(r"^\d{1,3}$", leading_text):
+            return
+
         last_ch = max(parsed_verses.keys())
         last_v = max(parsed_verses[last_ch].keys())
 
@@ -491,10 +505,10 @@ class BaseBibleParser:
             return
 
         existing = parsed_verses[last_ch].get(last_v, "").strip()
-        if existing:
-            parsed_verses[last_ch][last_v] = existing + " " + leading_text
-        else:
-            parsed_verses[last_ch][last_v] = leading_text
+        combined = (existing + " " + leading_text) if existing else leading_text
+        combined = self._strip_trailing_page_number(combined.strip())
+        if combined:
+            parsed_verses[last_ch][last_v] = combined
 
     def align_verses(
         self, kikuyu_dict: Dict, english_dict: Dict

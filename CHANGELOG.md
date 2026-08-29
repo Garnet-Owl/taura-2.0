@@ -3,6 +3,10 @@
 Short history of what changed and why it matters. Detailed technical notes
 belong in handoffs, tests, and code comments.
 
+## 2026-08-29 - Keep Exodus/Isaiah data, drop local algorithm changes
+- Rebuilt the local branch on top of remote `main`: the remote's FastText + Procrustes retrieval stack is kept as-is, and the local NLLB/BM25 rewrite is set aside (preserved on the `backup/local-26-commits` branch and the `pre-reset-2026-08-29` tag).
+- Carried over only the corpus work: Exodus (1,213 pairs) and Isaiah (1,292 pairs) aligned CSVs, their extractors, the page-number bleed fixes in the base parser, and the parser tests. Corpus is now 19,255 pairs; retraining on the expanded corpus is still pending.
+
 ## 2026-06-23 - Swahili NLP Improvements and Galatians Extraction
 - Implemented Swahili NLP techniques (parallel proper-noun anchors and Morfessor diagnostics) resulting in a massive improvement to retrieval BLEU (from ~5 to ~21).
 - Added the Galatians extractor and aligned corpus with 149 validated verse pairs.

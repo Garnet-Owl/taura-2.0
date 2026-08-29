@@ -13,7 +13,7 @@ Modern translation tools largely ignore Kikuyu. Taura exists to change that, sta
 
 Taura is not just a translation API. It is a full pipeline:
 
-- **Corpus curation:** parallel sentence pairs from the Bible (Matthew, Mark, Luke, John, Acts, Romans, 1–2 Corinthians) and agriculture sector data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado): over 9,700 curated pairs and growing
+- **Corpus curation:** parallel sentence pairs from the Bible (20 books, from the Gospels through Genesis, Exodus, Psalms, Proverbs, Ecclesiastes, Isaiah and Jeremiah) and agriculture sector data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado): over 19,200 curated pairs and growing
 - **Cross-lingual alignment:** monolingual FastText embeddings aligned via iterative Orthogonal Procrustes with three anchor sources (parallel sentence embeddings, seed dictionary, and identical-string vocabulary pairs) and CSLS-based refinement
 - **Translation API:** FastAPI service with retrieval and word-by-word modes, top-K candidates, and a lightweight web UI
 
@@ -40,6 +40,9 @@ The long-term goal is to push translation quality to the point where Taura is ge
 | **5. Psalms Expansion**<br>+Psalms (12,716 pairs total) | Ki→En<br>En→Ki | 33.18<br>35.96 | 49.02<br>56.75 | 25%<br>22% | 44%<br>46% | 0.345<br>0.342 | 5,654 |
 | **6. Genesis, Proverbs, Ecclesiastes**<br>+2,670 pairs (15,386 pairs total) | Ki→En<br>En→Ki | 38.67<br>38.53 | 56.04<br>58.76 | 18%<br>20% | 44%<br>48% | 0.299<br>0.328 | 6,571 |
 | **7. Jeremiah**<br>+1,364 pairs (16,750 pairs total) | Ki→En<br>En→Ki | 39.18<br>38.73 | 54.38<br>57.62 | 20%<br>27% | 42%<br>52% | 0.317<br>0.386 | 7,109 |
+| **8. Exodus + Isaiah**<br>+2,505 validated verse pairs (19,255 pairs total); retraining pending | Ki→En<br>En→Ki | -<br>- | -<br>- | -<br>- | -<br>- | -<br>- | - |
+
+Run 7 is the latest evaluated checkpoint. Run 8 adds the Exodus and Isaiah data; it still needs a fresh training run before metrics can be recorded.
 
 The hybrid alignment was the single biggest jump: a **4× BLEU improvement** from baseline.
 The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.
