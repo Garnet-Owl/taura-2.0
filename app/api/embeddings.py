@@ -117,19 +117,27 @@ def _get_embedding_worker(sentence: str, dim: int) -> np.ndarray:
     return get_sentence_embedding(_worker_model, sentence, dim=dim)
 
 
+def get_worker_count(sentence_count: int, chunksize: int, cpu_count: int) -> int:
+    """Returns the number of workers needed, never more than there are chunks of work."""
+    chunks = max(1, -(-sentence_count // chunksize))
+    # Cap at 12 workers; each loaded fastText model can take several GB of RAM
+    return min(cpu_count, 12, chunks)
+
+
 def get_sentence_embeddings_parallel(
     model_path: str, sentences: list[str], dim: int = 100
 ) -> np.ndarray:
-    """Extracts sentence embeddings using all available CPU cores without hoarding memory."""
-    cpu_count = max(1, multiprocessing.cpu_count())
-    # Cap workers at 12 to prevent OOM with 32GB RAM (each fastText model is ~800MB)
-    workers = min(cpu_count, 12)
+    """Extracts sentence embeddings using as many CPU cores as the batch can use."""
+    chunksize = 1000
+    workers = get_worker_count(
+        len(sentences), chunksize, max(1, multiprocessing.cpu_count())
+    )
 
     with ProcessPoolExecutor(
         max_workers=workers, initializer=_init_worker, initargs=(model_path,)
     ) as executor:
         func = partial(_get_embedding_worker, dim=dim)
-        results = list(executor.map(func, sentences, chunksize=1000))
+        results = list(executor.map(func, sentences, chunksize=chunksize))
 
     return np.array(results)
 

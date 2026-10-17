@@ -13,6 +13,7 @@ from app.api.embeddings import (
     extract_identical_string_dictionary,
     extract_parallel_proper_noun_anchors,
     get_sentence_embedding,
+    get_worker_count,
     iterative_procrustes,
     learn_alignment_matrix,
 )
@@ -336,3 +337,23 @@ class TestCrossLingualAlignmentPipeline(unittest.TestCase):
 
         with then("it successfully completes without error"):
             assert_that(translation, is_(equal_to("deity")))
+
+
+class TestWorkerCount(unittest.TestCase):
+    def test_small_batch_uses_a_single_worker(self):
+        """A batch that fits in one chunk must not spawn a model-loading worker per CPU."""
+        with given([]) as _:
+            sentence_count = 100
+        with when([]) as _:
+            workers = get_worker_count(sentence_count, chunksize=1000, cpu_count=4)
+        with then([]) as _:
+            assert_that(workers, equal_to(1))
+
+    def test_large_batch_is_capped_by_cpu_count(self):
+        """Large batches use every CPU, up to the memory cap of 12 workers."""
+        with given([]) as _:
+            sentence_count = 50_000
+        with when([]) as _:
+            workers = get_worker_count(sentence_count, chunksize=1000, cpu_count=32)
+        with then([]) as _:
+            assert_that(workers, equal_to(12))

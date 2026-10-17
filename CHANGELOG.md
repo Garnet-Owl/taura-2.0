@@ -53,3 +53,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-06-23 - Jeremiah Extraction
 - Extracted and aligned Jeremiah (1,364 verses) continuing the strategy of prioritizing the largest books to maximize corpus size.
+
+## 2026-10-17 - Evaluation Memory Fix
+- Fixed training evaluation crashing on small machines: the validation step no longer starts one multi-gigabyte model copy per CPU core when there are only 100 sentences to embed.
