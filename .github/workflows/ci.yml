@@ -7,6 +7,7 @@ on:
       - 'app/**'
       - 'tests/**'
       - 'scripts/**'
+      - 'data/parallel/**'
       - 'pyproject.toml'
       - 'uv.lock'
       - 'ruff.toml'
@@ -45,3 +46,43 @@ jobs:
 
       - name: Format check with Ruff
         run: uv run ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      # The parser tests read the source Bible PDFs, which live on Hugging Face, not in git.
+      - name: Cache Bible PDFs
+        id: bible-pdfs
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/Kikuyu_Bible_all.pdf
+            data/English_Bible_all.pdf
+          key: bible-pdfs-v1
+
+      - name: Download Bible PDFs
+        if: steps.bible-pdfs.outputs.cache-hit != 'true'
+        run: |
+          base=https://huggingface.co/datasets/Garnet-Owl/taura-datasets/resolve/main/bible
+          curl -sSfL -o data/Kikuyu_Bible_all.pdf "$base/Kikuyu_Bible_all.pdf"
+          curl -sSfL -o data/English_Bible_all.pdf "$base/English_Bible_all.pdf"
+
+      - name: Run tests
+        run: uv run pytest
