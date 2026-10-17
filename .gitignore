@@ -126,8 +126,6 @@ data/embeddings/*
 # PDF files
 *.pdf
 
-# AI coding
-session-details/handoffs/
 
 
 # Local wheel packages
