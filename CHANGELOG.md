@@ -62,3 +62,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-17 - Numbers Extraction
 - Extracted and aligned Numbers (1,288 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 21 books and the parallel corpus to 20,543 pairs. Not yet retrained, so it is not reflected in the metrics.
+
+## 2026-10-18 - Run 9 Evaluation (Numbers)
+- Retrained twice on the 20,643-pair corpus including Numbers and recorded the average in the README (Ki to En 32.92 BLEU, En to Ki 35.58); the vocabulary alignment grew to about 8,320 matched words, and the two runs differed by up to 5.5 BLEU, confirming how noisy the 100-sentence check is.
