@@ -31,6 +31,7 @@ _ds = _cfg.get("datasets", {})
 
 # ── Directories & files ───────────────────────────────────────────────────
 PARALLEL_DATA_DIR: str = _abs(_paths["parallel_data_dir"])
+SPLITS_DIR: str = _abs(_paths["splits_dir"])
 MODELS_DIR: str = _abs(_paths["models_dir"])
 MONOLINGUAL_DIR: str = _abs(_paths["monolingual_dir"])
 SEED_DICTIONARY_PATH: str = _abs(_paths["seed_dictionary"])
@@ -38,6 +39,10 @@ FEEDBACK_FILE_PATH: str = _abs(_paths["feedback_file"])
 
 TRAIN_KI_TXT: str = str(Path(MONOLINGUAL_DIR) / "train.kikuyu")
 TRAIN_EN_TXT: str = str(Path(MONOLINGUAL_DIR) / "train.english")
+
+TRAIN_TSV_PATH: str = str(Path(SPLITS_DIR) / "train.tsv")
+VAL_TSV_PATH: str = str(Path(SPLITS_DIR) / "val.tsv")
+TEST_TSV_PATH: str = str(Path(SPLITS_DIR) / "test.tsv")
 
 # ── Training hyperparameters ──────────────────────────────────────────────
 EMBEDDING_DIM: int = int(_train["embedding_dim"])
@@ -49,7 +54,6 @@ FASTTEXT_MIN_COUNT: int = int(_train["fasttext_min_count"])
 ALIGNMENT_REFINEMENT_ITERS: int = int(_train["alignment_refinement_iters"])
 FASTTEXT_MINN: int = int(_train.get("fasttext_minn", 3))
 FASTTEXT_MAXN: int = int(_train.get("fasttext_maxn", 6))
-VAL_SIZE: int = int(_train["val_size"])
 
 # ── HuggingFace repos ─────────────────────────────────────────────────────
 REPO_CGIAR: str = str(_ds.get("repo_cgiar", "CGIAR/KikuyuEnglish_translation"))

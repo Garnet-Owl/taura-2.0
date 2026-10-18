@@ -103,13 +103,13 @@ def evaluate_retrieval_accuracy(
 
 
 def main() -> None:
-    all_ki, all_en = load_all_parallel_csvs(config.PARALLEL_DATA_DIR)
+    # Imported here because train_embeddings imports this module at load time.
+    from scripts.train_embeddings import load_train_and_val  # noqa: PLC0415
 
-    val_size = config.VAL_SIZE
-    corpus_ki = all_ki[:-val_size]
-    corpus_en = all_en[:-val_size]
-    test_ki = all_ki[-val_size:]
-    test_en = all_en[-val_size:]
+    # Retrieval bank is the train split; scores are on the validation split.
+    corpus_ki, corpus_en, test_ki, test_en = load_train_and_val(
+        config.TRAIN_TSV_PATH, config.VAL_TSV_PATH
+    )
     logger.info("Corpus: %d sentences | Test: %d sentences", len(corpus_ki), len(test_ki))
 
     for path in [
