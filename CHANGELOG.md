@@ -115,3 +115,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Agent Instructions
 - Added GPU and compute hygiene rules for agents: check that no Taura Kaggle job is already running before starting one, make every GPU job finish on its own, and stop leftover local training at the end of each session, to save GPU and container hours.
+
+## 2026-10-18 - Run 16 Evaluation (new split baseline)
+- Retrained twice on the new seeded split (21,781 training pairs, 1 Kings included) and recorded the average in the README as a new baseline: Ki to En 30.82 BLEU, En to Ki 35.84, scored on 2,723 validation verses from every book. The two runs agree within 2.5 BLEU, so the new validation set is far more stable than the old 100-verse one; these numbers are not comparable with Runs 1-15.
