@@ -112,3 +112,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-10-18 - Seeded 80/10/10 Evaluation Split
 - Training and evaluation now use a fixed, seeded random split across every book (80% train, 10% validation, 10% test) instead of the last 100 verses, so scores reflect the whole corpus rather than one New Testament letter. The split is rebuilt with `uv run python -m scripts.prepare_dataset` from all parallel CSVs, with 158 exact duplicate pairs removed so none can appear in both train and validation.
 - Fixed loading of split files where a verse starts with a quotation mark, which previously merged many rows into one.
+
+## 2026-10-18 - Agent Instructions
+- Added GPU and compute hygiene rules for agents: check that no Taura Kaggle job is already running before starting one, make every GPU job finish on its own, and stop leftover local training at the end of each session, to save GPU and container hours.

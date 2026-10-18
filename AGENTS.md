@@ -141,3 +141,10 @@ Delete all but the 3 most recent handoff files after writing.
 - The owner has added `KAGGLE_API_TOKEN` to the cloud environment. Only check that it is set (`[ -n "$KAGGLE_API_TOKEN" ]`); never print it. If it is unset, the session predates the change, so record that in the handoff and carry on without GPU.
 - Use it through the Kaggle client (`uv add kaggle`, then `uv run kaggle kernels push/status/output`). The client reads `KAGGLE_API_TOKEN` automatically; no `kaggle.json` is needed.
 - No standing script is kept in the repo. Write a short throwaway script in the scratchpad for each GPU job and never commit it. Only commit reusable training code that the project itself needs, and keep tokens out of notebooks and logs.
+
+### GPU and compute hygiene (added 2026-10-18)
+
+- **Before starting a GPU job, make sure the GPU is free.** Run `uv run --with kaggle kaggle kernels status <kernel>` for every Taura kernel named in the latest handoff, and do not push a new kernel while another Taura kernel is `RUNNING` or `QUEUED`. The Kaggle CLI has no stop command, so a stale run can only be cancelled from the kernel's page on kaggle.com (cancel the running version); if one is still running from an earlier session and its results are not needed, record it in the handoff for the owner and wait for it or the 12-hour limit rather than starting a second job.
+- **Every GPU job must end on its own.** Kernels run as batch scripts that exit when training and evaluation finish: no interactive sessions, no idle waits, and a fixed number of epochs so GPU hours are not wasted. Download the outputs as soon as the kernel finishes.
+- **After every run, stop local work too.** When a session ends, no training or conversion process may be left running in the container; check with `pgrep -f train_embeddings` and similar, and stop leftovers before wrap-up.
+- Lessons so far: full NLLB-600M fine-tuning with AdamW runs out of memory on a 16 GB T4; use Adafactor plus gradient checkpointing. In a status loop, match the status text (`grep -q "RUNNING\|QUEUED"`), not `grep -v`, because uv prints warning lines.
