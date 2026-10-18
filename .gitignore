@@ -138,6 +138,7 @@ models/*.npy
 data/feedback.jsonl
 
 models/run_*
+models/marian-ct2-int8/
 data/*.tsv
 data/*.kikuyu*
 data/*.english*
