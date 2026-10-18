@@ -135,3 +135,9 @@ Delete all but the 3 most recent handoff files after writing.
 4. In the same environment, allow network access to `kaggle.com` and `www.kaggle.com` (custom or full access, or add them to the allowlist).
 5. Never paste the key into chat, git or any repo file. If it leaks, rotate it from the Kaggle settings page.
 6. Agents then use `uv add kaggle` and `kaggle kernels push/status/output` to run GPU notebooks and fetch results.
+
+### Kaggle status (updated 2026-10-18)
+
+- The owner has added `KAGGLE_API_TOKEN` to the cloud environment. Only check that it is set (`[ -n "$KAGGLE_API_TOKEN" ]`); never print it. If it is unset, the session predates the change, so record that in the handoff and carry on without GPU.
+- Use it through the Kaggle client (`uv add kaggle`, then `uv run kaggle kernels push/status/output`). The client reads `KAGGLE_API_TOKEN` automatically; no `kaggle.json` is needed.
+- No standing script is kept in the repo. Write a short throwaway script in the scratchpad for each GPU job and never commit it. Only commit reusable training code that the project itself needs, and keep tokens out of notebooks and logs.
