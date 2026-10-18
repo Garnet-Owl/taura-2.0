@@ -95,3 +95,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - 2 Chronicles Extraction
 - Extracted and aligned 2 Chronicles (822 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 27 books; numbers written inside verses (such as 3,600) no longer get mistaken for verse markers. Not yet retrained, so it is not reflected in the metrics.
+
+## 2026-10-18 - Run 14 Evaluation (Leviticus)
+- Retrained twice on 25,746 pairs including Leviticus and recorded the average in the README (Ki to En 32.13 BLEU, En to Ki 31.37); both directions are lower than Run 13, but the two runs differed by up to 17 BLEU on identical data, so this is most likely noise rather than a real regression

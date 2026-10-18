@@ -49,4 +49,8 @@ Deuteronomy extracted (959 pairs, zero missing/empty); corpus is 24 books. Run 1
 
 1 Chronicles extracted (942 pairs, zero missing/empty); corpus is 25 books. Run 13 (24,887 pairs as loaded) evaluated twice: E = Ki->En 37.24 / En->Ki 39.77 BLEU; F = 31.52 / 32.12 BLEU. Mean 34.38 / 35.94 BLEU, chrF 50.83 / 55.46, MNN about 8,805. En->Ki recovered from Run 12 (33.49); within-run spread is 5.7-7.6 BLEU, so all changes are noise. Remaining: validation protocol (owner decision); next largest unextracted book is 2 Chronicles (822 verses) or 1 Kings (816).
 
-Leviticus extracted (859 pairs, zero missing/empty); corpus is 26 books, not yet retrained (Run 14 pending). Next largest unextracted book: 2 Chronicles (822 verses).
+Leviticus extracted (859 pairs, zero missing/empty); corpus is 26 books, retrained as Run 14 (below).
+
+## Update 2026-10-18: Run 14 and 2 Chronicles
+
+Run 14 (25,746 pairs, Leviticus added) evaluated twice: G = Ki->En 30.67 / En->Ki 22.99 BLEU; H = 33.60 / 39.74 BLEU. Mean 32.13 / 31.37 BLEU, chrF 48.17 / 50.82, MNN about 8,967. Both directions are below Run 13, but run-to-run spread (up to 16.8 BLEU) is larger than the change, so treat it as noise. 2 Chronicles extracted (822 pairs, zero missing/empty); corpus is 27 books, not yet retrained (Run 15 pending). Next largest unextracted book: 1 Kings (816 verses), then 1 Samuel (810).
