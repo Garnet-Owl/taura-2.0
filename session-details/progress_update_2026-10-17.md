@@ -28,3 +28,7 @@ Numbers added after Run 8: 1,288 validated pairs (zero missing/empty). Corpus is
 ## Blockers
 
 None.
+
+## Update 2026-10-18: Run 9
+
+Run 9 (Numbers, 20,643 pairs as loaded) evaluated twice: A = Ki->En 30.18 / En->Ki 34.32 BLEU; B = 35.66 / 36.84 BLEU. Mean 32.92 / 35.58 BLEU, chrF 49.24 / 54.40, MNN about 8,320. Run-to-run spread (up to 5.5 BLEU) again exceeds the gap to Run 7. The retrain item is done; remaining: validation protocol (owner decision) and Ezekiel.
