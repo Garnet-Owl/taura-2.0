@@ -6,18 +6,23 @@ Still in Milestone 3: corpus expansion and quality control.
 
 ## Current Phase
 
-Run 16 (new baseline) is evaluated on the seeded 80/10/10 split (`data/splits/`, seed 42, 158 duplicate pairs removed):
-trained on 21,781 train pairs (all 28 books plus agriculture, 1 Kings included), scored on 2,723 validation pairs,
-mean of two retrains (K and L):
+The split is now stable: each pair is placed in train / validation / test by a seeded hash of its text (seed 42), so adding a
+book only appends pairs. Run 17 (new baseline, 1 Samuel included) trained on 22,467 train pairs and was scored on 2,836
+validation pairs, mean of two retrains (M and N):
 
-- Kikuyu -> English: 30.82 BLEU, 47.41 chrF, Top-1 19.5%, Top-5 38.7%, MRR 0.290.
-- English -> Kikuyu: 35.84 BLEU, 55.65 chrF, Top-1 22.8%, Top-5 41.7%, MRR 0.320.
-- MNN about 8,410.
+- Kikuyu -> English: 33.01 BLEU, 49.22 chrF, Top-1 21.7%, Top-5 39.6%, MRR 0.305.
+- English -> Kikuyu: 34.67 BLEU, 54.82 chrF, Top-1 21.8%, Top-5 38.9%, MRR 0.304.
+- MNN about 8,668.
 
-The two runs agree within 2.5 BLEU, so the new validation set is stable. Runs 1-15 used the old last-100 set and are not
-comparable. The test split has not been used.
+The runs differ by 3.8 BLEU Ki->En. Run 17 is not comparable with Run 16 (different validation verses); Run 18 onward will
+be. The test split has not been used.
 
-GPU experiments on the same validation split (generated translations, not retrieval; not directly comparable with FastText):
+Run 16 (previous shuffled split, 2,723 validation pairs): Ki->En 30.82 / 47.41, En->Ki 35.84 / 55.65.
+
+GPU experiments below were scored on the Run 16 validation split; they need re-scoring on the stable split (the Kaggle
+dataset `jameswanjiku/taura-splits-20261018` now holds the new train.tsv / val.tsv).
+
+GPU experiments on the Run 16 validation split (generated translations, not retrieval; not directly comparable with FastText):
 
 - NLLB-600M fine-tuned (Kaggle T4, 75 min): Ki->En 37.95 BLEU / 57.51 chrF, En->Ki 27.51 / 54.85. 623 MB int8, 1.5-3.4 s
   per sentence on CPU. Too slow for the CPU target.
@@ -28,12 +33,13 @@ GPU experiments on the same validation split (generated translations, not retrie
 
 ## Corpus
 
-28 Bible books plus agriculture data: 27,384 pairs loaded, 27,226 unique.
+29 Bible books plus agriculture data: 28,194 pairs loaded, 28,036 unique.
 
 ## Next Work
 
-1. Next largest unextracted book: 1 Samuel (810 verses), then retrain FastText and Marian on the rebuilt split.
-2. Improve Marian En->Ki (the weak direction): more epochs inside a 15-20 minute GPU budget, or back-translation.
+1. Retrain Marian on the stable split (more epochs for En->Ki inside a 15-20 minute GPU budget) and re-score both
+   directions on the new val.tsv, with CPU latency.
+2. Next largest unextracted book: 2 Kings (719 verses), then Run 18 (directly comparable with Run 17).
 
 ## Blockers
 

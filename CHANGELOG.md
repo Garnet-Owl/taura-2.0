@@ -128,3 +128,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - 1 Samuel Extraction
 - Extracted and aligned 1 Samuel (810 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 29 books. Two English PDF pages carry wrong headers (page 296 says 3:7-3:9 but runs to 4:9), so the extractor corrects them; otherwise 21 English verses would have been empty and their neighbours misaligned.
+
+## 2026-10-18 - Run 17 Evaluation (1 Samuel, stable split baseline)
+- Retrained twice with 1 Samuel on the new stable split (22,467 training pairs) and recorded the average in the README as a new baseline: Kikuyu to English 33.01 BLEU, English to Kikuyu 34.67, scored on 2,836 validation verses. The changes from Run 16 are within run-to-run noise, and later runs can now be compared directly with this one.
