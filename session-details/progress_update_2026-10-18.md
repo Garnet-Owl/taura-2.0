@@ -17,14 +17,23 @@ mean of two retrains (K and L):
 The two runs agree within 2.5 BLEU, so the new validation set is stable. Runs 1-15 used the old last-100 set and are not
 comparable. The test split has not been used.
 
+GPU experiments on the same validation split (generated translations, not retrieval; not directly comparable with FastText):
+
+- NLLB-600M fine-tuned (Kaggle T4, 75 min): Ki->En 37.95 BLEU / 57.51 chrF, En->Ki 27.51 / 54.85. 623 MB int8, 1.5-3.4 s
+  per sentence on CPU. Too slow for the CPU target.
+- Marian opus-mt fine-tuned (Kaggle T4, 20 min, 77M params per direction): Ki->En 39.21 / 55.67, En->Ki 22.13 / 50.45
+  (beam 4). 78 MB int8 each; 0.42 s (Ki->En) and 1.0 s (En->Ki) per sentence greedy on CPU, 75 / 137 ms batched; greedy
+  CPU int8 scores 33.98 / 20.67 BLEU. Served by the API's 'neural' method. Model: private HF repo
+  Garnet-Owl/taura-marian-kikuyu-english.
+
 ## Corpus
 
 28 Bible books plus agriculture data: 27,384 pairs loaded, 27,226 unique.
 
 ## Next Work
 
-1. GPU experiment: fine-tuned NLLB-200-distilled-600M on Kaggle (see handoff). CPU speed is a concern.
-2. Next largest unextracted book: 1 Samuel (810 verses), then retrain on the same split.
+1. Next largest unextracted book: 1 Samuel (810 verses), then retrain FastText and Marian on the rebuilt split.
+2. Improve Marian En->Ki (the weak direction): more epochs inside a 15-20 minute GPU budget, or back-translation.
 
 ## Blockers
 

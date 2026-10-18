@@ -60,6 +60,19 @@ Run 15 is the latest evaluated checkpoint, the mean of two identical retrains on
 
 Run 16 is the first run on the new seeded split and is a new baseline, not a continuation of Runs 1-15. Training now reads `data/splits/train.tsv` (21,781 pairs, 80% of the 27,226 unique pairs across all 28 books and the agriculture data, including 1 Kings) and is scored on `data/splits/val.tsv` (2,723 pairs from every book); the 10% test split is not used. Run K scored Ki→En 29.58 BLEU / 46.27 chrF and En→Ki 35.44 / 55.39 (MNN 8,407); run L scored Ki→En 32.06 / 48.55 and En→Ki 36.25 / 55.90 (MNN 8,412). The two runs now agree within 2.5 BLEU and 0.5 chrF, much tighter than the 3 to 17 BLEU spreads on the old 100-sentence set, so differences of a few BLEU between future runs can start to be trusted. Retrieval now has to pick the right verse out of 2,723 candidates instead of 100, which is much harder, yet Top-1 accuracy (19.5% and 22.8%) is about the same as before. MNN is lower than Run 15 (9,098 to about 8,410) because 20% of the pairs are now held out of training. Run 15's Ki→En decline cannot be compared with this run; whether it was caused by the old NT-only validation set can now be checked by adding the next book and retraining on the same split.
 
+### Neural models (GPU experiments, same split)
+
+From Run 16 the owner allowed compact neural translation models trained on the free Kaggle GPU, as long as they run fast on CPU. These rows are scored on the same 2,723-pair validation split as Run 16, but they **generate** a translation, whereas FastText retrieval picks the closest existing sentence out of the validation references themselves. Their BLEU is therefore not directly comparable with the FastText rows, and the neural scores are the more honest measure of real translation. CPU latency was measured in the cloud container (4 vCPU) with CTranslate2 int8, one sentence at a time over 30 validation verses (about 17 to 21 words each).
+
+| Run | Direction | BLEU | chrF | Model size (int8) | CPU latency per sentence | GPU training time |
+|---|---|---|---|---|---|---|
+| **N0. NLLB-200-distilled-600M, no fine-tuning** (beam 4) | Ki→En<br>En→Ki | 23.06<br>21.27 | 46.13<br>48.73 | 623 MB | 1.5 s / 2.2 s greedy<br>2.7 s / 3.4 s beam 4 | none |
+| **N1. NLLB-600M fine-tuned** (2 epochs, both directions in one model, beam 4) | Ki→En<br>En→Ki | 37.95<br>27.51 | 57.51<br>54.85 | 623 MB | same as N0 | 75 min (T4) |
+| **N2. Marian opus-mt fine-tuned** (one 77M model per direction, 8-minute cap each, beam 4) | Ki→En<br>En→Ki | **39.21**<br>22.13 | 55.67<br>50.45 | 78 MB each | 0.42 s / 1.0 s greedy<br>0.86 s / 2.2 s beam 4 | 20 min (T4) |
+| **N2 on CPU, int8, greedy, batched** (what the API serves fastest) | Ki→En<br>En→Ki | 33.98<br>20.67 | 51.98<br>48.72 | 78 MB each | 75 ms / 137 ms batched | — |
+
+Fine-tuning lifted NLLB from 23.06 to 37.95 BLEU Ki→En, so the Bible-domain data helps a lot. The small Marian model matched it Ki→En (39.21 BLEU, chrF 1.8 lower) at an eighth of the size, about 3.5 times faster on CPU and in about a quarter of the GPU time, which is why the API's `neural` mode uses Marian. English→Kikuyu is the weak direction for Marian (22.13 BLEU against NLLB's 27.51), because opus-mt-en-mul has no Kikuyu output tag; it reuses the Swahili tag and splits Kikuyu letters such as ĩ and ũ into single-character pieces, so outputs take more decoding steps and are slower. Greedy decoding on CPU costs about 5 BLEU Ki→En against beam 4. The validation verses are Bible text, and NLLB was pretrained on public Bible data, so all of these scores probably overstate quality on everyday Kikuyu. The test split has not been used. Models are in the private Hugging Face repo `Garnet-Owl/taura-marian-kikuyu-english` (N2); N1 stays in the Kaggle kernel output `jameswanjiku/taura-nllb600m-ft`.
+
 The hybrid alignment was the single biggest jump: a **4× BLEU improvement** from baseline.
 The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.
 
@@ -110,6 +123,11 @@ curl -X POST http://localhost:8000/translate \
 curl -X POST http://localhost:8000/translate/candidates \
   -H "Content-Type: application/json" \
   -d '{"text": "the man is reading a book", "source_lang": "en", "target_lang": "ki", "k": 5}'
+
+# Neural translation (needs the Marian models from Hugging Face in models/marian-ct2-int8/{ki_en,en_ki})
+curl -X POST http://localhost:8000/translate \
+  -H "Content-Type: application/json" \
+  -d '{"text": "The Lord is my shepherd.", "source_lang": "en", "target_lang": "ki", "method": "neural"}'
 
 # Model info
 curl http://localhost:8000/model/info
