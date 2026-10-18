@@ -35,7 +35,7 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
     ki_list = []
     en_list = []
     with open(tsv_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="\t")
+        reader = csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
         for row in reader:
             ki = row.get("kikuyu")
             en = row.get("english")
@@ -47,6 +47,16 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
                 ki_list.append(ki_str)
                 en_list.append(en_str)
     return ki_list, en_list
+
+
+def load_train_and_val(
+    train_path: str, val_path: str
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Loads the train and validation splits as (train_ki, train_en, val_ki, val_en)."""
+    train_ki, train_en = load_sentences(train_path)
+    val_ki, val_en = load_sentences(val_path)
+    logger.info(f"Split: {len(train_ki)} train / {len(val_ki)} val sentence pairs")
+    return train_ki, train_en, val_ki, val_en
 
 
 def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
@@ -191,17 +201,10 @@ def main() -> None:
 
     dim = config.EMBEDDING_DIM
 
-    # Load all parallel CSVs and split: last VAL_SIZE pairs held out for evaluation
-    parallel_dir = config.PARALLEL_DATA_DIR
-    all_ki, all_en = load_all_parallel_csvs(parallel_dir)
-
-    VAL_SIZE = config.VAL_SIZE
-    train_ki_sentences = all_ki[:-VAL_SIZE]
-    train_en_sentences = all_en[:-VAL_SIZE]
-    val_ki = all_ki[-VAL_SIZE:]
-    val_en = all_en[-VAL_SIZE:]
-    logger.info(
-        f"Split: {len(train_ki_sentences)} train / {len(val_ki)} val sentence pairs"
+    # Train on the seeded train split; evaluate on the validation split.
+    # The test split is never read here. Rebuild with scripts.prepare_dataset.
+    train_ki_sentences, train_en_sentences, val_ki, val_en = load_train_and_val(
+        config.TRAIN_TSV_PATH, config.VAL_TSV_PATH
     )
 
     # Write monolingual train files into the run directory so each run is self-contained
@@ -215,10 +218,10 @@ def main() -> None:
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
         train_en_path = os.path.join(temp_dir, "test_en.txt")
-        write_monolingual_txt(all_ki[:200], train_ki_path)
-        write_monolingual_txt(all_en[:200], train_en_path)
-        val_ki = all_ki[200:300]
-        val_en = all_en[200:300]
+        write_monolingual_txt(train_ki_sentences[:200], train_ki_path)
+        write_monolingual_txt(train_en_sentences[:200], train_en_path)
+        val_ki = val_ki[:100]
+        val_en = val_en[:100]
         config.FASTTEXT_EPOCH = 5
 
     # 1. Train Monolingual Models

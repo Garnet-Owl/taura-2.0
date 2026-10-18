@@ -3,6 +3,9 @@ paths:
   # Add a new sub-folder here to register a new data source — no code change needed.
   parallel_data_dir: data/parallel
 
+  # Seeded 80/10/10 train/val/test split built by scripts/prepare_dataset.py
+  splits_dir: data/splits
+
   # Root directory where training run sub-folders are created
   models_dir: models
 
@@ -33,9 +36,6 @@ training:
   fasttext_minn: 3
   fasttext_maxn: 6
   alignment_refinement_iters: 5
-
-  # Sentence pairs held out from training for evaluation
-  val_size: 100
 
 datasets:
   repo_cgiar: CGIAR/KikuyuEnglish_translation
