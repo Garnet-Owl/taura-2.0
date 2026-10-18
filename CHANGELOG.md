@@ -68,3 +68,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Ezekiel Extraction
 - Extracted and aligned Ezekiel (1,273 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 22 books. Not yet retrained, so it is not reflected in the metrics.
+
+## 2026-10-18 - Job Extraction
+- Extracted and aligned Job (1,070 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 23 books. Not yet retrained, so it is not reflected in the metrics.
