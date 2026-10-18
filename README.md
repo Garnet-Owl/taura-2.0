@@ -28,8 +28,10 @@ Neural rows generate translations (beam 4) and are timed on CPU (CTranslate2 int
 |---|---|---|---|---|---|
 | 1 (start) | FastText + simple Procrustes | old 100-verse set | 5.34 / - | 4.91 / - | - |
 | 17 | FastText + hybrid Procrustes (retrieval) | 29 books; 2,836 val | 33.01 / 49.22 | 34.67 / 54.82 | - |
+| 18 | same, + 2 Kings | 30 books; 2,906 val (Run 17's + 70) | 31.42 / 47.43 | 34.33 / 54.48 | - |
 | N2 | Marian opus-mt fine-tuned (77M per direction) | Run 16 split; 2,723 val | 39.21 / 55.67 | 22.13 / 50.45 | 78 MB each; 0.86 s Ki→En, 2.2 s En→Ki |
 
+Run 18 vs 17: both directions within Run 17's 3.8 BLEU run-to-run spread, so 2 Kings made no measurable change.
 FastText retrieval picks an existing validation sentence, so its BLEU is not directly comparable with the neural rows.
 
 ## Quick Start

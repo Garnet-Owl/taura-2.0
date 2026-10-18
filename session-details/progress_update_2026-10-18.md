@@ -6,6 +6,10 @@ Still in Milestone 3: corpus expansion and quality control.
 
 ## Current Phase
 
+Run 18 (2 Kings added, 23,047 train pairs, 2,906 val pairs = Run 17's 2,836 plus 2 Kings' 70), mean of two retrains:
+Ki->En 31.42 BLEU / 47.43 chrF, Top-1 20.3%, MRR 0.287; En->Ki 34.33 / 54.48, Top-1 21.9%, MRR 0.309; MNN about 8,699.
+Within Run 17's run-to-run spread; the two Run 18 retrains agree within 0.8 BLEU.
+
 The split is now stable: each pair is placed in train / validation / test by a seeded hash of its text (seed 42), so adding a
 book only appends pairs. Run 17 (new baseline, 1 Samuel included) trained on 22,467 train pairs and was scored on 2,836
 validation pairs, mean of two retrains (M and N):
@@ -33,13 +37,13 @@ GPU experiments on the Run 16 validation split (generated translations, not retr
 
 ## Corpus
 
-29 Bible books plus agriculture data: 28,194 pairs loaded, 28,036 unique.
+30 Bible books plus agriculture data: 28,913 pairs loaded, 28,752 unique.
 
 ## Next Work
 
 1. Retrain Marian on the stable split (more epochs for En->Ki inside a 15-20 minute GPU budget) and re-score both
    directions on the new val.tsv, with CPU latency.
-2. Next largest unextracted book: 2 Kings (719 verses), then Run 18 (directly comparable with Run 17).
+2. Next largest unextracted book after 2 Kings (done, Run 18), then Run 19 on the same stable split.
 
 ## Blockers
 

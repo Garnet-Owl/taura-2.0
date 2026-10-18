@@ -137,3 +137,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Shorter README
 - The README's performance section is now one small table with the starting run and the latest runs only, without the long per-run commentary; older results stay in this changelog and the git history.
+
+## 2026-10-18 - Run 18 Evaluation (2 Kings)
+- Retrained twice with 2 Kings (23,047 training pairs) and scored on the same stable validation verses as Run 17 plus 2 Kings' share (2,906 pairs): Kikuyu to English 31.42 BLEU, English to Kikuyu 34.33. Both are slightly below Run 17 but within its run-to-run spread, and the two runs agree within 0.8 BLEU, so adding 2 Kings did not measurably change quality.
