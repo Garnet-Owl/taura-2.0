@@ -19,6 +19,7 @@ from app.api.embeddings import (
     CrossLingualTranslator,
     get_sentence_embedding,
 )
+from app.api.neural import NeuralTranslator
 from app.shared import config
 from app.shared.logger import setup_logger
 
@@ -34,7 +35,8 @@ class TranslationRequest(BaseModel):
     source_lang: str = Field(..., description="Source language code ('ki' or 'en')")
     target_lang: str = Field(..., description="Target language code ('ki' or 'en')")
     method: str = Field(
-        "retrieval", description="Translation method ('retrieval' or 'word-by-word')"
+        "retrieval",
+        description="Translation method ('retrieval', 'word-by-word' or 'neural')",
     )
 
 
@@ -90,8 +92,19 @@ def _load_parallel_sentences() -> tuple[list[str], list[str]]:
     return ki_list, en_list
 
 
+def _load_neural_translator() -> NeuralTranslator | None:
+    """Loads the optional CTranslate2 neural model if its directory exists."""
+    if not os.path.isdir(config.NEURAL_MODEL_DIR):
+        logger.info(
+            "No neural model at %s; 'neural' method disabled.", config.NEURAL_MODEL_DIR
+        )
+        return None
+    return NeuralTranslator.load(config.NEURAL_MODEL_DIR)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    app.state.neural = _load_neural_translator()
     required = [
         config.KI_MODEL_PATH,
         config.EN_MODEL_PATH,
@@ -227,11 +240,15 @@ def translate(request: TranslationRequest) -> TranslationResponse:
             detail="Source and target languages must be different.",
         )
 
-    if method not in ("retrieval", "word-by-word"):
+    if method not in ("retrieval", "word-by-word", "neural"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Supported translation methods are 'retrieval' and 'word-by-word'.",
+            detail="Supported translation methods are 'retrieval', 'word-by-word'"
+            " and 'neural'.",
         )
+
+    if method == "neural":
+        return _translate_neural(request.text, src, tgt)
 
     # 2. Check if translators are initialized
     if not hasattr(app.state, "translators") or app.state.translators is None:
@@ -259,6 +276,22 @@ def translate(request: TranslationRequest) -> TranslationResponse:
         source_lang=src,
         target_lang=tgt,
         method=method,
+    )
+
+
+def _translate_neural(text: str, src: str, tgt: str) -> TranslationResponse:
+    """Translates with the fine-tuned neural model, or returns 503 if absent."""
+    neural = getattr(app.state, "neural", None)
+    if neural is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Neural translation model is not loaded.",
+        )
+    return TranslationResponse(
+        translated_text=neural.translate(text, src, tgt),
+        source_lang=src,
+        target_lang=tgt,
+        method="neural",
     )
 
 
