@@ -40,9 +40,9 @@ The long-term goal is to push translation quality to the point where Taura is ge
 | **5. Psalms Expansion**<br>+Psalms (12,716 pairs total) | Ki→En<br>En→Ki | 33.18<br>35.96 | 49.02<br>56.75 | 25%<br>22% | 44%<br>46% | 0.345<br>0.342 | 5,654 |
 | **6. Genesis, Proverbs, Ecclesiastes**<br>+2,670 pairs (15,386 pairs total) | Ki→En<br>En→Ki | 38.67<br>38.53 | 56.04<br>58.76 | 18%<br>20% | 44%<br>48% | 0.299<br>0.328 | 6,571 |
 | **7. Jeremiah**<br>+1,364 pairs (16,750 pairs total) | Ki→En<br>En→Ki | 39.18<br>38.73 | 54.38<br>57.62 | 20%<br>27% | 42%<br>52% | 0.317<br>0.386 | 7,109 |
-| **8. Exodus + Isaiah**<br>+2,505 validated verse pairs (19,255 pairs total); retraining pending | Ki→En<br>En→Ki | -<br>- | -<br>- | -<br>- | -<br>- | -<br>- | - |
+| **8. Exodus + Isaiah**<br>+2,505 validated verse pairs (19,255 pairs total) | Ki→En<br>En→Ki | 31.10<br>31.39 | 46.37<br>53.07 | 17%<br>20% | 39%<br>39% | 0.284<br>0.320 | 7,947 |
 
-Run 7 is the latest evaluated checkpoint. Run 8 adds the Exodus and Isaiah data; it still needs a fresh training run before metrics can be recorded.
+Run 8 is the latest evaluated checkpoint. It adds Exodus and Isaiah and raised the vocabulary bridge (MNN 7,109 to 7,947), but BLEU fell by about 8 points and chrF by about 8 (Ki→En) and 4.5 (En→Ki) against Run 7. The validation set is the last 100 pairs of the corpus (all New Testament epistle text, unchanged since Run 7) and the new data is Old Testament narrative and prophecy, so the extra data is far from the validation text and is likely diluting retrieval toward closer matches. This explanation is a hypothesis, not yet tested; a 100-sentence set is also noisy.
 
 The hybrid alignment was the single biggest jump: a **4× BLEU improvement** from baseline.
 The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.

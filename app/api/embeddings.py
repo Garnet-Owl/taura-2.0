@@ -2,6 +2,7 @@
 
 import io
 import multiprocessing
+import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -117,13 +118,26 @@ def _get_embedding_worker(sentence: str, dim: int) -> np.ndarray:
     return get_sentence_embedding(_worker_model, sentence, dim=dim)
 
 
+def _available_memory_bytes() -> int:
+    """Returns the free physical memory in bytes."""
+    return int(os.sysconf("SC_AVPHYS_PAGES") * os.sysconf("SC_PAGE_SIZE"))
+
+
+def max_embedding_workers(
+    model_bytes: int, available_bytes: int, cpu_count: int | None = None
+) -> int:
+    """Sizes the worker pool: each worker loads its own copy of the model, so
+    allow two model sizes of memory per worker, at most 12 workers, at least 1."""
+    cpus = cpu_count if cpu_count is not None else multiprocessing.cpu_count()
+    by_memory = int(available_bytes // (2 * max(model_bytes, 1)))
+    return max(1, min(cpus, 12, by_memory))
+
+
 def get_sentence_embeddings_parallel(
     model_path: str, sentences: list[str], dim: int = 100
 ) -> np.ndarray:
     """Extracts sentence embeddings using all available CPU cores without hoarding memory."""
-    cpu_count = max(1, multiprocessing.cpu_count())
-    # Cap workers at 12 to prevent OOM with 32GB RAM (each fastText model is ~800MB)
-    workers = min(cpu_count, 12)
+    workers = max_embedding_workers(os.path.getsize(model_path), _available_memory_bytes())
 
     with ProcessPoolExecutor(
         max_workers=workers, initializer=_init_worker, initargs=(model_path,)

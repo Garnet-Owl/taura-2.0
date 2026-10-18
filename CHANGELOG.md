@@ -56,3 +56,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Numbers Extraction
 - Extracted and aligned the Book of Numbers (1,288 verse pairs, zero missing and zero empty verses in both languages), growing the parallel corpus to 20,543 pairs across 21 Bible books.
+
+## 2026-10-18 - Run 8 Evaluated and Training Memory Fix
+- Retrained on 19,255 pairs (Exodus and Isaiah added): vocabulary alignment improved (7,947 matched words) but sentence translation scores dropped (Ki to En 31.10 BLEU, En to Ki 31.39) against Run 7; the README explains the likely cause.
+- Evaluation no longer crashes on machines with limited memory: the number of parallel embedding workers is now sized to the free memory instead of a fixed cap.
