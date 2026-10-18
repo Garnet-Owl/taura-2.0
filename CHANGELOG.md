@@ -83,3 +83,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 12 Evaluation (Deuteronomy)
 - Retrained twice on 23,945 pairs including Deuteronomy and recorded the average in the README (Ki to En 35.99 BLEU, En to Ki 33.49); English to Kikuyu dipped from Run 11, but the two runs differed by 4.4 BLEU, so this is most likely noise and is flagged for watching.
+
+## 2026-10-18 - 1 Chronicles Extraction
+- Extracted and aligned 1 Chronicles (942 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 25 books. Not yet retrained, so it is not reflected in the metrics.
