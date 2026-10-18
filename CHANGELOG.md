@@ -118,3 +118,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 16 Evaluation (new split baseline)
 - Retrained twice on the new seeded split (21,781 training pairs, 1 Kings included) and recorded the average in the README as a new baseline: Ki to En 30.82 BLEU, En to Ki 35.84, scored on 2,723 validation verses from every book. The two runs agree within 2.5 BLEU, so the new validation set is far more stable than the old 100-verse one; these numbers are not comparable with Runs 1-15.
+
+## 2026-10-18 - Neural Translation Experiments
+- Fine-tuned two compact neural models on the free Kaggle GPU and scored them on the new validation split: a small Marian model (78 MB per direction, trained in 20 minutes) reached 39.21 BLEU Kikuyu to English and 22.13 English to Kikuyu, and a larger NLLB-600M model reached 37.95 and 27.51 but runs about 3.5 times slower on CPU.
+- The API's `/translate` endpoint now has a `neural` method that serves the Marian models on CPU (download them from the private Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english into `models/marian-ct2-int8/`).
