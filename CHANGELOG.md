@@ -53,3 +53,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-06-23 - Jeremiah Extraction
 - Extracted and aligned Jeremiah (1,364 verses) continuing the strategy of prioritizing the largest books to maximize corpus size.
+
+## 2026-10-18 - Numbers Extraction
+- Extracted and aligned the Book of Numbers (1,288 verse pairs, zero missing and zero empty verses in both languages), growing the parallel corpus to 20,543 pairs across 21 Bible books.
