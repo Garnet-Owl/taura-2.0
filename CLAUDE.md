@@ -118,3 +118,20 @@ Write a handoff to `session-details/handoffs/YYYY-MM-DD_HHMM_handoff.md`:
 
 Delete all but the 3 most recent handoff files after writing.
 - **CRITICAL:** Missing verses are unacceptable without strict investigation! If a verse is missing, it implies that the matching of the other verses might be misaligned. Always verify PDF integrity.
+
+---
+
+## Owner Authorisations (added 2026-10-18)
+
+- **Free to choose the method.** Agents may try any technique that improves translation accuracy beyond FastText + Procrustes (for example fine-tuning a pretrained multilingual model, LoRA, back-translation), provided results are recorded honestly in README's Performance Progression table and compared against the previous run.
+- **Free to grow the corpus.** Agents may find, verify and add more Kikuyu-English parallel or monolingual data from public sources whose licence allows open-source use. Record the source, licence and cleaning rules, and never add data the project cannot legally redistribute. Verify alignment (no missing or empty pairs) before committing.
+- **Free GPU providers allowed.** If credentials exist in the environment, agents may train on a free provider (Kaggle preferred; Lightning AI or Modal are alternatives), using all data including newly extracted books. Never read or print credential values; check only that the variable is set (`[ -n "$KAGGLE_KEY" ]`). Large models and datasets go to Hugging Face or the provider, never git. This lifts the "no GPU work while Milestone 3 is open" limit for experiments that leave the existing FastText pipeline unchanged.
+
+### How the owner provides Kaggle credentials (free GPU)
+
+1. Create a free account at https://www.kaggle.com and verify your phone number (required for GPU and internet access).
+2. Open https://www.kaggle.com/settings, find the **API** section and click **Create New Token**. It downloads `kaggle.json` with your `username` and `key`. If the page shows a single token string instead, copy that.
+3. In Claude Code on the web, edit the environment this routine uses and add environment variables `KAGGLE_USERNAME` (the username) and `KAGGLE_KEY` (the key), or `KAGGLE_API_TOKEN` for the single-string token.
+4. In the same environment, allow network access to `kaggle.com` and `www.kaggle.com` (custom or full access, or add them to the allowlist).
+5. Never paste the key into chat, git or any repo file. If it leaks, rotate it from the Kaggle settings page.
+6. Agents then use `uv add kaggle` and `kaggle kernels push/status/output` to run GPU notebooks and fetch results.
