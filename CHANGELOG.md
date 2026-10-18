@@ -105,3 +105,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - 1 Kings Extraction
 - Extracted and aligned 1 Kings (816 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 28 books. Not yet retrained, so it is not reflected in the metrics.
+
+## 2026-10-18 - Run 15 Evaluation (2 Chronicles)
+- Retrained twice on 26,568 pairs including 2 Chronicles and recorded the average in the README (Ki to En 27.01 BLEU, En to Ki 34.30). Kikuyu to English fell for the fourth averaged run in a row, and this time both runs agree, so the drop is likely real. The probable cause is that the small validation set is all New Testament letters while every recent book added is Old Testament.
