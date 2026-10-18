@@ -1,6 +1,7 @@
 """Integration tests for the translation API endpoints."""
 
 import unittest
+from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 from givenpy import given, then, when
@@ -89,7 +90,8 @@ class TestTranslationAPI(unittest.TestCase):
                 response.json()["detail"],
                 is_(
                     equal_to(
-                        "Supported translation methods are 'retrieval' and 'word-by-word'."
+                        "Supported translation methods are 'retrieval', 'word-by-word'"
+                        " and 'neural'."
                     )
                 ),
             )
@@ -126,6 +128,53 @@ class TestTranslationAPI(unittest.TestCase):
                 assert_that(data["source_lang"], is_(equal_to("en")))
                 assert_that(data["target_lang"], is_(equal_to("ki")))
                 assert_that(data["method"], is_(equal_to("retrieval")))
+
+    def test_translate_neural_without_model_returns_503(self):
+        """Neural method should return 503 when no neural model is loaded."""
+        with given([]) as _:
+            app.state.neural = None
+            payload = {
+                "text": "Hello",
+                "source_lang": "en",
+                "target_lang": "ki",
+                "method": "neural",
+            }
+
+        with when("sending a neural translation request"):
+            response = self.client.post("/translate", json=payload)
+
+        with then("a 503 error explains the neural model is missing"):
+            assert_that(response.status_code, is_(equal_to(503)))
+            assert_that(
+                response.json()["detail"],
+                is_(equal_to("Neural translation model is not loaded.")),
+            )
+
+    def test_translate_neural_uses_loaded_model(self):
+        """Neural method should return the neural model's translation."""
+        with given([]) as _:
+            neural = MagicMock()
+            neural.translate.return_value = "Mwathani nĩ mũrĩithi wakwa"
+            app.state.neural = neural
+            payload = {
+                "text": "The Lord is my shepherd",
+                "source_lang": "en",
+                "target_lang": "ki",
+                "method": "neural",
+            }
+
+        with when("sending a neural translation request"):
+            response = self.client.post("/translate", json=payload)
+            app.state.neural = None
+
+        with then("the neural translation is returned"):
+            assert_that(response.status_code, is_(equal_to(200)))
+            data = response.json()
+            assert_that(
+                data["translated_text"], is_(equal_to("Mwathani nĩ mũrĩithi wakwa"))
+            )
+            assert_that(data["method"], is_(equal_to("neural")))
+            neural.translate.assert_called_once_with("The Lord is my shepherd", "en", "ki")
 
     def test_web_ui_root(self):
         """Root endpoint should return the HTML web UI page."""
