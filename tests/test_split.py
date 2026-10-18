@@ -5,7 +5,7 @@ import unittest
 from givenpy import given, then, when
 from hamcrest import assert_that, equal_to, is_
 
-from app.api.split import split_data
+from app.api.split import split_by_hash, split_data
 
 
 class TestSplit(unittest.TestCase):
@@ -62,3 +62,29 @@ class TestSplit(unittest.TestCase):
             assert_that(train1, is_(equal_to(train2)))
             assert_that(val1, is_(equal_to(val2)))
             assert_that(test1, is_(equal_to(test2)))
+
+    def test_split_by_hash_is_independent_of_other_items(self):
+        """A pair's split depends only on the pair and the seed, not its neighbours."""
+        with given([]) as _:
+            small = [(f"kikuyu_{i}", f"english_{i}") for i in range(100)]
+            large = list(reversed(small)) + [(f"extra_{i}", f"x_{i}") for i in range(100)]
+
+        with when("splitting both datasets with the same seed"):
+            small_splits = split_by_hash(small, 0.8, 0.1, 0.1, seed=42)
+            large_splits = split_by_hash(large, 0.8, 0.1, 0.1, seed=42)
+
+        with then("every original pair keeps its split"):
+            for small_part, large_part in zip(small_splits, large_splits, strict=True):
+                assert_that(set(small_part) <= set(large_part), is_(True))
+
+    def test_split_by_hash_changes_with_seed(self):
+        """A different seed gives a different assignment."""
+        with given([]) as _:
+            data = [(f"kikuyu_{i}", f"english_{i}") for i in range(200)]
+
+        with when("splitting with two seeds"):
+            _, val_a, _ = split_by_hash(data, 0.8, 0.1, 0.1, seed=42)
+            _, val_b, _ = split_by_hash(data, 0.8, 0.1, 0.1, seed=7)
+
+        with then("the validation sets differ"):
+            assert_that(val_a == val_b, is_(False))

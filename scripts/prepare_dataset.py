@@ -4,7 +4,9 @@ Preprocessing steps:
 1. Read every *.csv under the parallel data directory (Bible books and agriculture).
 2. Drop rows where either side is empty, and drop exact duplicate (Kikuyu, English)
    pairs so the same pair cannot land in both train and validation/test.
-3. Shuffle with a fixed seed (42) and split 80% train / 10% validation / 10% test.
+3. Assign each pair to train (80%), validation (10%) or test (10%) from a SHA-256
+   hash of the seed (42) and the pair's text. The assignment is stable: adding a
+   book never moves an existing pair to another split. Proportions are approximate.
 4. Write each split as a TSV with a "kikuyu\\tenglish" header to data/splits/.
 
 Train only on train.tsv, tune and compare on val.tsv, and keep test.tsv for final
@@ -13,7 +15,7 @@ comparisons. Rebuild the split after adding a book: uv run python -m scripts.pre
 
 import os
 
-from app.api.split import split_data
+from app.api.split import split_by_hash
 from app.shared import config
 from app.shared.logger import setup_logger
 from scripts.evaluate import load_all_parallel_csvs
@@ -44,9 +46,9 @@ def write_split_tsv(pairs: list[tuple[str, str]], file_path: str) -> None:
 
 
 def build_splits(parallel_dir: str, splits_dir: str, seed: int = SPLIT_SEED) -> None:
-    """Splits all parallel pairs 80/10/10 with a fixed seed and writes the TSVs."""
+    """Splits all parallel pairs about 80/10/10 by seeded hash and writes the TSVs."""
     pairs = load_parallel_pairs(parallel_dir)
-    train, val, test = split_data(
+    train, val, test = split_by_hash(
         pairs, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=seed
     )
     for name, split_pairs in [("train", train), ("val", val), ("test", test)]:
