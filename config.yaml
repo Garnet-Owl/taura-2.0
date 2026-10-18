@@ -3,6 +3,9 @@ paths:
   # Add a new sub-folder here to register a new data source — no code change needed.
   parallel_data_dir: data/parallel
 
+  # Seeded 80/10/10 train/val/test TSVs written by scripts/prepare_dataset.py
+  splits_dir: data/splits
+
   # Root directory where training run sub-folders are created
   models_dir: models
 
@@ -34,7 +37,8 @@ training:
   fasttext_maxn: 6
   alignment_refinement_iters: 5
 
-  # Sentence pairs held out from training for evaluation
+  # Legacy: size of the old last-N held-out set, still used by scripts/evaluate.py.
+  # Training now evaluates on the seeded validation split in splits_dir.
   val_size: 100
 
 datasets:

@@ -1,11 +1,13 @@
+"""Builds the seeded 80/10/10 train/validation/test split from data/parallel.
+
+Run with: uv run python -m scripts.prepare_dataset
+"""
+
 import os
-import sys
 from pathlib import Path
 
 import pandas as pd
 
-# Add root directory to sys.path to import app.api.split
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.api.preprocessing import normalize_text
 from app.api.split import split_data
 from app.shared import config
@@ -14,54 +16,51 @@ from app.shared.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+def load_parallel_pairs(parallel_dir: str) -> list[tuple[str, str]]:
+    """Loads (kikuyu, english) pairs from every CSV under parallel_dir.
+
+    Files are read in sorted path order, both sides are stripped, rows with an
+    empty side are skipped, and exact duplicate pairs are kept once so the same
+    pair cannot land in both train and validation.
+    """
+    csv_files = sorted(Path(parallel_dir).rglob("*.csv"))
+    if not csv_files:
+        raise FileNotFoundError(f"No CSV files found in {parallel_dir}")
+    pairs: dict[tuple[str, str], None] = {}
+    for csv_path in csv_files:
+        df = pd.read_csv(csv_path, dtype=str, keep_default_na=False)
+        for ki, en in zip(df["Kikuyu"], df["English"], strict=True):
+            pair = (ki.strip(), en.strip())
+            if pair[0] and pair[1]:
+                pairs.setdefault(pair, None)
+    logger.info(f"Loaded {len(pairs)} distinct pairs from {len(csv_files)} CSV files")
+    return list(pairs)
+
+
+def _flatten(text: str) -> str:
+    return text.replace("\t", " ").replace("\n", " ").replace("\r", " ")
+
+
+def write_split_tsv(pairs: list[tuple[str, str]], file_path: str) -> None:
+    """Writes pairs to a kikuyu/english TSV, flattening tabs and newlines."""
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write("kikuyu\tenglish\n")
+        for ki, en in pairs:
+            f.write(f"{_flatten(ki)}\t{_flatten(en)}\n")
+    logger.info("Saved %s pairs to %s", len(pairs), file_path)
+
+
 def main() -> None:
     logger.info("Starting dataset preparation pipeline...")
-    all_pairs = []
+    all_pairs = load_parallel_pairs(config.PARALLEL_DATA_DIR)
 
-    # We will load data exclusively from our processed Bible parallel dataset
-    # instead of downloading the corrupted HuggingFace datasets.
-    bible_csv_path = Path("data/processed/bible_parallel.csv")
-
-    if bible_csv_path.exists():
-        logger.info(f"Loading high-quality Bible parallel dataset from {bible_csv_path}")
-        df = pd.read_csv(bible_csv_path)
-        if "English" in df.columns and "Kikuyu" in df.columns:
-            df = df.dropna(subset=["English", "Kikuyu"])
-            for _, row in df.iterrows():
-                en = str(row["English"]).strip()
-                ki = str(row["Kikuyu"]).strip()
-                if en and ki:
-                    all_pairs.append((ki, en))
-        logger.info(f"Extracted {len(all_pairs)} pairs from the Bible dataset.")
-    else:
-        logger.warning(f"No Bible parallel dataset found at {bible_csv_path}.")
-        logger.warning("Pipeline is awaiting execution of the PDF parser.")
-        # We exit early because without clean data, generating splits is useless.
-        logger.warning("Skipping TSV split generation until dataset is available.")
-        sys.exit(0)
-
-    # Create data/ directory if it doesn't exist
-    os.makedirs(config.DATA_DIR, exist_ok=True)
-
-    # Split dataset
     train, val, test = split_data(
         all_pairs, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=42
     )
-
-    # Save as TSV files
-    for _split_name, split_data_list, file_path in [
-        ("train", train, config.TRAIN_TSV_PATH),
-        ("val", val, config.VAL_TSV_PATH),
-        ("test", test, config.TEST_TSV_PATH),
-    ]:
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write("kikuyu\tenglish\n")
-            for ki, en in split_data_list:
-                ki_clean = ki.replace("\t", " ").replace("\n", " ").replace("\r", " ")
-                en_clean = en.replace("\t", " ").replace("\n", " ").replace("\r", " ")
-                f.write(f"{ki_clean}\t{en_clean}\n")
-        logger.info("Saved %s pairs to %s", len(split_data_list), file_path)
+    write_split_tsv(train, config.TRAIN_TSV_PATH)
+    write_split_tsv(val, config.VAL_TSV_PATH)
+    write_split_tsv(test, config.TEST_TSV_PATH)
 
     # Also save raw monolingual text files for training FastText embeddings.
     # Use APPEND mode so that any existing large scraped corpora are preserved.

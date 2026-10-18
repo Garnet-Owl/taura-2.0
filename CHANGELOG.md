@@ -108,3 +108,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 15 Evaluation (2 Chronicles)
 - Retrained twice on 26,568 pairs including 2 Chronicles and recorded the average in the README (Ki to En 27.01 BLEU, En to Ki 34.30). Kikuyu to English fell for the fourth averaged run in a row, and this time both runs agree, so the drop is likely real. The probable cause is that the small validation set is all New Testament letters while every recent book added is Old Testament.
+
+## 2026-10-18 - Seeded Train/Validation/Test Split
+- Training now learns from a seeded 80/10/10 split drawn from every book and agriculture file (21,781 train, 2,723 validation, 2,722 test pairs, duplicates removed so no pair sits in two splits), replacing the old fixed set of the last 100 verses. Future scores are therefore fairer, but they are not comparable with Runs 1-15.
+- Fixed a bug where a verse starting with a straight quote mark swallowed the lines after it when the split files were read.

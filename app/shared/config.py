@@ -36,6 +36,11 @@ MONOLINGUAL_DIR: str = _abs(_paths["monolingual_dir"])
 SEED_DICTIONARY_PATH: str = _abs(_paths["seed_dictionary"])
 FEEDBACK_FILE_PATH: str = _abs(_paths["feedback_file"])
 
+SPLITS_DIR: str = _abs(_paths.get("splits_dir", "data/splits"))
+TRAIN_TSV_PATH: str = str(Path(SPLITS_DIR) / "train.tsv")
+VAL_TSV_PATH: str = str(Path(SPLITS_DIR) / "val.tsv")
+TEST_TSV_PATH: str = str(Path(SPLITS_DIR) / "test.tsv")
+
 TRAIN_KI_TXT: str = str(Path(MONOLINGUAL_DIR) / "train.kikuyu")
 TRAIN_EN_TXT: str = str(Path(MONOLINGUAL_DIR) / "train.english")
 

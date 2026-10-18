@@ -35,7 +35,7 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
     ki_list = []
     en_list = []
     with open(tsv_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="\t")
+        reader = csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
         for row in reader:
             ki = row.get("kikuyu")
             en = row.get("english")
@@ -49,26 +49,19 @@ def load_sentences(tsv_path: str) -> tuple[list[str], list[str]]:
     return ki_list, en_list
 
 
-def load_all_parallel_csvs(parallel_dir: str) -> tuple[list[str], list[str]]:
-    """Loads all parallel CSV files from a directory, returning (ki_list, en_list)."""
-    ki_list: list[str] = []
-    en_list: list[str] = []
-    csv_files = sorted(Path(parallel_dir).rglob("*.csv"))
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {parallel_dir}")
-    for csv_path in csv_files:
-        with open(csv_path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                ki = row.get("Kikuyu", "").strip()
-                en = row.get("English", "").strip()
-                if ki and en:
-                    ki_list.append(ki)
-                    en_list.append(en)
-    logger.info(
-        f"Loaded {len(ki_list)} sentence pairs from {len(csv_files)} CSV files in {parallel_dir}"
-    )
-    return ki_list, en_list
+def load_train_val(
+    train_path: str, val_path: str
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Loads the seeded train and validation splits as (train_ki, train_en, val_ki, val_en)."""
+    for path in (train_path, val_path):
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Split file {path} not found. "
+                "Run `uv run python -m scripts.prepare_dataset` first."
+            )
+    train_ki, train_en = load_sentences(train_path)
+    val_ki, val_en = load_sentences(val_path)
+    return train_ki, train_en, val_ki, val_en
 
 
 def write_monolingual_txt(sentences: list[str], path: str) -> None:
@@ -191,15 +184,11 @@ def main() -> None:
 
     dim = config.EMBEDDING_DIM
 
-    # Load all parallel CSVs and split: last VAL_SIZE pairs held out for evaluation
-    parallel_dir = config.PARALLEL_DATA_DIR
-    all_ki, all_en = load_all_parallel_csvs(parallel_dir)
-
-    VAL_SIZE = config.VAL_SIZE
-    train_ki_sentences = all_ki[:-VAL_SIZE]
-    train_en_sentences = all_en[:-VAL_SIZE]
-    val_ki = all_ki[-VAL_SIZE:]
-    val_en = all_en[-VAL_SIZE:]
+    # Train on the seeded train split and evaluate on the validation split.
+    # The test split is left untouched for final comparisons only.
+    train_ki_sentences, train_en_sentences, val_ki, val_en = load_train_val(
+        config.TRAIN_TSV_PATH, config.VAL_TSV_PATH
+    )
     logger.info(
         f"Split: {len(train_ki_sentences)} train / {len(val_ki)} val sentence pairs"
     )
@@ -215,10 +204,10 @@ def main() -> None:
         temp_dir = tempfile.mkdtemp()
         train_ki_path = os.path.join(temp_dir, "test_ki.txt")
         train_en_path = os.path.join(temp_dir, "test_en.txt")
-        write_monolingual_txt(all_ki[:200], train_ki_path)
-        write_monolingual_txt(all_en[:200], train_en_path)
-        val_ki = all_ki[200:300]
-        val_en = all_en[200:300]
+        write_monolingual_txt(train_ki_sentences[:200], train_ki_path)
+        write_monolingual_txt(train_en_sentences[:200], train_en_path)
+        val_ki = val_ki[:100]
+        val_en = val_en[:100]
         config.FASTTEXT_EPOCH = 5
 
     # 1. Train Monolingual Models
