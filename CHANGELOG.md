@@ -122,3 +122,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-10-18 - Neural Translation Experiments
 - Fine-tuned two compact neural models on the free Kaggle GPU and scored them on the new validation split: a small Marian model (78 MB per direction, trained in 20 minutes) reached 39.21 BLEU Kikuyu to English and 22.13 English to Kikuyu, and a larger NLLB-600M model reached 37.95 and 27.51 but runs about 3.5 times slower on CPU.
 - The API's `/translate` endpoint now has a `neural` method that serves the Marian models on CPU (download them from the private Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english into `models/marian-ct2-int8/`).
+
+## 2026-10-18 - Stable Evaluation Split
+- The 80/10/10 split now places each verse pair by a seeded hash of its text instead of a shuffle, so adding a new book only adds pairs and never moves existing ones between train, validation and test. Future runs can be compared on the same validation verses as the corpus grows (rebuilt split: 21,805 / 2,771 / 2,650 pairs).

@@ -22,7 +22,7 @@ The long-term goal is to push translation quality to the point where Taura is ge
 
 ## Performance Progression
 
-> This section tracks the evolution of Taura's cross-lingual alignment. Every row represents a real training run. Runs 1-15 were evaluated on a fixed 100-sentence validation set (the last 100 pairs in file order). From Run 16 onward, training uses the seeded 80/10/10 split in `data/splits/` and scores are on its 2,723-pair validation set drawn from every book, so Run 16 and later are **not directly comparable** with Runs 1-15.
+> This section tracks the evolution of Taura's cross-lingual alignment. Every row represents a real training run. Runs 1-15 were evaluated on a fixed 100-sentence validation set (the last 100 pairs in file order). From Run 16 onward, training uses the seeded 80/10/10 split in `data/splits/` and scores are on its 2,723-pair validation set drawn from every book, so Run 16 and later are **not directly comparable** with Runs 1-15. From Run 17 the split assigns each pair by a seeded hash of its text, so adding a book no longer reshuffles existing pairs between train, validation and test; this one-time change means Run 17 is not directly comparable with Run 16 either, but later runs will share one stable validation set.
 
 > [!NOTE]
 > **Metrics Key:**
