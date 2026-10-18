@@ -15,10 +15,15 @@ Lower than Run 7 (39.18 / 38.73 BLEU). An identical repeat retrain scored 35.49 
 differences of several BLEU are within noise (multithreaded, unseeded FastText; 100-sentence validation set).
 Not treated as a confirmed regression.
 
+## Corpus
+
+Numbers added after Run 8: 1,288 validated pairs (zero missing/empty). Corpus is now 21 books and 20,543 pairs; a retrain (Run 9) is pending.
+
 ## Next Work
 
 1. Make evaluation more trustworthy: average several training runs or enlarge the validation set (owner decision on split policy).
-2. Extract the next largest unextracted Bible book, then retrain.
+2. Retrain on 20,543 pairs and record Run 9 (ideally averaged over several runs).
+3. Then extract Ezekiel (1,273 verses), the next largest unextracted book.
 
 ## Blockers
 

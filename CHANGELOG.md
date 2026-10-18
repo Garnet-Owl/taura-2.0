@@ -59,3 +59,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-17 - Run 8 Evaluation (Exodus + Isaiah)
 - Retrained on 19,255 pairs and recorded Run 8 in the README. Scores dipped versus Run 7, but a second identical retrain swung by up to 6 BLEU, so the dip is within run-to-run noise on the small 100-sentence validation set.
+
+## 2026-10-17 - Numbers Extraction
+- Extracted and aligned Numbers (1,288 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 21 books and the parallel corpus to 20,543 pairs. Not yet retrained, so it is not reflected in the metrics.
