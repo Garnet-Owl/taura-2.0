@@ -140,3 +140,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 18 Evaluation (2 Kings)
 - Retrained twice with 2 Kings (23,047 training pairs) and scored on the same stable validation verses as Run 17 plus 2 Kings' share (2,906 pairs): Kikuyu to English 31.42 BLEU, English to Kikuyu 34.33. Both are slightly below Run 17 but within its run-to-run spread, and the two runs agree within 0.8 BLEU, so adding 2 Kings did not measurably change quality.
+
+## 2026-10-18 - Marian Retrain (N3)
+- Retrained the small Marian neural models on the stable split, training English to Kikuyu for 7 full epochs instead of stopping at a time limit. English to Kikuyu rose from 22.13 to 25.19 BLEU and Kikuyu to English held at 39.56, measured on CPU (0.6 s and 1.3 s per sentence, 78 MB per direction). The new models replace the old ones in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english.

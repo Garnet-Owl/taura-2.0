@@ -35,14 +35,19 @@ GPU experiments on the Run 16 validation split (generated translations, not retr
   CPU int8 scores 33.98 / 20.67 BLEU. Served by the API's 'neural' method. Model: private HF repo
   Garnet-Owl/taura-marian-kikuyu-english.
 
+GPU run N3 (Kaggle `jameswanjiku/taura-marian-ft` v2, Marian, stable split, fixed epochs Ki->En 4 / En->Ki 7, 30 min T4),
+scored on CPU int8 on Run 18's 2,906 val pairs: Ki->En 39.56 / 56.30 (beam 4), 34.98 / 53.07 (greedy); En->Ki 25.19 / 53.47
+(beam 4), 24.22 / 52.32 (greedy). Latency per sentence beam 4: 0.59 s / 1.34 s; greedy 0.29 s / 0.64 s. 78 MB per
+direction. Uploaded to HF `Garnet-Owl/taura-marian-kikuyu-english` (replaces N2; N2 is in the repo history).
+
 ## Corpus
 
 30 Bible books plus agriculture data: 28,913 pairs loaded, 28,752 unique.
 
 ## Next Work
 
-1. Retrain Marian on the stable split (more epochs for En->Ki inside a 15-20 minute GPU budget) and re-score both
-   directions on the new val.tsv, with CPU latency.
+1. Improve En->Ki further (25.19 BLEU, the weak direction): e.g. add Kikuyu tokens to the en-mul vocabulary or
+   back-translate monolingual Kikuyu; compare on the same val.tsv with CPU latency.
 2. Next largest unextracted book after 2 Kings (done, Run 18), then Run 19 on the same stable split.
 
 ## Blockers
