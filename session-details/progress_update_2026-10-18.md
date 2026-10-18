@@ -31,4 +31,10 @@ letters while recent additions are all Old Testament history and law. This has n
 
 ## Blockers
 
-- Owner decision on the validation split policy (see Next Work 1).
+None.
+
+## Owner Decisions (2026-10-18)
+
+- Validation split: seeded random 80/10/10 (train/validation/test) across all books. Work item 1 is unblocked.
+- Method: experiment with lighter translation models trained on the Kaggle GPU, provided inference runs fast on CPU.
+  Kaggle GPU access was verified this session (2x Tesla T4).
