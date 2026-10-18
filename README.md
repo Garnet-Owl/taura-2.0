@@ -40,9 +40,9 @@ The long-term goal is to push translation quality to the point where Taura is ge
 | **5. Psalms Expansion**<br>+Psalms (12,716 pairs total) | Ki→En<br>En→Ki | 33.18<br>35.96 | 49.02<br>56.75 | 25%<br>22% | 44%<br>46% | 0.345<br>0.342 | 5,654 |
 | **6. Genesis, Proverbs, Ecclesiastes**<br>+2,670 pairs (15,386 pairs total) | Ki→En<br>En→Ki | 38.67<br>38.53 | 56.04<br>58.76 | 18%<br>20% | 44%<br>48% | 0.299<br>0.328 | 6,571 |
 | **7. Jeremiah**<br>+1,364 pairs (16,750 pairs total) | Ki→En<br>En→Ki | 39.18<br>38.73 | 54.38<br>57.62 | 20%<br>27% | 42%<br>52% | 0.317<br>0.386 | 7,109 |
-| **8. Exodus + Isaiah**<br>+2,505 validated verse pairs (19,255 pairs total); retraining pending | Ki→En<br>En→Ki | -<br>- | -<br>- | -<br>- | -<br>- | -<br>- | - |
+| **8. Exodus + Isaiah**<br>+2,505 validated verse pairs (19,255 pairs total) | Ki→En<br>En→Ki | 28.95<br>35.47 | 44.34<br>53.75 | 16%<br>23% | 38%<br>41% | 0.277<br>0.338 | 7,981 |
 
-Run 7 is the latest evaluated checkpoint. Run 8 adds the Exodus and Isaiah data; it still needs a fresh training run before metrics can be recorded.
+Run 8 is the latest evaluated checkpoint. Its scores are lower than Run 7 on the 100-sentence validation set, but that gap is mostly noise rather than a proven regression: retraining the same 19,255 pairs a second time gave Ki→En 35.49 BLEU / 51.06 chrF and En→Ki 32.24 BLEU / 52.19 chrF. FastText training is multithreaded and not bit-for-bit reproducible, and 100 sentences is a small yardstick, so single-run differences of several BLEU points are not meaningful. The vocabulary bridge did grow (7,981 mutual nearest neighbours versus 7,109). Exodus and Isaiah are Old Testament law and prophecy, while the validation sentences are New Testament letters, so a small domain mismatch may also contribute. A larger or repeated-run validation protocol is the next evaluation improvement.
 
 The hybrid alignment was the single biggest jump: a **4× BLEU improvement** from baseline.
 The recent expansion of the Bible corpus significantly balanced the model, driving Kikuyu→English BLEU up by +12 points and pushing Mutual Nearest Neighbors to 4,859.
