@@ -21,6 +21,7 @@ from app.preprocessing.bible.thessalonians1.service import Thessalonians1Extract
 from app.preprocessing.bible.psalms.service import PsalmsExtractor
 from app.preprocessing.bible.genesis.service import GenesisExtractor
 from app.preprocessing.bible.exodus.service import ExodusExtractor
+from app.preprocessing.bible.numbers.service import NumbersExtractor
 from app.preprocessing.bible.proverbs.service import ProverbsExtractor
 from app.preprocessing.bible.ecclesiastes.service import EcclesiastesExtractor
 from app.preprocessing.bible.isaiah.service import IsaiahExtractor
@@ -43,6 +44,7 @@ BOOKS = [
     ("Psalms", PsalmsExtractor, "psalms_aligned.csv"),
     ("Genesis", GenesisExtractor, "genesis_aligned.csv"),
     ("Exodus", ExodusExtractor, "exodus_aligned.csv"),
+    ("Numbers", NumbersExtractor, "numbers_aligned.csv"),
     ("Proverbs", ProverbsExtractor, "proverbs_aligned.csv"),
     ("Ecclesiastes", EcclesiastesExtractor, "ecclesiastes_aligned.csv"),
     ("Isaiah", IsaiahExtractor, "isaiah_aligned.csv"),
