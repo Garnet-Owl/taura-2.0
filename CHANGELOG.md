@@ -65,3 +65,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 9 Evaluation (Numbers)
 - Retrained twice on the 20,643-pair corpus including Numbers and recorded the average in the README (Ki to En 32.92 BLEU, En to Ki 35.58); the vocabulary alignment grew to about 8,320 matched words, and the two runs differed by up to 5.5 BLEU, confirming how noisy the 100-sentence check is.
+
+## 2026-10-18 - Ezekiel Extraction
+- Extracted and aligned Ezekiel (1,273 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 22 books. Not yet retrained, so it is not reflected in the metrics.
