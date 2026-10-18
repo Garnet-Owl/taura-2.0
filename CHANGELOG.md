@@ -77,3 +77,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 11 Evaluation (Job)
 - Retrained twice on 22,986 pairs including Job and recorded the average in the README (Ki to En 32.88 BLEU, En to Ki 37.88); the vocabulary alignment grew to about 8,680 matched words, and the two runs differed by over 4 BLEU, so the small En to Ki dip is noise rather than a regression.
+
+## 2026-10-18 - Deuteronomy Extraction
+- Extracted and aligned Deuteronomy (959 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 24 books. Not yet retrained, so it is not reflected in the metrics.
