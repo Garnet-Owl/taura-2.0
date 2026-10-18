@@ -9,6 +9,10 @@ paths:
   # Root directory where training run sub-folders are created
   models_dir: models
 
+  # Optional fine-tuned NLLB model exported to CTranslate2 int8 (download from
+  # Hugging Face; never committed). Enables the 'neural' /translate method.
+  neural_model_dir: models/nllb-taura-ct2-int8
+
   # Directory where accumulated monolingual text lives (append-only, not used by training directly)
   monolingual_dir: data/monolingual
 

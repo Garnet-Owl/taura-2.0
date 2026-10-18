@@ -26,6 +26,7 @@ dependencies = [
     "datasets<3.0.0",
     "ijson>=3.5.0",
     "hnswlib>=0.8.0",
+    "ctranslate2>=4.8.3",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
