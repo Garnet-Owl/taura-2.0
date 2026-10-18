@@ -108,3 +108,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 15 Evaluation (2 Chronicles)
 - Retrained twice on 26,568 pairs including 2 Chronicles and recorded the average in the README (Ki to En 27.01 BLEU, En to Ki 34.30). Kikuyu to English fell for the fourth averaged run in a row, and this time both runs agree, so the drop is likely real. The probable cause is that the small validation set is all New Testament letters while every recent book added is Old Testament.
+
+## 2026-10-18 - Seeded 80/10/10 Evaluation Split
+- Training and evaluation now use a fixed, seeded random split across every book (80% train, 10% validation, 10% test) instead of the last 100 verses, so scores reflect the whole corpus rather than one New Testament letter. The split is rebuilt with `uv run python -m scripts.prepare_dataset` from all parallel CSVs, with 158 exact duplicate pairs removed so none can appear in both train and validation.
+- Fixed loading of split files where a verse starts with a quotation mark, which previously merged many rows into one.
