@@ -131,3 +131,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 17 Evaluation (1 Samuel, stable split baseline)
 - Retrained twice with 1 Samuel on the new stable split (22,467 training pairs) and recorded the average in the README as a new baseline: Kikuyu to English 33.01 BLEU, English to Kikuyu 34.67, scored on 2,836 validation verses. The changes from Run 16 are within run-to-run noise, and later runs can now be compared directly with this one.
+
+## 2026-10-18 - 2 Kings Extraction
+- Extracted and aligned 2 Kings (719 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 30 books. Page headers in both PDFs were correct for this book, and the verses at every page break and the longest and shortest pairs were checked by hand to confirm the alignment.
