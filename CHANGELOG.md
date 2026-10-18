@@ -56,3 +56,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-17 - Evaluation Memory Fix
 - Fixed training evaluation crashing on small machines: the validation step no longer starts one multi-gigabyte model copy per CPU core when there are only 100 sentences to embed.
+
+## 2026-10-17 - Run 8 Evaluation (Exodus + Isaiah)
+- Retrained on 19,255 pairs and recorded Run 8 in the README. Scores dipped versus Run 7, but a second identical retrain swung by up to 6 BLEU, so the dip is within run-to-run noise on the small 100-sentence validation set.
