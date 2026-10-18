@@ -74,3 +74,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 10 Evaluation (Ezekiel)
 - Retrained twice on 21,916 pairs including Ezekiel and recorded the average in the README (Ki to En 32.20 BLEU, En to Ki 39.04); the vocabulary alignment grew to 8,533 matched words, and the two runs again differed by several BLEU, so small changes are not meaningful.
+
+## 2026-10-18 - Run 11 Evaluation (Job)
+- Retrained twice on 22,986 pairs including Job and recorded the average in the README (Ki to En 32.88 BLEU, En to Ki 37.88); the vocabulary alignment grew to about 8,680 matched words, and the two runs differed by over 4 BLEU, so the small En to Ki dip is noise rather than a regression.
