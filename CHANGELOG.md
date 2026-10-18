@@ -89,3 +89,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 13 Evaluation (1 Chronicles)
 - Retrained twice on 24,887 pairs including 1 Chronicles and recorded the average in the README (Ki to En 34.38 BLEU, En to Ki 35.94); English to Kikuyu recovered from the Run 12 dip, but the two runs differed by 6 to 8 BLEU, so the movement is noise.
+
+## 2026-10-18 - Leviticus Extraction
+- Extracted and aligned Leviticus (859 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 26 books. Not yet retrained, so it is not reflected in the metrics.
