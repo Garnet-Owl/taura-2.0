@@ -125,3 +125,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Stable Evaluation Split
 - The 80/10/10 split now places each verse pair by a seeded hash of its text instead of a shuffle, so adding a new book only adds pairs and never moves existing ones between train, validation and test. Future runs can be compared on the same validation verses as the corpus grows (rebuilt split: 21,805 / 2,771 / 2,650 pairs).
+
+## 2026-10-18 - 1 Samuel Extraction
+- Extracted and aligned 1 Samuel (810 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 29 books. Two English PDF pages carry wrong headers (page 296 says 3:7-3:9 but runs to 4:9), so the extractor corrects them; otherwise 21 English verses would have been empty and their neighbours misaligned.
