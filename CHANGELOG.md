@@ -101,3 +101,4 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Agent Instructions
 - Added owner authorisations to CLAUDE.md and AGENTS.md: agents may try better methods, grow the corpus with verified data, and use free GPU providers such as Kaggle, with steps for supplying credentials.
+- Recorded that the Kaggle API token is configured in the cloud environment and how agents should use it.
