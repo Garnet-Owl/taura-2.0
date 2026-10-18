@@ -92,3 +92,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Leviticus Extraction
 - Extracted and aligned Leviticus (859 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 26 books. Not yet retrained, so it is not reflected in the metrics.
+
+## 2026-10-18 - 2 Chronicles Extraction
+- Extracted and aligned 2 Chronicles (822 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 27 books; numbers written inside verses (such as 3,600) no longer get mistaken for verse markers. Not yet retrained, so it is not reflected in the metrics.
