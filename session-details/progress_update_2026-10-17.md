@@ -32,3 +32,7 @@ None.
 ## Update 2026-10-18: Run 9
 
 Run 9 (Numbers, 20,643 pairs as loaded) evaluated twice: A = Ki->En 30.18 / En->Ki 34.32 BLEU; B = 35.66 / 36.84 BLEU. Mean 32.92 / 35.58 BLEU, chrF 49.24 / 54.40, MNN about 8,320. Run-to-run spread (up to 5.5 BLEU) again exceeds the gap to Run 7. The retrain item is done; remaining: validation protocol (owner decision) and Ezekiel.
+
+## Update 2026-10-18: Run 10 and Job
+
+Run 10 (Ezekiel, 21,916 pairs as loaded) evaluated twice: A = Ki->En 34.59 / En->Ki 39.85 BLEU; B = 29.81 / 38.23 BLEU. Mean 32.20 / 39.04 BLEU, chrF 48.02 / 56.40, MNN 8,533. The Ki->En change from Run 9 is inside the 4.8 BLEU spread between the two runs. Job was then extracted (1,070 pairs, zero missing/empty): corpus is 23 books, not yet retrained. Remaining: validation protocol (owner decision); retrain as Run 11 with Job; next largest unextracted book.

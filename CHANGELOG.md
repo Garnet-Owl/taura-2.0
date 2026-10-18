@@ -71,3 +71,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Job Extraction
 - Extracted and aligned Job (1,070 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 23 books. Not yet retrained, so it is not reflected in the metrics.
+
+## 2026-10-18 - Run 10 Evaluation (Ezekiel)
+- Retrained twice on 21,916 pairs including Ezekiel and recorded the average in the README (Ki to En 32.20 BLEU, En to Ki 39.04); the vocabulary alignment grew to 8,533 matched words, and the two runs again differed by several BLEU, so small changes are not meaningful.
