@@ -134,3 +134,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - 2 Kings Extraction
 - Extracted and aligned 2 Kings (719 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 30 books. Page headers in both PDFs were correct for this book, and the verses at every page break and the longest and shortest pairs were checked by hand to confirm the alignment.
+
+## 2026-10-18 - Shorter README
+- The README's performance section is now one small table with the starting run and the latest runs only, without the long per-run commentary; older results stay in this changelog and the git history.
