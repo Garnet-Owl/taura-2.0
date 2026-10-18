@@ -102,3 +102,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-10-18 - Agent Instructions
 - Added owner authorisations to CLAUDE.md and AGENTS.md: agents may try better methods, grow the corpus with verified data, and use free GPU providers such as Kaggle, with steps for supplying credentials.
 - Recorded that the Kaggle API token is configured in the cloud environment and how agents should use it.
+
+## 2026-10-18 - 1 Kings Extraction
+- Extracted and aligned 1 Kings (816 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 28 books. Not yet retrained, so it is not reflected in the metrics.
