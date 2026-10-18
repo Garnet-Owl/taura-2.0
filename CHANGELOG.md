@@ -98,3 +98,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Run 14 Evaluation (Leviticus)
 - Retrained twice on 25,746 pairs including Leviticus and recorded the average in the README (Ki to En 32.13 BLEU, En to Ki 31.37); both directions are lower than Run 13, but the two runs differed by up to 17 BLEU on identical data, so this is most likely noise rather than a real regression
+
+## 2026-10-18 - Agent Instructions
+- Added owner authorisations to CLAUDE.md and AGENTS.md: agents may try better methods, grow the corpus with verified data, and use free GPU providers such as Kaggle, with steps for supplying credentials.
