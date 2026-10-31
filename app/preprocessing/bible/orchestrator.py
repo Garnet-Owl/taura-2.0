@@ -5,6 +5,7 @@ Orchestrator to run preprocessing/extraction across different Bible books.
 import argparse
 from pathlib import Path
 
+from app.preprocessing.bible.base.core import strip_next_chapter_numbers
 from app.preprocessing.bible.matthew.service import MatthewExtractor
 from app.preprocessing.bible.mark.service import MarkExtractor
 from app.preprocessing.bible.luke.service import LukeExtractor
@@ -126,7 +127,9 @@ def main():
     for book_name, ExtractorClass, csv_name in books_to_run:
         print(f"\nStarting Book of {book_name} Extraction...")
         extractor = ExtractorClass()
-        df = extractor.extract_and_align(args.kikuyu_pdf, args.english_pdf)
+        df = strip_next_chapter_numbers(
+            extractor.extract_and_align(args.kikuyu_pdf, args.english_pdf)
+        )
 
         csv_file = output_path / csv_name
         df.to_csv(csv_file, index=False, encoding="utf-8")
