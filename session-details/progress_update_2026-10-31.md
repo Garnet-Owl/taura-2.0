@@ -88,3 +88,5 @@ None.
   Kaggle GPU access was verified this session (2x Tesla T4).
 
 Run 24 (Ezra and Zechariah; 26,147 train pairs, 3,309 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run24): Ki->En 36.13 BLEU / 51.68 chrF, Top-1 23.7%, MRR 0.323; En->Ki 37.32 / 56.35, Top-1 23.3%, MRR 0.326. Versus Run 23 (37.64 / 35.81): Ki->En down 1.5, En->Ki up 1.5, both inside run-to-run noise, so the two books made no measurable difference. Models not republished. Corpus is 39 books.
+
+Run 25 (Hosea and Esther; 26,439 train pairs, 3,346 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run25): Ki->En 34.86 BLEU / 50.97 chrF, Top-1 22.9%, MRR 0.315; En->Ki 37.94 / 58.26, Top-1 23.9%, MRR 0.329. Versus Run 24 (36.13 / 37.32): Ki->En down 1.3 BLEU, En->Ki up 0.6 BLEU and 1.9 chrF; the validation set also grew, so differences are within run-to-run noise. Models not republished. Corpus is 41 books.
