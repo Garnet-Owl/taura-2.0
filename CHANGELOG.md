@@ -161,3 +161,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Run 20 Evaluation (Joshua and Judges)
 - Retrained twice with Joshua and Judges (24,628 training pairs) and scored on 3,096 validation verses: Kikuyu to English 31.79 BLEU, English to Kikuyu 35.87. The two retrains differ by about 2.5 BLEU in each direction, so adding the two books did not measurably change quality.
+
+## 2026-10-31 - Nehemiah Extraction
+- Extracted and aligned Nehemiah (406 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 34 books. The Kikuyu cleaner now removes a trailing number only from a chapter's last verse, so the population counts in the Nehemiah 7 lists (for example "ciarĩ 372") are kept. The split grew append-only to 24,958 train, 3,135 validation and 3,032 test pairs.
