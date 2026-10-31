@@ -86,3 +86,5 @@ None.
 - Validation split: seeded random 80/10/10 (train/validation/test) across all books. Done in Run 16.
 - Method: experiment with lighter translation models trained on the Kaggle GPU, provided inference runs fast on CPU.
   Kaggle GPU access was verified this session (2x Tesla T4).
+
+Run 24 (Ezra and Zechariah; 26,147 train pairs, 3,309 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run24): Ki->En 36.13 BLEU / 51.68 chrF, Top-1 23.7%, MRR 0.323; En->Ki 37.32 / 56.35, Top-1 23.3%, MRR 0.326. Versus Run 23 (37.64 / 35.81): Ki->En down 1.5, En->Ki up 1.5, both inside run-to-run noise, so the two books made no measurable difference. Models not republished. Corpus is 39 books.
