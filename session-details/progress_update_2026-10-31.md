@@ -45,13 +45,18 @@ scored on CPU int8 on Run 18's 2,906 val pairs: Ki->En 39.56 / 56.30 (beam 4), 3
 (beam 4), 24.22 / 52.32 (greedy). Latency per sentence beam 4: 0.59 s / 1.34 s; greedy 0.29 s / 0.64 s. 78 MB per
 direction. Uploaded to HF `Garnet-Owl/taura-marian-kikuyu-english` (replaces N2; N2 is in the repo history).
 
+GPU run N4 (Kaggle `jameswanjiku/taura-marian-ft` v3, En->Ki only, 12 epochs at lr 2e-4, 24,118 train pairs incl.
+Joshua, 36 min T4), scored on CPU int8 beam 4 on the current 3,042 val pairs: En->Ki 26.39 BLEU / 54.36 chrF (N3 on the same
+pairs: 25.15 / 53.61; on Run 18's 2,906: 26.26 vs 25.19). 2.05 s per sentence on a seeded 100-sentence sample (N3 2.09 s),
+78 MB. Replaces en_ki in HF `Garnet-Owl/taura-marian-kikuyu-english`; Ki->En stays N3.
+
 ## Corpus
 
 32 Bible books plus agriculture data: 30,266 pairs loaded, 30,101 unique (2 Samuel and Joshua added 2026-10-31; split now 24,118 train / 3,042 val / 2,941 test).
 
 ## Next Work
 
-1. Improve En->Ki further (25.19 BLEU, the weak direction): e.g. add Kikuyu tokens to the en-mul vocabulary or
+1. Improve En->Ki further (26.39 BLEU with N4, still the weak direction): e.g. add Kikuyu tokens to the en-mul vocabulary or
    back-translate monolingual Kikuyu; compare on the same val.tsv with CPU latency.
 2. Run 20 with Joshua (extracted 2026-10-31) on the current split, then extract Judges (618).
 

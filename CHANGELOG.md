@@ -153,3 +153,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Run 19 Evaluation (2 Samuel)
 - Retrained twice with 2 Samuel (23,593 training pairs) and scored on Run 18's validation verses plus 2 Samuel's share (2,984 pairs): Kikuyu to English 33.91 BLEU, English to Kikuyu 33.21. Kikuyu to English rose 2.5 and English to Kikuyu fell 1.1, but the two retrains themselves differ by 3.1 BLEU, so adding 2 Samuel did not measurably change quality.
+
+## 2026-10-31 - Marian English to Kikuyu Retrain (N4)
+- Retrained the English to Kikuyu neural model for 12 epochs instead of 7, on the current training split (now including 2 Samuel and Joshua). On the same 3,042 validation verses it scores 26.39 BLEU against 25.15 for the previous model, with the same size (78 MB) and CPU speed (about 2 s per sentence with beam 4). It replaces the English to Kikuyu model in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english; Kikuyu to English is unchanged.
