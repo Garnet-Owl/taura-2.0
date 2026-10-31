@@ -152,3 +152,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Joshua Extraction
 - Extracted and aligned Joshua (658 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 32 books. Some Kikuyu verses come out with words run together because of the PDF text layer (for example 10:38), and a few verse boundaries differ between the two translations (22:11-12); the pairs are still aligned verse for verse.
+
+## 2026-10-31 - Marian English to Kikuyu Retrain (N4)
+- Retrained the English to Kikuyu neural model for 12 epochs instead of 7, on the current training split (now including 2 Samuel and Joshua). On the same 3,042 validation verses it scores 26.39 BLEU against 25.15 for the previous model, with the same size (78 MB) and CPU speed (about 2 s per sentence with beam 4). It replaces the English to Kikuyu model in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english; Kikuyu to English is unchanged.
