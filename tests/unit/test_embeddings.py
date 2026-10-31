@@ -345,7 +345,9 @@ class TestWorkerCount(unittest.TestCase):
         with given([]) as _:
             sentence_count = 100
         with when([]) as _:
-            workers = get_worker_count(sentence_count, chunksize=1000, cpu_count=4)
+            workers = get_worker_count(
+                sentence_count, chunksize=1000, cpu_count=4, memory_gb=64.0
+            )
         with then([]) as _:
             assert_that(workers, equal_to(1))
 
@@ -354,6 +356,19 @@ class TestWorkerCount(unittest.TestCase):
         with given([]) as _:
             sentence_count = 50_000
         with when([]) as _:
-            workers = get_worker_count(sentence_count, chunksize=1000, cpu_count=32)
+            workers = get_worker_count(
+                sentence_count, chunksize=1000, cpu_count=32, memory_gb=64.0
+            )
         with then([]) as _:
             assert_that(workers, equal_to(12))
+
+    def test_workers_are_capped_by_memory(self):
+        """Each worker loads a ~2.4 GB model, so a 15 GB machine must not get 4 workers."""
+        with given([]) as _:
+            sentence_count = 50_000
+        with when([]) as _:
+            workers = get_worker_count(
+                sentence_count, chunksize=1000, cpu_count=4, memory_gb=15.0
+            )
+        with then([]) as _:
+            assert_that(workers, equal_to(2))
