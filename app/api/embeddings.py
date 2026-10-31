@@ -2,6 +2,7 @@
 
 import io
 import multiprocessing
+import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -117,11 +118,29 @@ def _get_embedding_worker(sentence: str, dim: int) -> np.ndarray:
     return get_sentence_embedding(_worker_model, sentence, dim=dim)
 
 
-def get_worker_count(sentence_count: int, chunksize: int, cpu_count: int) -> int:
-    """Returns the number of workers needed, never more than there are chunks of work."""
+def get_total_memory_gb() -> float:
+    """Returns the machine's physical memory in GB (0 when it cannot be read)."""
+    try:
+        return os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1024**3
+    except (ValueError, OSError, AttributeError):
+        return 0.0
+
+
+def get_worker_count(
+    sentence_count: int,
+    chunksize: int,
+    cpu_count: int,
+    memory_gb: float | None = None,
+) -> int:
+    """Returns the number of workers needed, capped by chunks, CPUs and memory.
+
+    Each worker loads its own fastText model (about 2.4 GB, budgeted as 4 GB), and the
+    parent process keeps 5 GB for its own models. Unknown memory (0) adds no cap.
+    """
     chunks = max(1, -(-sentence_count // chunksize))
-    # Cap at 12 workers; each loaded fastText model can take several GB of RAM
-    return min(cpu_count, 12, chunks)
+    memory_gb = get_total_memory_gb() if memory_gb is None else memory_gb
+    by_memory = max(1, int((memory_gb - 5) // 4)) if memory_gb > 0 else 12
+    return min(cpu_count, 12, chunks, by_memory)
 
 
 def get_sentence_embeddings_parallel(
