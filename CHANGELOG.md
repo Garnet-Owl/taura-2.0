@@ -185,3 +185,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-10-31 - Run 22 and Published FastText Models
 - Trained the FastText + Procrustes models on Kaggle with Revelation included (25,270 training pairs) and scored 3,178 validation verses: Kikuyu to English 35.74 BLEU, English to Kikuyu 36.83, the same as Run 21 within run-to-run noise.
 - The models are now public in the `fasttext/` folder of the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english, and the README explains how to download them so nobody has to retrain.
+
+## 2026-10-31 - Daniel Extraction
+- Extracted and aligned Daniel (357 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 36 books. The Kikuyu PDF prints the wrong chapter number (10 instead of 11) in the page headers of Daniel 10:4 to 12:4, so those three page ranges are set by hand from the page text. Some Kikuyu words run together because of the PDF text layer (for example 2:49). The split grew append-only to 25,534 train, 3,222 validation and 3,128 test pairs; retraining on it is still pending.
