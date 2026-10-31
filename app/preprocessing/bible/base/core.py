@@ -6,9 +6,11 @@ import re
 from typing import Dict, List, Optional, Tuple, Union
 
 import fitz  # PyMuPDF
+import pandas as pd
 
 from app.preprocessing.bible.base.structure import (
     BIBLE_BOOKS,
+    get_verse_count,
     kikuyu_to_english_book_name,
 )
 
@@ -129,6 +131,32 @@ for book in BIBLE_BOOKS:
             ALL_VERSES_SEQ.append((bname, ch_no, v_no))
 
 VERSE_TO_IDX = {ref: idx for idx, ref in enumerate(ALL_VERSES_SEQ)}
+
+
+_REFERENCE_PATTERN = re.compile(r"^(?P<book>.+) (?P<chapter>\d+):(?P<verse>\d+)$")
+
+
+def strip_next_chapter_numbers(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove the next chapter's number left at the end of a chapter's last verse.
+
+    The PDF prints the next chapter number right after a chapter's last verse,
+    so text such as "... a sixth day. 2" ends Genesis 1:31. Only a trailing
+    number equal to chapter + 1 on a chapter's final verse is removed; counts
+    inside other verses are kept.
+    """
+    cleaned = df.copy()
+    for idx, ref in cleaned["Reference"].items():
+        match = _REFERENCE_PATTERN.match(ref)
+        if not match:
+            continue
+        book, chapter, verse = match["book"], int(match["chapter"]), int(match["verse"])
+        if verse != get_verse_count(book, chapter):
+            continue
+        tail = re.compile(rf"\s+{chapter + 1}\s*$")
+        for column in ("Kikuyu", "English"):
+            cleaned.at[idx, column] = tail.sub("", cleaned.at[idx, column])
+    return cleaned
 
 
 def get_next_verse(ref: Tuple[str, int, int]) -> Optional[Tuple[str, int, int]]:
