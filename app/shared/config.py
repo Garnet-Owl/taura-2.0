@@ -62,6 +62,13 @@ REPO_MICH: str = str(_ds.get("repo_mich", "michsethowusu/english-kikuyu_sentence
 
 
 # ── Latest run helpers (derived at import time, mutable by scripts) ───────
+_REQUIRED_RUN_FILES = ("en.bin", "ki.bin", "proj_ki_en.npy", "proj_en_ki.npy")
+
+
+def _is_complete_run(run_dir: str) -> bool:
+    return all(os.path.isfile(os.path.join(run_dir, f)) for f in _REQUIRED_RUN_FILES)
+
+
 def get_latest_run_dir() -> str:
     if not os.path.exists(MODELS_DIR):
         return MODELS_DIR
@@ -70,10 +77,14 @@ def get_latest_run_dir() -> str:
         for d in os.listdir(MODELS_DIR)
         if d.startswith("run_") and os.path.isdir(os.path.join(MODELS_DIR, d))
     ]
-    if not runs:
+    complete_runs = [d for d in runs if _is_complete_run(os.path.join(MODELS_DIR, d))]
+    candidates = complete_runs or runs
+    if not candidates:
         return MODELS_DIR
-    runs.sort(key=lambda d: os.path.getmtime(os.path.join(MODELS_DIR, d)), reverse=True)
-    return os.path.join(MODELS_DIR, runs[0])
+    candidates.sort(
+        key=lambda d: os.path.getmtime(os.path.join(MODELS_DIR, d)), reverse=True
+    )
+    return os.path.join(MODELS_DIR, candidates[0])
 
 
 LATEST_RUN_DIR: str = get_latest_run_dir()
