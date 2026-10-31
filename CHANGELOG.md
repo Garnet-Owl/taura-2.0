@@ -158,3 +158,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Judges Extraction
 - Extracted and aligned Judges (618 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 33 books. Several English page headers skip chapters (10 and 15), so verse positions were checked by hand around those pages; a few Kikuyu verses split sentences differently from English, but pairs stay aligned verse for verse. The split grew append-only to 24,628 train, 3,096 validation and 2,995 test pairs.
+
+## 2026-10-31 - Run 20 Evaluation (Joshua and Judges)
+- Retrained twice with Joshua and Judges (24,628 training pairs) and scored on 3,096 validation verses: Kikuyu to English 31.79 BLEU, English to Kikuyu 35.87. The two retrains differ by about 2.5 BLEU in each direction, so adding the two books did not measurably change quality.
