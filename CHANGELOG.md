@@ -209,3 +209,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Hosea Extraction
 - Extracted and aligned Hosea (197 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 40 books. Chapter-final verses end cleanly and verse lengths in the two languages agree. The split grew append-only to 26,308 train, 3,328 validation and 3,235 test pairs; retraining on it is still pending.
+
+## 2026-11-01 - Esther Extraction
+- Extracted and aligned Esther (167 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 41 books. Chapter-final verses end cleanly and verse lengths agree; one verse (3:9) has glued Kikuyu words from the PDF, a known cleanup item. The split grew append-only; retraining on it is still pending.
