@@ -6,7 +6,11 @@ Still in Milestone 3: corpus expansion and quality control.
 
 ## Current Phase
 
-Run 21 (Nehemiah added, 24,958 train pairs, 3,135 val pairs = Run 20's 3,096 plus Nehemiah's 39), mean of two retrains (35.71 / 51.96 and 35.67 / 52.00 Ki->En; 37.08 / 56.82 and 36.19 / 57.23 En->Ki):
+Run 22 (Revelation added, 25,270 train pairs, 3,178 val pairs = Run 21's 3,135 plus Revelation's 43), single Kaggle run (kernel jameswanjiku/taura-fasttext-run22; FastText is CPU-only, the GPU sat idle):
+Ki->En 35.74 BLEU / 52.16 chrF, Top-1 23.2%, MRR 0.322; En->Ki 36.83 / 57.38, Top-1 23.3%, MRR 0.326. Within noise of Run 21 (35.69 / 36.63).
+Models published to Garnet-Owl/taura-marian-kikuyu-english under fasttext/. Owner rule: training only on Kaggle GPU, never the container CPU.
+
+Previous: Run 21 (Nehemiah added, 24,958 train pairs, 3,135 val pairs = Run 20's 3,096 plus Nehemiah's 39), mean of two retrains (35.71 / 51.96 and 35.67 / 52.00 Ki->En; 37.08 / 56.82 and 36.19 / 57.23 En->Ki):
 Ki->En 35.69 BLEU / 51.98 chrF, Top-1 22.8%, MRR 0.313; En->Ki 36.63 / 57.03, Top-1 23.7%, MRR 0.327.
 Within retrain noise of Runs 19-20 (Run 20 pair spread was 2.5 BLEU; Run 21's is 0.05 / 0.9). Training's built-in evaluation was OOM-killed with 4 workers; worker count is now also capped by memory (2 on this 15 GB container), so no wrapper was needed.
 
