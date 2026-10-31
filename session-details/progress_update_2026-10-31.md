@@ -6,7 +6,11 @@ Still in Milestone 3: corpus expansion and quality control.
 
 ## Current Phase
 
-Run 20 (Joshua + Judges added, 24,628 train pairs, 3,096 val pairs = Run 19's 2,984 plus Joshua's 58 and Judges' 54), mean of two retrains (30.47 / 33.10 and 34.68 / 37.06):
+Run 21 (Nehemiah added, 24,958 train pairs, 3,135 val pairs = Run 20's 3,096 plus Nehemiah's 39), mean of two retrains (35.71 / 51.96 and 35.67 / 52.00 Ki->En; 37.08 / 56.82 and 36.19 / 57.23 En->Ki):
+Ki->En 35.69 BLEU / 51.98 chrF, Top-1 22.8%, MRR 0.313; En->Ki 36.63 / 57.03, Top-1 23.7%, MRR 0.327.
+Within retrain noise of Runs 19-20 (Run 20 pair spread was 2.5 BLEU; Run 21's is 0.05 / 0.9). Training's built-in evaluation was OOM-killed with 4 workers; worker count is now also capped by memory (2 on this 15 GB container), so no wrapper was needed.
+
+Previous: Run 20 (Joshua + Judges added, 24,628 train pairs, 3,096 val pairs = Run 19's 2,984 plus Joshua's 58 and Judges' 54), mean of two retrains (30.47 / 33.10 and 34.68 / 37.06):
 Ki->En 31.79 BLEU / 47.13 chrF, Top-1 21.0%, MRR 0.298; En->Ki 35.87 / 55.17, Top-1 23.3%, MRR 0.324.
 Within retrain noise of Run 19 (spread 2.6 / 2.4 BLEU between the two retrains). Evaluation with 4 worker processes was OOM-killed on the 15 GB
 container (each worker loads a 2.4 GB model); it was re-run with 2 workers via a throwaway wrapper, so no repo change was needed.
@@ -65,7 +69,7 @@ pairs: 25.15 / 53.61; on Run 18's 2,906: 26.26 vs 25.19). 2.05 s per sentence on
 
 1. Improve En->Ki further (26.39 BLEU with N4, still the weak direction): e.g. add Kikuyu tokens to the en-mul vocabulary or
    back-translate monolingual Kikuyu; compare on the same val.tsv with CPU latency.
-2. Joshua and Judges are extracted and trained (Run 20). Next book: the largest without an aligned CSV (check MASTER_PLAN / data/parallel).
+2. Joshua, Judges and Nehemiah are extracted and trained (Run 21). Next book: the largest without an aligned CSV (check MASTER_PLAN / data/parallel).
 
 ## Blockers
 

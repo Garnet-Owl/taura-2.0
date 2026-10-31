@@ -164,3 +164,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Nehemiah Extraction
 - Extracted and aligned Nehemiah (406 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 34 books. The Kikuyu cleaner now removes a trailing number only from a chapter's last verse, so the population counts in the Nehemiah 7 lists (for example "ciarĩ 372") are kept. The split grew append-only to 24,958 train, 3,135 validation and 3,032 test pairs.
+
+## 2026-10-31 - Run 21 Evaluation (Nehemiah) and Memory-Safe Evaluation
+- Retrained twice with Nehemiah (24,958 training pairs) and scored on 3,135 validation verses: Kikuyu to English 35.69 BLEU, English to Kikuyu 36.63. The rise over Run 20 (31.79 / 35.87) is inside the run-to-run spread seen in earlier runs, so Nehemiah made no clearly measurable change.
+- Embedding extraction now limits parallel workers by available memory (2 on a 15 GB machine) so training and evaluation no longer crash with out-of-memory errors on smaller machines.
