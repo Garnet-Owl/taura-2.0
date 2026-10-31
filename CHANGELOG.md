@@ -143,3 +143,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-18 - Marian Retrain (N3)
 - Retrained the small Marian neural models on the stable split, training English to Kikuyu for 7 full epochs instead of stopping at a time limit. English to Kikuyu rose from 22.13 to 25.19 BLEU and Kikuyu to English held at 39.56, measured on CPU (0.6 s and 1.3 s per sentence, 78 MB per direction). The new models replace the old ones in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english.
+
+## 2026-10-31 - 2 Samuel Extraction
+- Added the 2 Samuel extractor and aligned corpus with 695 validated verse pairs (zero missing or empty), the only book from a local branch that had not already been extracted on main. The split grew append-only to 23,593 training, 2,984 validation and 2,867 test pairs. Retraining (Run 19) is still pending.
