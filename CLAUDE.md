@@ -148,3 +148,4 @@ Delete all but the 3 most recent handoff files after writing.
 - **Every GPU job must end on its own.** Kernels run as batch scripts that exit when training and evaluation finish: no interactive sessions, no idle waits, and a fixed number of epochs so GPU hours are not wasted. Download the outputs as soon as the kernel finishes.
 - **After every run, stop local work too.** When a session ends, no training or conversion process may be left running in the container; check with `pgrep -f train_embeddings` and similar, and stop leftovers before wrap-up.
 - Lessons so far: full NLLB-600M fine-tuning with AdamW runs out of memory on a 16 GB T4; use Adafactor plus gradient checkpointing. In a status loop, match the status text (`grep -q "RUNNING\|QUEUED"`), not `grep -v`, because uv prints warning lines.
+- **Keep public.** The GitHub repository and every Hugging Face repo for Kikuyu-English translation (models and datasets) must stay public. Never make them private.
