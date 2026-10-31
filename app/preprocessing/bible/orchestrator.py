@@ -41,6 +41,7 @@ from app.preprocessing.bible.ecclesiastes.service import EcclesiastesExtractor
 from app.preprocessing.bible.isaiah.service import IsaiahExtractor
 from app.preprocessing.bible.jeremiah.service import JeremiahExtractor
 from app.preprocessing.bible.daniel.service import DanielExtractor
+from app.preprocessing.bible.hebrews.service import HebrewsExtractor
 
 BOOKS = [
     ("Matthew", MatthewExtractor, "matthew_aligned.csv"),
@@ -79,6 +80,7 @@ BOOKS = [
     ("Isaiah", IsaiahExtractor, "isaiah_aligned.csv"),
     ("Jeremiah", JeremiahExtractor, "jeremiah_aligned.csv"),
     ("Daniel", DanielExtractor, "daniel_aligned.csv"),
+    ("Hebrews", HebrewsExtractor, "hebrews_aligned.csv"),
 ]
 
 
