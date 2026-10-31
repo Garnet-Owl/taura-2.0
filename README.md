@@ -62,6 +62,24 @@ uv run python -m scripts.train_embeddings
 uv run uvicorn app.serve.main:app --reload
 ```
 
+### Run the neural translator (recommended, CPU only)
+
+The fine-tuned Marian models are public on Hugging Face: **[Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)**. You only need the two int8 folders (about 78 MB each); no GPU and no FastText training are required.
+
+```bash
+uv sync
+uv run --with huggingface_hub hf download Garnet-Owl/taura-marian-kikuyu-english \
+  --include "ki_en/ct2-int8/*" --include "en_ki/ct2-int8/*" --local-dir hf-download
+mkdir -p models/marian-ct2-int8
+cp -r hf-download/ki_en/ct2-int8 models/marian-ct2-int8/ki_en
+cp -r hf-download/en_ki/ct2-int8 models/marian-ct2-int8/en_ki
+uv run uvicorn app.serve.main:app
+```
+
+Repeat `--include` once per folder, and download into a folder inside the project (not `/tmp`), which also works on Windows. A startup warning that the FastText models are not found is expected and harmless: only the `neural` method needs the downloaded models.
+
+Then translate with `"method": "neural"` (see the API examples below) or use the web UI. English to Kikuyu takes about 2 s per sentence on 4 CPU cores; Kikuyu to English about 0.6 s.
+
 Open **[http://localhost:8000](http://localhost:8000)** for the web UI or **[http://localhost:8000/docs](http://localhost:8000/docs)** for the API.
 
 ## API
@@ -77,7 +95,7 @@ curl -X POST http://localhost:8000/translate/candidates \
   -H "Content-Type: application/json" \
   -d '{"text": "the man is reading a book", "source_lang": "en", "target_lang": "ki", "k": 5}'
 
-# Neural translation (needs the Marian models from Hugging Face in models/marian-ct2-int8/{ki_en,en_ki})
+# Neural translation (needs the Marian models; see 'Run the neural translator' above)
 curl -X POST http://localhost:8000/translate \
   -H "Content-Type: application/json" \
   -d '{"text": "The Lord is my shepherd.", "source_lang": "en", "target_lang": "ki", "method": "neural"}'

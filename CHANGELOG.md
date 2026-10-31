@@ -168,3 +168,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-10-31 - Run 21 Evaluation (Nehemiah) and Memory-Safe Evaluation
 - Retrained twice with Nehemiah (24,958 training pairs) and scored on 3,135 validation verses: Kikuyu to English 35.69 BLEU, English to Kikuyu 36.63. The rise over Run 20 (31.79 / 35.87) is inside the run-to-run spread seen in earlier runs, so Nehemiah made no clearly measurable change.
 - Embedding extraction now limits parallel workers by available memory (2 on a 15 GB machine) so training and evaluation no longer crash with out-of-memory errors on smaller machines.
+
+## 2026-10-31 - README: Run the Neural Translator
+- The README now links the public Hugging Face model repo (Garnet-Owl/taura-marian-kikuyu-english) and gives copy-paste steps to download the CPU models and start the translator on a local PC. The project rules now say the code and Hugging Face repos must stay public.
