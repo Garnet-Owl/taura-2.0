@@ -146,3 +146,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - 2 Samuel Extraction
 - Added the 2 Samuel extractor and aligned corpus with 695 validated verse pairs (zero missing or empty), the only book from a local branch that had not already been extracted on main. The split grew append-only to 23,593 training, 2,984 validation and 2,867 test pairs. Retraining (Run 19) is still pending.
+
+## 2026-10-31 - Run 19 Evaluation (2 Samuel)
+- Retrained twice with 2 Samuel (23,593 training pairs) and scored on 2,984 validation verses: Kikuyu to English 31.85 BLEU, English to Kikuyu 33.66. Both are within noise of Run 18, so 2 Samuel did not measurably change quality. The two retrains differed by 7.4 BLEU Kikuyu to English (28.15 vs 35.55), so differences under about 4 BLEU should not be read as real.
