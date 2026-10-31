@@ -218,3 +218,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Lamentations Extraction
 - Extracted and aligned Lamentations (154 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 42 books. Verse 1 and chapter-final verses are clean; the split grew append-only to 26,565 train, 3,357 validation and 3,270 test pairs, and retraining on it is still pending.
+
+## 2026-10-31 - Amos Extraction
+- Extracted and aligned Amos (146 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 43 books. Footnote symbols (asterisk, dagger) are now stripped from the verse text. The split grew append-only to 26,683 train, 3,371 validation and 3,284 test pairs; retraining on it is still pending.
