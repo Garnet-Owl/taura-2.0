@@ -114,3 +114,24 @@ class TestModelInfoEndpoint(unittest.TestCase):
 
         with then("it returns 200"):
             assert_that(response.status_code, is_(equal_to(200)))
+
+    def test_model_info_reports_neural_availability(self) -> None:
+        """Model info tells the web UI whether the neural model is loaded."""
+        with given([]) as _:
+            app.state.neural = None
+
+        with when("calling /model/info without a neural model"):
+            without = self.client.get("/model/info").json()
+
+        with then("neural_available is false"):
+            assert_that(without["neural_available"], is_(False))
+
+        with given([]) as _:
+            app.state.neural = object()
+
+        with when("calling /model/info with a neural model"):
+            with_model = self.client.get("/model/info").json()
+            app.state.neural = None
+
+        with then("neural_available is true"):
+            assert_that(with_model["neural_available"], is_(True))

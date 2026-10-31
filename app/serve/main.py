@@ -75,6 +75,9 @@ class ModelInfoResponse(BaseModel):
     window_size: int = Field(..., description="Context window size")
     min_count: int = Field(..., description="Minimum word count threshold")
     metrics: dict = Field(default_factory=dict, description="Evaluation metrics")
+    neural_available: bool = Field(
+        False, description="Whether the neural (Marian) model is loaded"
+    )
 
 
 def _load_parallel_sentences() -> tuple[list[str], list[str]]:
@@ -389,4 +392,5 @@ def model_info() -> ModelInfoResponse:
         window_size=config.FASTTEXT_WS,
         min_count=config.FASTTEXT_MIN_COUNT,
         metrics=metrics,
+        neural_available=getattr(app.state, "neural", None) is not None,
     )
