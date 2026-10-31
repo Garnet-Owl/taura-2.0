@@ -197,3 +197,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Ezra Extraction
 - Extracted and aligned Ezra (280 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 38 books. Footnote marks such as † stay in some verses, as in the other books. The split grew to 25,992 train, 3,279 validation and 3,192 test pairs (4 existing pairs moved between splits because of duplicate handling); retraining on it is still pending.
+
+## 2026-10-31 - Run 23 Evaluation (Daniel, Hebrews, Cleaned Chapter Numbers)
+- Retrained FastText + Procrustes on the Kaggle GPU with Daniel, Hebrews and the cleaned verses (25,770 training pairs) and scored 3,254 validation verses: Kikuyu to English 37.64 BLEU, English to Kikuyu 35.81. Compared with Run 22 (35.74 / 36.83) the changes are within run-to-run noise, so the extra books and the cleaning made no clearly measurable difference. The published models are unchanged.
