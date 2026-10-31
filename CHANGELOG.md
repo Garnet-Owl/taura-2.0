@@ -181,3 +181,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Revelation Extraction
 - Extracted and aligned Revelation (404 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 35 books. A verse that opens a page (17:18) was being swallowed by the previous verse; the marker search now accepts a number at the start of the page text. A few Kikuyu words in 1:1 run together because of the PDF text layer. The split grew append-only to 25,270 train, 3,178 validation and 3,079 test pairs.
+
+## 2026-10-31 - Run 22 and Published FastText Models
+- Trained the FastText + Procrustes models on Kaggle with Revelation included (25,270 training pairs) and scored 3,178 validation verses: Kikuyu to English 35.74 BLEU, English to Kikuyu 36.83, the same as Run 21 within run-to-run noise.
+- The models are now public in the `fasttext/` folder of the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english, and the README explains how to download them so nobody has to retrain.
