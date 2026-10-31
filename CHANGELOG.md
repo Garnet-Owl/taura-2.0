@@ -150,3 +150,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-10-31 - Joshua Extraction
 - Added the Joshua extractor and aligned corpus with 658 validated verse pairs (zero missing or empty on both sides), bringing the Bible corpus to 32 books. Page headers were correct in both PDFs, and the verses at every page break plus the shortest and longest pairs were checked by hand; the few unusual length ratios come from city lists that the Kikuyu text phrases more fully.
 - The split grew append-only to 24,118 training, 3,042 validation and 2,941 test pairs; no existing pair moved.
+
+## 2026-10-31 - Run 19 Evaluation (2 Samuel)
+- Retrained twice with 2 Samuel (23,593 training pairs) and scored on Run 18's validation verses plus 2 Samuel's share (2,984 pairs): Kikuyu to English 33.91 BLEU, English to Kikuyu 33.21. Kikuyu to English rose 2.5 and English to Kikuyu fell 1.1, but the two retrains themselves differ by 3.1 BLEU, so adding 2 Samuel did not measurably change quality.

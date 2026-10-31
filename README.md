@@ -27,13 +27,13 @@ Neural rows generate translations (beam 4) and are timed on CPU (CTranslate2 int
 | Run | Model | Data / validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
 |---|---|---|---|---|---|
 | 1 (start) | FastText + simple Procrustes | old 100-verse set | 5.34 / - | 4.91 / - | - |
-| 17 | FastText + hybrid Procrustes (retrieval) | 29 books; 2,836 val | 33.01 / 49.22 | 34.67 / 54.82 | - |
-| 18 | same, + 2 Kings | 30 books; 2,906 val (Run 17's + 70) | 31.42 / 47.43 | 34.33 / 54.48 | - |
+| 18 | FastText + hybrid Procrustes (retrieval), + 2 Kings | 30 books; 2,906 val | 31.42 / 47.43 | 34.33 / 54.48 | - |
+| 19 | same, + 2 Samuel | 31 books; 2,984 val (Run 18's + 78) | 33.91 / 49.33 | 33.21 / 53.93 | - |
 | N2 | Marian opus-mt fine-tuned (77M per direction) | Run 16 split; 2,723 val | 39.21 / 55.67 | 22.13 / 50.45 | 78 MB each; 0.86 s Ki→En, 2.2 s En→Ki |
 | N3 | same, fixed epochs (Ki→En 4, En→Ki 7) | Run 17 train; Run 18's 2,906 val | **39.56 / 56.30** | **25.19 / 53.47** | 78 MB each; 0.59 s Ki→En, 1.34 s En→Ki |
 
 N3 vs N2: En→Ki +3 BLEU from training it for 7 full epochs instead of a time cap (validation sets differ slightly; no overlap with training).
-Run 18 vs 17: both directions within Run 17's 3.8 BLEU run-to-run spread, so 2 Kings made no measurable change.
+Run 19 vs 18: Ki→En +2.5 and En→Ki -1.1 BLEU, both inside the 3.1 BLEU gap between Run 19's own two retrains, so 2 Samuel made no measurable change.
 FastText retrieval picks an existing validation sentence, so its BLEU is not directly comparable with the neural rows.
 
 ## Quick Start
