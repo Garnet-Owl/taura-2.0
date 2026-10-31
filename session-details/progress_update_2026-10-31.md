@@ -46,13 +46,13 @@ direction. Uploaded to HF `Garnet-Owl/taura-marian-kikuyu-english` (replaces N2;
 
 ## Corpus
 
-31 Bible books plus agriculture data: 29,608 pairs loaded, 29,444 unique (2 Samuel added 2026-10-31; split now 23,593 train / 2,984 val / 2,867 test).
+32 Bible books plus agriculture data: 30,266 pairs loaded, 30,101 unique (Joshua added 2026-10-31; split now 24,118 train / 3,042 val / 2,941 test).
 
 ## Next Work
 
 1. Improve En->Ki further (25.19 BLEU, the weak direction): e.g. add Kikuyu tokens to the en-mul vocabulary or
    back-translate monolingual Kikuyu; compare on the same val.tsv with CPU latency.
-2. Joshua (extracted 2026-10-31), then Judges (618); retrain FastText (Run 20) after Joshua.
+2. Judges (618) next; retrain FastText (Run 20) with Joshua (not yet trained).
 
 ## Blockers
 
