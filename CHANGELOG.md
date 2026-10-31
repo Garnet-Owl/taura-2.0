@@ -215,3 +215,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Run 25 Evaluation (Hosea, Esther)
 - Retrained FastText + Procrustes on the Kaggle GPU with Hosea and Esther (26,439 training pairs) and scored 3,346 validation verses: Kikuyu to English 34.86 BLEU, English to Kikuyu 37.94. Versus Run 24 (36.13 / 37.32) one direction fell slightly and the other rose slightly, within run-to-run noise, so the two books made no clearly measurable difference. Published models are unchanged.
+
+## 2026-10-31 - Lamentations Extraction
+- Extracted and aligned Lamentations (154 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 42 books. Verse 1 and chapter-final verses are clean; the split grew append-only to 26,565 train, 3,357 validation and 3,270 test pairs, and retraining on it is still pending.
