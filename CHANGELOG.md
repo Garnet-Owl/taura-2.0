@@ -146,3 +146,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - 2 Samuel Extraction
 - Added the 2 Samuel extractor and aligned corpus with 695 validated verse pairs (zero missing or empty), the only book from a local branch that had not already been extracted on main. The split grew append-only to 23,593 training, 2,984 validation and 2,867 test pairs. Retraining (Run 19) is still pending.
+
+## 2026-10-31 - Joshua Extraction
+- Added the Joshua extractor and aligned corpus with 658 validated verse pairs (zero missing or empty on both sides), bringing the Bible corpus to 32 books. Page headers were correct in both PDFs, and the verses at every page break plus the shortest and longest pairs were checked by hand; the few unusual length ratios come from city lists that the Kikuyu text phrases more fully.
+- The split grew append-only to 24,118 training, 3,042 validation and 2,941 test pairs; no existing pair moved.

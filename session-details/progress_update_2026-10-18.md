@@ -42,7 +42,7 @@ direction. Uploaded to HF `Garnet-Owl/taura-marian-kikuyu-english` (replaces N2;
 
 ## Corpus
 
-31 Bible books plus agriculture data: 29,608 pairs loaded, 29,444 unique (2 Samuel added 2026-10-31; split now 23,593 train / 2,984 val / 2,867 test).
+32 Bible books plus agriculture data: 30,266 pairs loaded, 30,101 unique (2 Samuel and Joshua added 2026-10-31; split now 24,118 train / 3,042 val / 2,941 test).
 
 ## Next Work
 
