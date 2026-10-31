@@ -171,3 +171,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - README: Run the Neural Translator
 - The README now links the public Hugging Face model repo (Garnet-Owl/taura-marian-kikuyu-english) and gives copy-paste steps to download the CPU models and start the translator on a local PC. The project rules now say the code and Hugging Face repos must stay public.
+
+## 2026-10-31 - Web UI Neural Method
+- The web UI now has a Neural option (the fine-tuned Marian models) and uses it by default, so it works on a PC without the large FastText models. If the neural models are not installed the Neural button is disabled and Retrieval is selected. The README copy steps were made safer so a repeated run cannot leave the model files in a nested folder.
