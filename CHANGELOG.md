@@ -188,3 +188,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Daniel Extraction
 - Extracted and aligned Daniel (357 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 36 books. The Kikuyu PDF prints the wrong chapter number (10 instead of 11) in the page headers of Daniel 10:4 to 12:4, so those three page ranges are set by hand from the page text. Some Kikuyu words run together because of the PDF text layer (for example 2:49). The split grew append-only to 25,534 train, 3,222 validation and 3,128 test pairs; retraining on it is still pending.
+
+## 2026-10-31 - Hebrews Extraction
+- Extracted and aligned Hebrews (303 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 37 books. Verse boundaries differ slightly between the Kikuyu and English translations in places (for example 10:21), but pairs stay aligned verse for verse. The split grew append-only to 25,770 train, 3,249 validation and 3,168 test pairs; retraining on it is still pending.
