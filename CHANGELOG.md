@@ -155,3 +155,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Marian English to Kikuyu Retrain (N4)
 - Retrained the English to Kikuyu neural model for 12 epochs instead of 7, on the current training split (now including 2 Samuel and Joshua). On the same 3,042 validation verses it scores 26.39 BLEU against 25.15 for the previous model, with the same size (78 MB) and CPU speed (about 2 s per sentence with beam 4). It replaces the English to Kikuyu model in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english; Kikuyu to English is unchanged.
+
+## 2026-10-31 - Judges Extraction
+- Extracted and aligned Judges (618 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 33 books. Several English page headers skip chapters (10 and 15), so verse positions were checked by hand around those pages; a few Kikuyu verses split sentences differently from English, but pairs stay aligned verse for verse. The split grew append-only to 24,628 train, 3,096 validation and 2,995 test pairs.
