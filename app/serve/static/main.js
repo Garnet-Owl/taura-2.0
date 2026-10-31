@@ -5,8 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const sourceLangSelect = document.getElementById("source-lang");
     const targetLangSelect = document.getElementById("target-lang");
     const swapLangsBtn = document.getElementById("swap-langs");
+    const methodNeural = document.getElementById("method-neural");
     const methodRetrieval = document.getElementById("method-retrieval");
-    const methodWbw = document.getElementById("method-wbw");
     const sourceTextarea = document.getElementById("source-text");
     const charCountSpan = document.getElementById("char-count");
     const clearTextBtn = document.getElementById("clear-text");
@@ -34,6 +34,18 @@ document.addEventListener("DOMContentLoaded", () => {
         method: ""
     };
     let currentRating = null;
+
+    // Neural is the default; fall back to retrieval when its model is not installed.
+    fetch("/model/info")
+        .then(r => r.json())
+        .then(info => {
+            if (!info.neural_available) {
+                methodNeural.disabled = true;
+                methodNeural.nextElementSibling.title = "Neural model not installed (see README)";
+                methodRetrieval.checked = true;
+            }
+        })
+        .catch(() => {});
 
     // 1. Language Swapping & Sync Logic
     function handleLanguageSync(changedElement) {
@@ -113,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const sourceLang = sourceLangSelect.value;
         const targetLang = targetLangSelect.value;
-        const method = methodRetrieval.checked ? "retrieval" : "word-by-word";
+        const method = document.querySelector('input[name="method"]:checked').value;
 
         // Show spinner, hide text output
         targetTextPlaceholder.classList.add("hidden");
@@ -193,8 +205,13 @@ document.addEventListener("DOMContentLoaded", () => {
         container.style.width = "100%";
 
         const methodInfo = document.createElement("p");
-        methodInfo.innerHTML = `<strong>Translation System:</strong> Cross-lingual word embedding projection via <strong>${
-            translation.method === "retrieval" ? "Global Sentence Retrieval" : "Word-by-word Dictionary Matching"
+        const methodNames = {
+            "neural": "Neural (fine-tuned Marian, runs on CPU)",
+            "retrieval": "Global Sentence Retrieval",
+            "word-by-word": "Word-by-word Dictionary Matching"
+        };
+        methodInfo.innerHTML = `<strong>Translation System:</strong> <strong>${
+            methodNames[translation.method] || translation.method
         }</strong>.`;
         container.appendChild(methodInfo);
 
@@ -221,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 chipContainer.appendChild(chip);
             });
             container.appendChild(chipContainer);
-        } else {
+        } else if (translation.method === "retrieval") {
             const retrievalInfo = document.createElement("p");
             retrievalInfo.innerHTML = `<em>Retrieved parallel pair matching target representation coordinates in joint Kikuyu-English space.</em>`;
             container.appendChild(retrievalInfo);
