@@ -33,6 +33,7 @@ Neural rows generate translations (beam 4) and are timed on CPU (CTranslate2 int
 | 22 | same, + Revelation; one run on Kaggle (published models) | 35 books; 3,178 val (Run 21's + Revelation's 43) | 35.74 / 52.16 | 36.83 / 57.38 | 4.9 GB total (2 x 2.4 GB) |
 | 23 | same, + Daniel, Hebrews, 148 verses cleaned of stray chapter numbers; one run on Kaggle (models not republished) | 37 books; 3,254 val (Run 22's 3,178 + Daniel, Hebrews; 117 cleaned pairs moved between splits) | 37.64 / 53.41 | 35.81 / 56.43 | 4.9 GB total (2 x 2.4 GB) |
 | 24 | same, + Ezra, Zechariah; one run on Kaggle (models not republished) | 39 books; 3,309 val (Run 23's 3,254 + Ezra's 25 + Zechariah's 30) | 36.13 / 51.68 | 37.32 / 56.35 | 4.9 GB total (2 x 2.4 GB) |
+| 25 | same, + Hosea, Esther; one run on Kaggle (models not republished) | 41 books; 3,346 val (Run 24's 3,309 + Hosea's 19 + Esther's 18) | 34.86 / 50.97 | 37.94 / 58.26 | 4.9 GB total (2 x 2.4 GB) |
 | N3 | Marian opus-mt fine-tuned (77M per direction), fixed epochs (Ki→En 4, En→Ki 7) | Run 17 train; Run 18's 2,906 val | **39.56 / 56.30** | 25.19 / 53.47 | 78 MB each; 0.59 s Ki→En, 1.34 s En→Ki |
 | N4 | same, En→Ki only, 12 epochs (Ki→En stays N3) | 32 books; 3,042 val (Run 19's + Joshua's 58) | - | **26.39 / 54.36** | 78 MB; 2.05 s En→Ki (N3: 2.09 s, same 100 sentences) |
 
