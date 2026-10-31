@@ -194,3 +194,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Stray Chapter Numbers Removed From Verses
 - 148 verses at the end of a chapter (mostly Genesis, Jeremiah, Proverbs and Ecclesiastes, a few in Acts, Matthew and others) ended with the next chapter's number in both languages, for example "a sixth day. 2". The aligned CSVs are cleaned and the extractor orchestrator now removes such numbers automatically; counts inside verses are never touched. Because the split is chosen by the verse text, 117 of these changed verses moved between splits (now 25,770 train, 3,254 validation and 3,163 test pairs), so the next run's validation set differs slightly from Run 22's.
+
+## 2026-10-31 - Ezra Extraction
+- Extracted and aligned Ezra (280 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 38 books. Footnote marks such as † stay in some verses, as in the other books. The split grew to 25,992 train, 3,279 validation and 3,192 test pairs (4 existing pairs moved between splits because of duplicate handling); retraining on it is still pending.
