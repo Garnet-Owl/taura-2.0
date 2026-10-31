@@ -203,3 +203,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Zechariah Extraction
 - Extracted and aligned Zechariah (211 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 39 books. Verse lengths in the two languages agree closely, and chapter-final verses end cleanly. The split grew append-only to 26,147 train, 3,309 validation and 3,218 test pairs; retraining on it is still pending.
+
+## 2026-11-01 - Run 24 Evaluation (Ezra, Zechariah)
+- Retrained FastText + Procrustes on the Kaggle GPU with Ezra and Zechariah (26,147 training pairs) and scored 3,309 validation verses: Kikuyu to English 36.13 BLEU, English to Kikuyu 37.32. Versus Run 23 (37.64 / 35.81) one direction fell and the other rose by about the same amount, within run-to-run noise, so the two books made no clearly measurable difference. Published models are unchanged.
