@@ -200,3 +200,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Run 23 Evaluation (Daniel, Hebrews, Cleaned Chapter Numbers)
 - Retrained FastText + Procrustes on the Kaggle GPU with Daniel, Hebrews and the cleaned verses (25,770 training pairs) and scored 3,254 validation verses: Kikuyu to English 37.64 BLEU, English to Kikuyu 35.81. Compared with Run 22 (35.74 / 36.83) the changes are within run-to-run noise, so the extra books and the cleaning made no clearly measurable difference. The published models are unchanged.
+
+## 2026-10-31 - Zechariah Extraction
+- Extracted and aligned Zechariah (211 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 39 books. Verse lengths in the two languages agree closely, and chapter-final verses end cleanly. The split grew append-only to 26,147 train, 3,309 validation and 3,218 test pairs; retraining on it is still pending.

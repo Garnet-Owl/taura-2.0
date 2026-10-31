@@ -33,6 +33,7 @@ from app.preprocessing.bible.samuel2.service import Samuel2Extractor
 from app.preprocessing.bible.joshua.service import JoshuaExtractor
 from app.preprocessing.bible.judges.service import JudgesExtractor
 from app.preprocessing.bible.ezra.service import EzraExtractor
+from app.preprocessing.bible.zechariah.service import ZechariahExtractor
 from app.preprocessing.bible.nehemiah.service import NehemiahExtractor
 from app.preprocessing.bible.revelation.service import RevelationExtractor
 from app.preprocessing.bible.deuteronomy.service import DeuteronomyExtractor
@@ -75,6 +76,7 @@ BOOKS = [
     ("Joshua", JoshuaExtractor, "joshua_aligned.csv"),
     ("Judges", JudgesExtractor, "judges_aligned.csv"),
     ("Ezra", EzraExtractor, "ezra_aligned.csv"),
+    ("Zechariah", ZechariahExtractor, "zechariah_aligned.csv"),
     ("Nehemiah", NehemiahExtractor, "nehemiah_aligned.csv"),
     ("Revelation", RevelationExtractor, "revelation_aligned.csv"),
     ("Job", JobExtractor, "job_aligned.csv"),
