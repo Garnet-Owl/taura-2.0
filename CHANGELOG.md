@@ -174,3 +174,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Web UI Neural Method
 - The web UI now has a Neural option (the fine-tuned Marian models) and uses it by default, so it works on a PC without the large FastText models. If the neural models are not installed the Neural button is disabled and Retrieval is selected. The README copy steps were made safer so a repeated run cannot leave the model files in a nested folder.
+
+## 2026-10-31 - Revelation Extraction
+- Extracted and aligned Revelation (404 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 35 books. A verse that opens a page (17:18) was being swallowed by the previous verse; the marker search now accepts a number at the start of the page text. A few Kikuyu words in 1:1 run together because of the PDF text layer. The split grew append-only to 25,270 train, 3,178 validation and 3,079 test pairs.
