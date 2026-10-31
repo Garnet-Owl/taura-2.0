@@ -221,3 +221,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Amos Extraction
 - Extracted and aligned Amos (146 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 43 books. Footnote symbols (asterisk, dagger) are now stripped from the verse text. The split grew append-only to 26,683 train, 3,371 validation and 3,284 test pairs; retraining on it is still pending.
+
+## 2026-10-31 - Run 26 Evaluation (Lamentations)
+- Retrained FastText + Procrustes on the Kaggle GPU with Lamentations (26,565 training pairs) and scored 3,357 validation verses: Kikuyu to English 35.70 BLEU, English to Kikuyu 37.55. Versus Run 25 (34.86 / 37.94) one direction rose slightly and the other fell slightly, within run-to-run noise. Published models are unchanged.
