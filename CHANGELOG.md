@@ -206,3 +206,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Run 24 Evaluation (Ezra, Zechariah)
 - Retrained FastText + Procrustes on the Kaggle GPU with Ezra and Zechariah (26,147 training pairs) and scored 3,309 validation verses: Kikuyu to English 36.13 BLEU, English to Kikuyu 37.32. Versus Run 23 (37.64 / 35.81) one direction fell and the other rose by about the same amount, within run-to-run noise, so the two books made no clearly measurable difference. Published models are unchanged.
+
+## 2026-11-01 - Hosea Extraction
+- Extracted and aligned Hosea (197 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 40 books. Chapter-final verses end cleanly and verse lengths in the two languages agree. The split grew append-only to 26,308 train, 3,328 validation and 3,235 test pairs; retraining on it is still pending.
