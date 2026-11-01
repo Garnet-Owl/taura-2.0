@@ -293,3 +293,4 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Neural Models Refreshed (N6)
 - Retrained both Marian neural models on all 66 books and replaced the public ones in Garnet-Owl/taura-marian-kikuyu-english. Held-out quality: Kikuyu→English 41.33 BLEU (was 39.56), English→Kikuyu 26.74 (was 26.79, unchanged). The published models were trained once more on train, validation and test together, so use the held-out scores as their quality reference. CPU speed on 4 cores: 1.0 s and 2.4 s per sentence, 78 MB each.
+- Also refreshed the public FastText models (`fasttext/` in the same repo) with a final pass on all 66 books (train, validation and test together); use Run 34 (35.1 / 38.3 BLEU) as their held-out quality reference.
