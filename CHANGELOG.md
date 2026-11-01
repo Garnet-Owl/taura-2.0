@@ -255,3 +255,4 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - 1 Peter Added
 - Added the book of 1 Peter (105 verse pairs, none missing or empty), bringing the corpus to 49 books. The split grew append-only to 27,153 train, 3,427 validation and 3,353 test pairs.
+- Retrained FastText with 1 Peter (Run 31): Kikuyu→English 36.0 BLEU, English→Kikuyu 35.3 BLEU, unchanged within normal run-to-run variation. Published models are unchanged.
