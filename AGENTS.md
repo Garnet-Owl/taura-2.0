@@ -69,6 +69,11 @@ Current milestone state is in `session-details/progress_update_<date>.md` and th
 - Document preprocessing steps clearly.
 - FastText models should be trained with clear versioning and metric tracking.
 
+### README
+- **Keep the README short and ordered** (intro, screenshot, what's inside, performance, quick start, API, tests, contributing, license). No long per-run commentary there.
+- **The README Performance table holds only the latest 3 evaluated metric rows** (drop the oldest when adding one). Full history lives in `CHANGELOG.md` and git history.
+- **Refresh the README UI screenshot** (`data/assets/taura-iu-screenshot.png`) whenever the web UI changes.
+
 ---
 
 ## Testing Rules
