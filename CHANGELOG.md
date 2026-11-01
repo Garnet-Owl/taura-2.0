@@ -294,3 +294,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-01 - Neural Models Refreshed (N6)
 - Retrained both Marian neural models on all 66 books and replaced the public ones in Garnet-Owl/taura-marian-kikuyu-english. Held-out quality: Kikuyu→English 41.33 BLEU (was 39.56), English→Kikuyu 26.74 (was 26.79, unchanged). The published models were trained once more on train, validation and test together, so use the held-out scores as their quality reference. CPU speed on 4 cores: 1.0 s and 2.4 s per sentence, 78 MB each.
 - Also refreshed the public FastText models (`fasttext/` in the same repo) with a final pass on all 66 books (train, validation and test together); use Run 34 (35.1 / 38.3 BLEU) as their held-out quality reference.
+
+## 2026-11-01 - Neural Models Re-scored on CPU
+- Re-scored the held-out Marian models on CPU (int8, beam 4, 3,510 validation pairs): Kikuyu→English 40.25 BLEU / 57.19 chrF, English→Kikuyu 26.33 / 54.57. These are slightly below the GPU-computed 41.33 and 26.74 in the N6 row, because the CPU int8 model is what users actually run. Both sets are in the same range; the scores are saved as `cpu_scores_heldout_cpu.json` in the Hugging Face repo.
