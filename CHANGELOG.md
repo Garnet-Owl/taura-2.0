@@ -293,3 +293,4 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Neural Models Refreshed (N6)
 - Retrained both neural translators on all 66 Bible books and replaced them in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english. On held-out validation (3,510 verses) Kikuyu→English scores 40.3 BLEU (was 39.6) and English→Kikuyu 26.3 (was 26.4, no real change); both stay 78 MB per direction.
+- Also replaced the published FastText models in the same Hugging Face repo with ones trained on all 66 books (quality reference: Run 34, 35.1 / 38.3 BLEU). Added a rule to never poll Kaggle more than once every 5 minutes, after hitting its rate limit.
