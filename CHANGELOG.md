@@ -248,3 +248,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Marian English-to-Kikuyu Experiment (N5)
 - Retrained the neural English-to-Kikuyu model on all 46 books: 26.79 BLEU, about the same as before (26.39), at 1.5 s per sentence on CPU and 78 MB. Starting from a Swahili-only base model was far worse (7.97 BLEU), so we keep the multilingual base. The published model is unchanged.
+
+## 2026-11-01 - James Added
+- Added the book of James (108 verse pairs, none missing or empty), bringing the corpus to 48 books. The train/validation/test split was rebuilt with the new verses (27,071 / 3,415 / 3,342 pairs).
