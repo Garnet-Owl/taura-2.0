@@ -224,3 +224,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-10-31 - Run 26 Evaluation (Lamentations)
 - Retrained FastText + Procrustes on the Kaggle GPU with Lamentations (26,565 training pairs) and scored 3,357 validation verses: Kikuyu to English 35.70 BLEU, English to Kikuyu 37.55. Versus Run 25 (34.86 / 37.94) one direction rose slightly and the other fell slightly, within run-to-run noise. Published models are unchanged.
+
+## 2026-11-01 - Song of Solomon Extraction
+- Extracted and aligned Song of Solomon (117 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 44 books. The English speaker labels (Beloved, Lover, Friends) and footnote marks are removed so they do not leak into translations. The split grew append-only to 26,780 train, 3,378 validation and 3,297 test pairs; retraining on it is still pending.
