@@ -19,9 +19,9 @@ Latest three evaluated runs on the validation split (`data/splits/val.tsv`). Old
 
 | Run | Model | Validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
 |---|---|---|---|---|---|
-| 33 | FastText + Procrustes, 52 books (single Kaggle run, models not republished) | 3,461 val | 36.47 / 52.26 | 35.00 / 55.95 | 4.9 GB total (2 x 2.4 GB) |
 | 34 | same, trained on all 66 books (adds the last 14 books); single Kaggle run, models not republished. Ki→En down 1.3 BLEU, En→Ki up 3.3 BLEU: within the ~3 BLEU retrain noise | 3,510 val | 35.13 / 50.97 | 38.35 / 57.92 | 4.9 GB total (2 x 2.4 GB) |
 | N5 | Marian opus-mt fine-tuned (77M), En→Ki 12 epochs (published neural model; Ki→En N3 scored 39.56 / 56.30) | 3,390 val | - | 26.79 / 54.93 | 78 MB each; 1.51 s En→Ki, 0.59 s Ki→En |
+| N6 | Marian opus-mt fine-tuned (77M), both directions retrained on all 66 books; **published neural models refreshed** (release pass on train+val+test; scores are from the matching held-out run on train only) | 3,510 val | 41.33 / 57.93 | 26.74 / 54.80 | 78 MB each; 1.02 s Ki→En, 2.39 s En→Ki |
 
 FastText retrieval returns an existing training sentence, so its BLEU is not directly comparable with the neural rows. Single FastText runs vary by about 3 BLEU between retrains, so differences smaller than that are noise. Neural rows use beam 4 on CPU (CTranslate2 int8, 4 vCPU, one sentence at a time).
 
@@ -54,7 +54,7 @@ uv run uvicorn app.serve.main:app --reload
 
 ### Run the neural translator (recommended, CPU only)
 
-The fine-tuned Marian models are public on Hugging Face: **[Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)**. You only need the two int8 folders (about 78 MB each); no GPU and no FastText training are required.
+The fine-tuned Marian models (refreshed 2026-11-01 on the whole 66-book corpus; the FastText models there are older) are public on Hugging Face: **[Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)**. You only need the two int8 folders (about 78 MB each); no GPU and no FastText training are required.
 
 ```bash
 uv sync
