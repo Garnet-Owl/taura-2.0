@@ -268,3 +268,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Training Policy
 - Wrote down the rule that every model is always trained on all the data (old books plus new ones), never on the new data alone, and that published models get a final pass on train, validation and test together.
+
+## 2026-11-01 - Ruth Added
+- Added the book of Ruth (85 verse pairs, none missing or empty), bringing the corpus to 52 books. The split grew append-only to 27,372 train, 3,461 validation and 3,373 test pairs.
