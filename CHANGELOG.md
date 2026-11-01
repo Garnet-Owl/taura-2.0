@@ -230,3 +230,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Run 27 Evaluation (Amos, Song of Solomon)
 - Retrained FastText + Procrustes on the Kaggle GPU with Amos and Song of Solomon (26,780 training pairs) and scored 3,378 validation verses: Kikuyu to English 34.89 BLEU, English to Kikuyu 35.03. Versus Run 26 (35.70 / 37.55) both fell, English to Kikuyu by 2.5 BLEU; the validation set gained 21 poetic/prophetic verses with unusual wording and the retrieval method varies run to run, so this is likely noise rather than damage from the new books. Published models are unchanged.
+
+## 2026-11-01 - Micah Extraction
+- Extracted and aligned Micah (105 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 45 books. The split grew append-only to 26,863 train, 3,388 validation and 3,309 test pairs; retraining on it is next.

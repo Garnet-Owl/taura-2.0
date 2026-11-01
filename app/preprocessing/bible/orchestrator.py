@@ -37,6 +37,7 @@ from app.preprocessing.bible.esther.service import EstherExtractor
 from app.preprocessing.bible.hosea.service import HoseaExtractor
 from app.preprocessing.bible.amos.service import AmosExtractor
 from app.preprocessing.bible.songofsolomon.service import SongOfSolomonExtractor
+from app.preprocessing.bible.micah.service import MicahExtractor
 from app.preprocessing.bible.lamentations.service import LamentationsExtractor
 from app.preprocessing.bible.zechariah.service import ZechariahExtractor
 from app.preprocessing.bible.nehemiah.service import NehemiahExtractor
@@ -85,6 +86,7 @@ BOOKS = [
     ("Hosea", HoseaExtractor, "hosea_aligned.csv"),
     ("Amos", AmosExtractor, "amos_aligned.csv"),
     ("Song of Solomon", SongOfSolomonExtractor, "songofsolomon_aligned.csv"),
+    ("Micah", MicahExtractor, "micah_aligned.csv"),
     ("Lamentations", LamentationsExtractor, "lamentations_aligned.csv"),
     ("Zechariah", ZechariahExtractor, "zechariah_aligned.csv"),
     ("Nehemiah", NehemiahExtractor, "nehemiah_aligned.csv"),
