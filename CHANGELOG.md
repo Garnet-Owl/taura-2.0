@@ -283,3 +283,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Roadmap Update
 - Planned the next sessions: extract all 13 remaining Bible books in one go, refresh the public models, then add up to 1,000 reviewed synthetic Kikuyu-English pairs per session and retrain after every 2,000.
+
+## 2026-11-01 - Whole Bible Complete
+- Added the last 13 books (Obadiah, Jonah, Habakkuk, Zephaniah, Haggai, Malachi, 2 Thessalonians, Titus, Philemon, 2 Peter, 2 John, 3 John, Jude; 502 verse pairs, none missing or empty), so all 66 books are now in the corpus. The split grew append-only to 27,846 train, 3,510 validation and 3,425 test pairs.

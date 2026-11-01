@@ -45,6 +45,19 @@ from app.preprocessing.bible.john1.service import John1Extractor
 from app.preprocessing.bible.timothy2.service import Timothy2Extractor
 from app.preprocessing.bible.ruth.service import RuthExtractor
 from app.preprocessing.bible.joel.service import JoelExtractor
+from app.preprocessing.bible.obadiah.service import ObadiahExtractor
+from app.preprocessing.bible.jonah.service import JonahExtractor
+from app.preprocessing.bible.habakkuk.service import HabakkukExtractor
+from app.preprocessing.bible.zephaniah.service import ZephaniahExtractor
+from app.preprocessing.bible.haggai.service import HaggaiExtractor
+from app.preprocessing.bible.malachi.service import MalachiExtractor
+from app.preprocessing.bible.thessalonians2.service import Thessalonians2Extractor
+from app.preprocessing.bible.titus.service import TitusExtractor
+from app.preprocessing.bible.philemon.service import PhilemonExtractor
+from app.preprocessing.bible.peter2.service import Peter2Extractor
+from app.preprocessing.bible.john2.service import John2Extractor
+from app.preprocessing.bible.john3.service import John3Extractor
+from app.preprocessing.bible.jude.service import JudeExtractor
 from app.preprocessing.bible.nahum.service import NahumExtractor
 from app.preprocessing.bible.lamentations.service import LamentationsExtractor
 from app.preprocessing.bible.zechariah.service import ZechariahExtractor
@@ -114,6 +127,19 @@ BOOKS = [
     ("Jeremiah", JeremiahExtractor, "jeremiah_aligned.csv"),
     ("Daniel", DanielExtractor, "daniel_aligned.csv"),
     ("Hebrews", HebrewsExtractor, "hebrews_aligned.csv"),
+    ("Obadiah", ObadiahExtractor, "obadiah_aligned.csv"),
+    ("Jonah", JonahExtractor, "jonah_aligned.csv"),
+    ("Habakkuk", HabakkukExtractor, "habakkuk_aligned.csv"),
+    ("Zephaniah", ZephaniahExtractor, "zephaniah_aligned.csv"),
+    ("Haggai", HaggaiExtractor, "haggai_aligned.csv"),
+    ("Malachi", MalachiExtractor, "malachi_aligned.csv"),
+    ("2 Thessalonians", Thessalonians2Extractor, "thessalonians2_aligned.csv"),
+    ("Titus", TitusExtractor, "titus_aligned.csv"),
+    ("Philemon", PhilemonExtractor, "philemon_aligned.csv"),
+    ("2 Peter", Peter2Extractor, "peter2_aligned.csv"),
+    ("2 John", John2Extractor, "john2_aligned.csv"),
+    ("3 John", John3Extractor, "john3_aligned.csv"),
+    ("Jude", JudeExtractor, "jude_aligned.csv"),
 ]
 
 
