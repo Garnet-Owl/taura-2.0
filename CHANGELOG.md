@@ -274,3 +274,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Joel Added
 - Added the book of Joel (73 verse pairs, none missing or empty), bringing the corpus to 53 books. The split grew append-only to 27,432 train, 3,469 validation and 3,378 test pairs.
+
+## 2026-11-01 - FastText Run 33
+- Retrained FastText with 2 Timothy and Ruth (Run 33): Kikuyu→English 36.5 BLEU, English→Kikuyu 35.0 BLEU, unchanged within normal run-to-run variation. Published models are unchanged.
