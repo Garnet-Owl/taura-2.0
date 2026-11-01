@@ -23,6 +23,7 @@ def main() -> None:
     args = parser.parse_args()
 
     model_sync.cleanup_legacy_downloads()
+    model_sync.cleanup_stale_snapshot_dirs()
     for result in model_sync.sync_all_deployed_models(force=args.force):
         if result.error:
             logger.warning("%s: sync failed (%s)", result.name, result.error)

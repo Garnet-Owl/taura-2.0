@@ -233,5 +233,55 @@ class TestCleanupLegacyDownloads(unittest.TestCase):
             assert_that(os.path.isfile(os.path.join(real_run_dir, "ki.bin")), is_(True))
 
 
+class TestCleanupStaleSnapshotDirs(unittest.TestCase):
+    def test_removes_orphaned_snapshot_dirs_but_ignores_unrelated_entries(self):
+        """A killed sync leaves its temp snapshot dir behind; the next sync clears it."""
+        with given([]) as _:
+            fake_temp_root = tempfile.mkdtemp(prefix="taura-test-temproot-")
+            self.addCleanup(shutil.rmtree, fake_temp_root, ignore_errors=True)
+
+            orphaned_fasttext = os.path.join(
+                fake_temp_root, "taura-fasttext-snapshot-abc123"
+            )
+            os.makedirs(orphaned_fasttext)
+            with open(os.path.join(orphaned_fasttext, "ki.bin"), "w") as f:
+                f.write("partial download from a killed process")
+
+            orphaned_marian = os.path.join(fake_temp_root, "taura-marian-snapshot-xyz789")
+            os.makedirs(orphaned_marian)
+
+            unrelated_dir = os.path.join(fake_temp_root, "some-other-apps-temp-dir")
+            os.makedirs(unrelated_dir)
+            unrelated_file = os.path.join(
+                fake_temp_root, "taura-fasttext-snapshot-notadir.txt"
+            )
+            with open(unrelated_file, "w") as f:
+                f.write("not a directory, must be left alone")
+
+        with when("cleaning up stale snapshot dirs"):
+            removed = model_sync.cleanup_stale_snapshot_dirs(temp_root=fake_temp_root)
+
+        with then("only the orphaned snapshot directories are gone"):
+            assert_that(os.path.isdir(orphaned_fasttext), is_(False))
+            assert_that(os.path.isdir(orphaned_marian), is_(False))
+            assert_that(len(removed), is_(equal_to(2)))
+
+        with then("unrelated entries are left alone"):
+            assert_that(os.path.isdir(unrelated_dir), is_(True))
+            assert_that(os.path.isfile(unrelated_file), is_(True))
+
+    def test_does_nothing_when_temp_root_has_no_leftovers(self):
+        """A clean temp dir (normal exit already cleaned up) is a no-op."""
+        with given([]) as _:
+            fake_temp_root = tempfile.mkdtemp(prefix="taura-test-temproot-")
+            self.addCleanup(shutil.rmtree, fake_temp_root, ignore_errors=True)
+
+        with when("cleaning up stale snapshot dirs"):
+            removed = model_sync.cleanup_stale_snapshot_dirs(temp_root=fake_temp_root)
+
+        with then("nothing was removed"):
+            assert_that(removed, is_(equal_to([])))
+
+
 if __name__ == "__main__":
     unittest.main()

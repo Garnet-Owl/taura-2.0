@@ -301,3 +301,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-01 - Models Auto-Download on Startup
 - The server now fetches the Marian and FastText models from Hugging Face automatically every time it starts, instead of requiring a manual `hf download` and copy. It checks the Hub repo's latest revision first and only re-downloads when it actually changed, so restarts don't re-pull several gigabytes for nothing. There is now exactly one local copy of each model family (`models/marian-ct2-int8/`, `models/fasttext-deployed/`); the old manual `models/run_hf_fasttext` folder convention is gone, and a leftover one is deleted automatically on startup. Offline use: `uv run python -m scripts.sync_models [--force]` fetches without starting the server.
 - The web UI now also disables Retrieval and Word-by-Word (not just Neural) when their models aren't actually loaded, so switching methods can't select one that would just return a 503.
+
+## 2026-11-01 - Auto-Cleanup of Interrupted Downloads
+- Found during a real first-run download: if a sync is killed mid-download (closed terminal, Ctrl-C ignored), its temporary snapshot folder was left behind in `%TEMP%` forever, since nothing deletes it on its own. Every startup now clears out any leftover `taura-*-snapshot-*` folders before starting a new sync.
