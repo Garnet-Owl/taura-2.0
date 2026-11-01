@@ -64,6 +64,7 @@ Current milestone state is in `session-details/progress_update_<date>.md` and th
 
 ### Machine Learning & Data Preprocessing
 - **Train on all data, every time (owner rule, 2026-11-01).** Every model (FastText + Procrustes, Marian/NLLB fine-tunes, any future method) is trained from scratch on the whole current corpus: all old books plus every new book, never only the new data and never by continuing from the previous model on new data alone. Rebuild the splits with `scripts.prepare_dataset` first, so the train split contains every book. Validation (10%) is for comparing runs; test (10%) is for final comparisons only. For a release/published model, do one final pass trained on train + validation + test together, and report its scores as the quality reference of the matching held-out run, not as new scores.
+- **Refresh the public models regularly (owner rule, 2026-11-01).** After every 4 new books (or a comparable amount of new data pairs), retrain and evaluate on the held-out split, then do the full train+val+test pass (for public release only) and replace the outdated published FastText and neural (Marian) models on Hugging Face with the new ones. Report CPU latency and size with them, and record in README that the published models were refreshed and which corpus they cover.
 - Ensure reproducibility: set seeds where applicable.
 - Document preprocessing steps clearly.
 - FastText models should be trained with clear versioning and metric tracking.

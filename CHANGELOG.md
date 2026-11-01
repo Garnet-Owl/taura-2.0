@@ -277,3 +277,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - FastText Run 33
 - Retrained FastText with 2 Timothy and Ruth (Run 33): Kikuyu→English 36.5 BLEU, English→Kikuyu 35.0 BLEU, unchanged within normal run-to-run variation. Published models are unchanged.
+
+## 2026-11-01 - Model Refresh Policy
+- Wrote down the rule that after every 4 new books (or a similar amount of new data) the public FastText and neural models are retrained on all data and replaced on Hugging Face, so the published models do not fall behind the corpus.
