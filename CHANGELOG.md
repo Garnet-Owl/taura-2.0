@@ -290,3 +290,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-01 - FastText Run 34 and README Rewrite
 - FastText Run 34 on all 66 books: Kikuyu→English 35.1 BLEU, English→Kikuyu 38.3 BLEU, within normal run-to-run variation. Published models are not yet refreshed.
 - Rewrote the README to be shorter and better ordered, with only the latest three metric rows, and replaced the web UI screenshot with one showing the new Neural method. The "latest 3 rows" rule is now in CLAUDE.md.
+
+## 2026-11-01 - Neural Models Refreshed (N6)
+- Retrained both Marian neural models on all 66 books and replaced the public ones in Garnet-Owl/taura-marian-kikuyu-english. Held-out quality: Kikuyu→English 41.33 BLEU (was 39.56), English→Kikuyu 26.74 (was 26.79, unchanged). The published models were trained once more on train, validation and test together, so use the held-out scores as their quality reference. CPU speed on 4 cores: 1.0 s and 2.4 s per sentence, 78 MB each.
