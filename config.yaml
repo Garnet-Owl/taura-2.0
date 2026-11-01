@@ -10,9 +10,14 @@ paths:
   models_dir: models
 
   # Optional fine-tuned Marian models exported to CTranslate2 int8, one sub-folder
-  # per direction (ki_en, en_ki). Download from Hugging Face; never committed.
-  # Enables the 'neural' /translate method.
+  # per direction (ki_en, en_ki). Auto-downloaded from Hugging Face on server
+  # startup (app.shared.model_sync); never committed. Enables the 'neural' method.
   neural_model_dir: models/marian-ct2-int8
+
+  # FastText + Procrustes models, auto-downloaded from Hugging Face on server
+  # startup. Always the single deployed copy (no run_* versioning); never
+  # committed. Enables the 'retrieval' and 'word-by-word' methods.
+  fasttext_deploy_dir: models/fasttext-deployed
 
   # Directory where accumulated monolingual text lives (append-only, not used by training directly)
   monolingual_dir: data/monolingual
@@ -45,3 +50,9 @@ training:
 datasets:
   repo_cgiar: CGIAR/KikuyuEnglish_translation
   repo_mich: michsethowusu/english-kikuyu_sentence-pairs
+
+# Hugging Face repo serving the deployed Marian and FastText models.
+# app.shared.model_sync checks this repo's latest commit SHA on every server
+# startup and re-downloads only when it differs from the locally cached one.
+models:
+  hf_repo: Garnet-Owl/taura-marian-kikuyu-english

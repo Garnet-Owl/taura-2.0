@@ -34,6 +34,7 @@ PARALLEL_DATA_DIR: str = _abs(_paths["parallel_data_dir"])
 SPLITS_DIR: str = _abs(_paths["splits_dir"])
 MODELS_DIR: str = _abs(_paths["models_dir"])
 NEURAL_MODEL_DIR: str = _abs(_paths["neural_model_dir"])
+FASTTEXT_DEPLOY_DIR: str = _abs(_paths["fasttext_deploy_dir"])
 MONOLINGUAL_DIR: str = _abs(_paths["monolingual_dir"])
 SEED_DICTIONARY_PATH: str = _abs(_paths["seed_dictionary"])
 FEEDBACK_FILE_PATH: str = _abs(_paths["feedback_file"])
@@ -59,6 +60,23 @@ FASTTEXT_MAXN: int = int(_train.get("fasttext_maxn", 6))
 # ── HuggingFace repos ─────────────────────────────────────────────────────
 REPO_CGIAR: str = str(_ds.get("repo_cgiar", "CGIAR/KikuyuEnglish_translation"))
 REPO_MICH: str = str(_ds.get("repo_mich", "michsethowusu/english-kikuyu_sentence-pairs"))
+
+_models_cfg = _cfg.get("models", {})
+HF_MODEL_REPO: str = str(
+    _models_cfg.get("hf_repo", "Garnet-Owl/taura-marian-kikuyu-english")
+)
+
+# ── Deployed (served) FastText model paths — always the single copy synced
+# from HF_MODEL_REPO by app.shared.model_sync; never a run_* training dir ──
+DEPLOYED_KI_MODEL_PATH: str = os.path.join(FASTTEXT_DEPLOY_DIR, "ki.bin")
+DEPLOYED_EN_MODEL_PATH: str = os.path.join(FASTTEXT_DEPLOY_DIR, "en.bin")
+DEPLOYED_PROJ_KI_EN_PATH: str = os.path.join(FASTTEXT_DEPLOY_DIR, "proj_ki_en.npy")
+DEPLOYED_PROJ_EN_KI_PATH: str = os.path.join(FASTTEXT_DEPLOY_DIR, "proj_en_ki.npy")
+DEPLOYED_TGT_EMBS_KI_PATH: str = os.path.join(FASTTEXT_DEPLOY_DIR, "tgt_embs_ki.npy")
+DEPLOYED_TGT_EMBS_EN_PATH: str = os.path.join(FASTTEXT_DEPLOY_DIR, "tgt_embs_en.npy")
+DEPLOYED_METRICS_JSON_PATH: str = os.path.join(
+    FASTTEXT_DEPLOY_DIR, "evaluation_metrics.json"
+)
 
 
 # ── Latest run helpers (derived at import time, mutable by scripts) ───────

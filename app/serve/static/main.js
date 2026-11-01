@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const swapLangsBtn = document.getElementById("swap-langs");
     const methodNeural = document.getElementById("method-neural");
     const methodRetrieval = document.getElementById("method-retrieval");
+    const methodWbw = document.getElementById("method-wbw");
     const sourceTextarea = document.getElementById("source-text");
     const charCountSpan = document.getElementById("char-count");
     const clearTextBtn = document.getElementById("clear-text");
@@ -15,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const targetTextDiv = document.getElementById("target-text");
     const loadingSpinner = document.getElementById("loading-spinner");
     const copyBtn = document.getElementById("copy-btn");
-    
+
     // Details & Feedback Panels
     const detailsCard = document.getElementById("details-card");
     const alignmentInfo = document.getElementById("alignment-info");
@@ -35,14 +36,24 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     let currentRating = null;
 
-    // Neural is the default; fall back to retrieval when its model is not installed.
+    // Neural is the default; disable whichever method's models are not installed
+    // and select the first one that is, so the UI never offers a mode that will 503.
     fetch("/model/info")
         .then(r => r.json())
         .then(info => {
             if (!info.neural_available) {
                 methodNeural.disabled = true;
                 methodNeural.nextElementSibling.title = "Neural model not installed (see README)";
-                methodRetrieval.checked = true;
+            }
+            if (!info.fasttext_available) {
+                methodRetrieval.disabled = true;
+                methodRetrieval.nextElementSibling.title = "FastText models not installed (see README)";
+                methodWbw.disabled = true;
+                methodWbw.nextElementSibling.title = "FastText models not installed (see README)";
+            }
+            if (document.querySelector('input[name="method"]:checked').disabled) {
+                const firstEnabled = document.querySelector('input[name="method"]:not(:disabled)');
+                if (firstEnabled) firstEnabled.checked = true;
             }
         })
         .catch(() => {});
@@ -51,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function handleLanguageSync(changedElement) {
         const src = sourceLangSelect.value;
         const tgt = targetLangSelect.value;
-        
+
         if (src === tgt) {
             if (changedElement === sourceLangSelect) {
                 targetLangSelect.value = src === "en" ? "ki" : "en";
@@ -68,11 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const temp = sourceLangSelect.value;
         sourceLangSelect.value = targetLangSelect.value;
         targetLangSelect.value = temp;
-        
+
         // Swap textareas content if output exists
         const srcText = sourceTextarea.value;
         const tgtText = targetTextDiv.textContent;
-        
+
         if (tgtText && !targetTextDiv.classList.contains("hidden")) {
             sourceTextarea.value = tgtText;
             targetTextDiv.textContent = srcText;
@@ -156,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const data = await response.json();
-            
+
             // Render translated text
             targetTextDiv.textContent = data.translated_text;
             targetTextDiv.classList.remove("hidden");
@@ -252,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", () => {
             ratingButtons.forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
-            
+
             currentRating = parseInt(btn.getAttribute("data-rating"));
             feedbackDetails.classList.remove("hidden");
         });
@@ -260,9 +271,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     submitFeedbackBtn.addEventListener("click", async () => {
         if (currentRating === null) return;
-        
+
         const comment = feedbackComment.value.trim();
-        
+
         try {
             submitFeedbackBtn.disabled = true;
             const response = await fetch("/feedback", {
@@ -309,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
+        return str.replace(/[&<>'"]/g,
             tag => ({
                 '&': '&amp;',
                 '<': '&lt;',

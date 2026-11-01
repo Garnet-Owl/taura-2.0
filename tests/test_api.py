@@ -1,13 +1,33 @@
 """Integration tests for the translation API endpoints."""
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 from givenpy import given, then, when
 from hamcrest import assert_that, equal_to, has_key, is_
 
+from app.serve import main
 from app.serve.main import app
+
+
+class TestStartupModelSync(unittest.TestCase):
+    def test_startup_syncs_and_cleans_up_without_touching_the_network(self):
+        """Server startup always calls the model sync, never only on first boot."""
+        with given([]) as _:
+            pass
+
+        with when("the app starts up"):
+            with (
+                patch.object(main.model_sync, "sync_all_deployed_models") as fake_sync,
+                patch.object(main.model_sync, "cleanup_legacy_downloads") as fake_cleanup,
+            ):
+                with TestClient(app):
+                    pass
+
+        with then("the deployed models are synced and legacy downloads cleaned up"):
+            fake_cleanup.assert_called_once()
+            fake_sync.assert_called_once()
 
 
 class TestTranslationAPI(unittest.TestCase):

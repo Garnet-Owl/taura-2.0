@@ -52,40 +52,20 @@ uv run python -m scripts.train_embeddings
 uv run uvicorn app.serve.main:app --reload
 ```
 
-### Run the neural translator (recommended, CPU only)
+### Run the server (models auto-download)
 
-The fine-tuned Marian models (Marian and FastText both refreshed 2026-11-01 on the whole 66-book corpus) are public on Hugging Face: **[Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)**. You only need the two int8 folders (about 78 MB each); no GPU and no FastText training are required.
+Both the fine-tuned Marian models (CPU int8, recommended, ~78 MB per direction) and the FastText + Procrustes models (retrieval, word-by-word; ~2.4 GB each for `ki.bin`/`en.bin`) are public on Hugging Face: **[Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)**. No manual download is needed.
 
 ```bash
 uv sync
-uv run --with huggingface_hub hf download Garnet-Owl/taura-marian-kikuyu-english \
-  --include "ki_en/ct2-int8/*" --include "en_ki/ct2-int8/*" --local-dir hf-download
-rm -rf models/marian-ct2-int8
-mkdir -p models/marian-ct2-int8/ki_en models/marian-ct2-int8/en_ki
-cp hf-download/ki_en/ct2-int8/* models/marian-ct2-int8/ki_en/
-cp hf-download/en_ki/ct2-int8/* models/marian-ct2-int8/en_ki/
 uv run uvicorn app.serve.main:app
 ```
 
-Repeat `--include` once per folder, and download into a folder inside the project (not `/tmp`), which also works on Windows. A startup warning that the FastText models are not found is expected and harmless: only the `neural` method needs the downloaded models.
+On every startup the server checks that Hub repo's latest revision and downloads straight into `models/marian-ct2-int8/` and `models/fasttext-deployed/` — always exactly one copy of each, replacing whatever was there before. If the local copy's revision already matches the Hub's, nothing is re-downloaded (no repeated multi-GB transfers on every restart). If Hugging Face is unreachable, the server logs a warning and serves with whatever is already on disk (or returns 503 for the affected methods if nothing is there yet).
 
-Each folder must contain `model.bin` directly (check with `ls models/marian-ct2-int8/en_ki`). Open http://localhost:8000: the web UI uses the **Neural** method by default and falls back to Retrieval when the neural models are not installed. Through the API use `"method": "neural"` (see the API examples below). English to Kikuyu takes about 2 s per sentence on 4 CPU cores; Kikuyu to English about 0.6 s.
+Open http://localhost:8000 for the web UI (it only offers methods whose models are actually loaded) or http://localhost:8000/docs for the API docs. Through the API, `"method"` is one of `"neural"`, `"retrieval"` or `"word-by-word"` (see the API examples below). English to Kikuyu with the neural method takes about 2 s per sentence on 4 CPU cores; Kikuyu to English about 0.6 s.
 
-Open http://localhost:8000 for the web UI or http://localhost:8000/docs for the API docs.
-
-### Download the FastText models (retrieval and word-by-word)
-
-The trained FastText + Procrustes models are in the `fasttext/` folder of the same public repo, so you do not need to train them. They are large (about 2.4 GB each for `ki.bin` and `en.bin`).
-
-```bash
-uv run --with huggingface_hub hf download Garnet-Owl/taura-marian-kikuyu-english \
-  --include "fasttext/*" --local-dir hf-download
-mkdir -p models/run_hf_fasttext
-cp hf-download/fasttext/* models/run_hf_fasttext/
-uv run uvicorn app.serve.main:app
-```
-
-The server uses the newest `models/run_*` folder, which must contain `ki.bin`, `en.bin`, `proj_ki_en.npy` and `proj_en_ki.npy`. Retrieval also needs `data/splits/train.tsv` (in git) to look up sentences. Retraining is done on a GPU provider (Kaggle) rather than a laptop; Run 22 used `uv run python -m scripts.train_embeddings` on a Kaggle kernel.
+To pre-fetch models without starting the server (e.g. warming a deploy image), or to force a re-download: `uv run python -m scripts.sync_models [--force]`.
 
 ## API
 

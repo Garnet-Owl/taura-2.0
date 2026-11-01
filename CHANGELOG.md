@@ -297,3 +297,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Neural Models Re-scored on CPU
 - Re-scored the held-out Marian models on CPU (int8, beam 4, 3,510 validation pairs): Kikuyu→English 40.25 BLEU / 57.19 chrF, English→Kikuyu 26.33 / 54.57. These are slightly below the GPU-computed 41.33 and 26.74 in the N6 row, because the CPU int8 model is what users actually run. Both sets are in the same range; the scores are saved as `cpu_scores_heldout_cpu.json` in the Hugging Face repo.
+
+## 2026-11-01 - Models Auto-Download on Startup
+- The server now fetches the Marian and FastText models from Hugging Face automatically every time it starts, instead of requiring a manual `hf download` and copy. It checks the Hub repo's latest revision first and only re-downloads when it actually changed, so restarts don't re-pull several gigabytes for nothing. There is now exactly one local copy of each model family (`models/marian-ct2-int8/`, `models/fasttext-deployed/`); the old manual `models/run_hf_fasttext` folder convention is gone, and a leftover one is deleted automatically on startup. Offline use: `uv run python -m scripts.sync_models [--force]` fetches without starting the server.
+- The web UI now also disables Retrieval and Word-by-Word (not just Neural) when their models aren't actually loaded, so switching methods can't select one that would just return a 503.

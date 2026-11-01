@@ -135,3 +135,24 @@ class TestModelInfoEndpoint(unittest.TestCase):
 
         with then("neural_available is true"):
             assert_that(with_model["neural_available"], is_(True))
+
+    def test_model_info_reports_fasttext_availability(self) -> None:
+        """Model info tells the web UI whether FastText translators are loaded."""
+        with given([]) as _:
+            app.state.translators = None
+
+        with when("calling /model/info without fasttext translators"):
+            without = self.client.get("/model/info").json()
+
+        with then("fasttext_available is false"):
+            assert_that(without["fasttext_available"], is_(False))
+
+        with given([]) as _:
+            app.state.translators = {"ki_en": object(), "en_ki": object()}
+
+        with when("calling /model/info with fasttext translators loaded"):
+            with_model = self.client.get("/model/info").json()
+            app.state.translators = None
+
+        with then("fasttext_available is true"):
+            assert_that(with_model["fasttext_available"], is_(True))

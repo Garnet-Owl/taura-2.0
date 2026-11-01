@@ -20,7 +20,7 @@ from app.api.embeddings import (
     get_sentence_embedding,
 )
 from app.api.neural import NeuralTranslator
-from app.shared import config
+from app.shared import config, model_sync
 from app.shared.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -78,6 +78,10 @@ class ModelInfoResponse(BaseModel):
     neural_available: bool = Field(
         False, description="Whether the neural (Marian) model is loaded"
     )
+    fasttext_available: bool = Field(
+        False,
+        description="Whether the FastText models are loaded (retrieval, word-by-word)",
+    )
 
 
 def _load_parallel_sentences() -> tuple[list[str], list[str]]:
@@ -105,20 +109,41 @@ def _load_neural_translator() -> NeuralTranslator | None:
     return NeuralTranslator.load(config.NEURAL_MODEL_DIR)
 
 
+def _sync_deployed_models() -> None:
+    """Auto-fetches the latest deployed models from Hugging Face on startup.
+
+    Keeps exactly one local copy of each model family, replacing it whenever
+    the Hub repo's latest revision differs; never raises on network errors.
+    """
+    model_sync.cleanup_legacy_downloads()
+    for result in model_sync.sync_all_deployed_models():
+        if result.error:
+            logger.warning(
+                "%s model sync skipped (will use whatever is on disk): %s",
+                result.name,
+                result.error,
+            )
+        elif result.updated:
+            logger.info("%s models updated to revision %s.", result.name, result.revision)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    _sync_deployed_models()
+
     app.state.neural = _load_neural_translator()
     required = [
-        config.KI_MODEL_PATH,
-        config.EN_MODEL_PATH,
-        config.PROJ_KI_EN_PATH,
-        config.PROJ_EN_KI_PATH,
+        config.DEPLOYED_KI_MODEL_PATH,
+        config.DEPLOYED_EN_MODEL_PATH,
+        config.DEPLOYED_PROJ_KI_EN_PATH,
+        config.DEPLOYED_PROJ_EN_KI_PATH,
     ]
     if not all(os.path.exists(p) for p in required):
         missing = [p for p in required if not os.path.exists(p)]
         logger.warning(
-            "Translation models not found (%s). "
-            "Run `uv run python -m scripts.train_embeddings` to train. "
+            "Deployed FastText models not found (%s). "
+            "They are auto-downloaded from Hugging Face on startup; check network "
+            "access and config.HF_MODEL_REPO. "
             "All /translate requests will return 503 until models are loaded.",
             ", ".join(missing),
         )
@@ -126,21 +151,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         yield
         return
 
-    ki_model = fasttext.load_model(config.KI_MODEL_PATH)
-    en_model = fasttext.load_model(config.EN_MODEL_PATH)
-    W_ki_en = np.load(config.PROJ_KI_EN_PATH)
-    W_en_ki = np.load(config.PROJ_EN_KI_PATH)
+    ki_model = fasttext.load_model(config.DEPLOYED_KI_MODEL_PATH)
+    en_model = fasttext.load_model(config.DEPLOYED_EN_MODEL_PATH)
+    W_ki_en = np.load(config.DEPLOYED_PROJ_KI_EN_PATH)
+    W_en_ki = np.load(config.DEPLOYED_PROJ_EN_KI_PATH)
 
     ki_sentences, en_sentences = _load_parallel_sentences()
 
     tgt_embs_ki = (
-        np.load(config.TGT_EMBS_KI_PATH)
-        if os.path.exists(config.TGT_EMBS_KI_PATH)
+        np.load(config.DEPLOYED_TGT_EMBS_KI_PATH)
+        if os.path.exists(config.DEPLOYED_TGT_EMBS_KI_PATH)
         else None
     )
     tgt_embs_en = (
-        np.load(config.TGT_EMBS_EN_PATH)
-        if os.path.exists(config.TGT_EMBS_EN_PATH)
+        np.load(config.DEPLOYED_TGT_EMBS_EN_PATH)
+        if os.path.exists(config.DEPLOYED_TGT_EMBS_EN_PATH)
         else None
     )
 
@@ -377,9 +402,9 @@ def _retrieve_top_k(
 def model_info() -> ModelInfoResponse:
     """Returns model version, hyperparameters, and current evaluation metrics."""
     metrics: dict = {}
-    if os.path.exists(config.METRICS_JSON_PATH):
+    if os.path.exists(config.DEPLOYED_METRICS_JSON_PATH):
         try:
-            with open(config.METRICS_JSON_PATH, "r", encoding="utf-8") as f:
+            with open(config.DEPLOYED_METRICS_JSON_PATH, "r", encoding="utf-8") as f:
                 metrics = json.load(f)
         except (json.JSONDecodeError, OSError):
             pass
@@ -393,4 +418,5 @@ def model_info() -> ModelInfoResponse:
         min_count=config.FASTTEXT_MIN_COUNT,
         metrics=metrics,
         neural_available=getattr(app.state, "neural", None) is not None,
+        fasttext_available=bool(getattr(app.state, "translators", None)),
     )
