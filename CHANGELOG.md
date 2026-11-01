@@ -280,3 +280,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Model Refresh Policy
 - Wrote down the rule that after every 4 new books (or a similar amount of new data) the public FastText and neural models are retrained on all data and replaced on Hugging Face, so the published models do not fall behind the corpus.
+
+## 2026-11-01 - Roadmap Update
+- Planned the next sessions: extract all 13 remaining Bible books in one go, refresh the public models, then add up to 1,000 reviewed synthetic Kikuyu-English pairs per session and retrain after every 2,000.
