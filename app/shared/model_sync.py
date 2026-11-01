@@ -22,6 +22,7 @@ logger = setup_logger(__name__)
 
 _REVISION_FILE = ".hf_revision.json"
 _LEGACY_DOWNLOAD_PATHS = ("models/run_hf_fasttext", "hf-download")
+_SNAPSHOT_DIR_PREFIXES = ("taura-marian-snapshot-", "taura-fasttext-snapshot-")
 
 
 @dataclass(frozen=True)
@@ -154,5 +155,27 @@ def cleanup_legacy_downloads() -> list[str]:
         path = os.path.join(config.BASE_DIR, rel)
         if os.path.isdir(path):
             shutil.rmtree(path)
+            removed.append(path)
+    return removed
+
+
+def cleanup_stale_snapshot_dirs(temp_root: str | None = None) -> list[str]:
+    """Removes snapshot dirs orphaned by a sync that didn't exit normally.
+
+    tempfile.TemporaryDirectory() only cleans up on a normal context-manager
+    exit; a killed or crashed sync (closed terminal, Ctrl-C ignored mid-download,
+    process killed) leaves its snapshot dir behind in the OS temp folder forever,
+    since nothing else ever deletes it. Call this before starting a new sync.
+    """
+    root = temp_root if temp_root is not None else tempfile.gettempdir()
+    removed = []
+    if not os.path.isdir(root):
+        return removed
+    for entry in os.listdir(root):
+        if not entry.startswith(_SNAPSHOT_DIR_PREFIXES):
+            continue
+        path = os.path.join(root, entry)
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
             removed.append(path)
     return removed

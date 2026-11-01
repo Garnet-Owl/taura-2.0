@@ -116,6 +116,7 @@ def _sync_deployed_models() -> None:
     the Hub repo's latest revision differs; never raises on network errors.
     """
     model_sync.cleanup_legacy_downloads()
+    model_sync.cleanup_stale_snapshot_dirs()
     for result in model_sync.sync_all_deployed_models():
         if result.error:
             logger.warning(

@@ -21,12 +21,16 @@ class TestStartupModelSync(unittest.TestCase):
             with (
                 patch.object(main.model_sync, "sync_all_deployed_models") as fake_sync,
                 patch.object(main.model_sync, "cleanup_legacy_downloads") as fake_cleanup,
+                patch.object(
+                    main.model_sync, "cleanup_stale_snapshot_dirs"
+                ) as fake_cleanup_snapshots,
             ):
                 with TestClient(app):
                     pass
 
-        with then("the deployed models are synced and legacy downloads cleaned up"):
+        with then("the deployed models are synced and old downloads cleaned up"):
             fake_cleanup.assert_called_once()
+            fake_cleanup_snapshots.assert_called_once()
             fake_sync.assert_called_once()
 
 
