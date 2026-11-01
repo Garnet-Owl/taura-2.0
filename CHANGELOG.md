@@ -271,3 +271,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Ruth Added
 - Added the book of Ruth (85 verse pairs, none missing or empty), bringing the corpus to 52 books. The split grew append-only to 27,372 train, 3,461 validation and 3,373 test pairs.
+
+## 2026-11-01 - Joel Added
+- Added the book of Joel (73 verse pairs, none missing or empty), bringing the corpus to 53 books. The split grew append-only to 27,432 train, 3,469 validation and 3,378 test pairs.

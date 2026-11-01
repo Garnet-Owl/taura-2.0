@@ -44,6 +44,7 @@ from app.preprocessing.bible.peter1.service import Peter1Extractor
 from app.preprocessing.bible.john1.service import John1Extractor
 from app.preprocessing.bible.timothy2.service import Timothy2Extractor
 from app.preprocessing.bible.ruth.service import RuthExtractor
+from app.preprocessing.bible.joel.service import JoelExtractor
 from app.preprocessing.bible.nahum.service import NahumExtractor
 from app.preprocessing.bible.lamentations.service import LamentationsExtractor
 from app.preprocessing.bible.zechariah.service import ZechariahExtractor
@@ -100,6 +101,7 @@ BOOKS = [
     ("1 John", John1Extractor, "john1_aligned.csv"),
     ("2 Timothy", Timothy2Extractor, "timothy2_aligned.csv"),
     ("Ruth", RuthExtractor, "ruth_aligned.csv"),
+    ("Joel", JoelExtractor, "joel_aligned.csv"),
     ("Nahum", NahumExtractor, "nahum_aligned.csv"),
     ("Lamentations", LamentationsExtractor, "lamentations_aligned.csv"),
     ("Zechariah", ZechariahExtractor, "zechariah_aligned.csv"),
