@@ -236,3 +236,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Run 28 Evaluation (Micah)
 - Retrained FastText + Procrustes on the Kaggle GPU with Micah (26,863 training pairs) and scored 3,388 validation verses: Kikuyu to English 35.05 BLEU, English to Kikuyu 39.32. Versus Run 27 (34.89 / 35.03) both rose, English to Kikuyu by 4.3 BLEU, undoing the Run 27 dip; run-to-run noise is about 3 BLEU, so this is mostly noise. Published models are unchanged.
+
+## 2026-11-01 - 1 Timothy Extraction
+- Extracted and aligned 1 Timothy (113 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 46 books. The split grew to 26,950 train, 3,401 validation and 3,322 test pairs; retraining on it is next.
