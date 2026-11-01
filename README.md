@@ -12,7 +12,7 @@ Modern translation tools largely ignore Kikuyu. Taura exists to change that, sta
 
 Taura is not just a translation API. It is a full pipeline:
 
-- **Corpus curation:** parallel sentence pairs from the Bible (49 books, one CSV each in `data/parallel/`) and agriculture sector data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado): over 30,000 curated pairs and growing
+- **Corpus curation:** parallel sentence pairs from the Bible (50 books, one CSV each in `data/parallel/`) and agriculture sector data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado): over 30,000 curated pairs and growing
 - **Cross-lingual alignment:** monolingual FastText embeddings aligned via iterative Orthogonal Procrustes with three anchor sources (parallel sentence embeddings, seed dictionary, and identical-string vocabulary pairs) and CSLS-based refinement
 - **Translation API:** FastAPI service with retrieval and word-by-word modes, top-K candidates, a CPU neural mode (fine-tuned Marian), and a lightweight web UI
 
