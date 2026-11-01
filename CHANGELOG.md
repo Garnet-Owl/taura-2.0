@@ -286,3 +286,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Whole Bible Complete
 - Added the last 13 books (Obadiah, Jonah, Habakkuk, Zephaniah, Haggai, Malachi, 2 Thessalonians, Titus, Philemon, 2 Peter, 2 John, 3 John, Jude; 502 verse pairs, none missing or empty), so all 66 books are now in the corpus. The split grew append-only to 27,846 train, 3,510 validation and 3,425 test pairs.
+
+## 2026-11-01 - FastText Run 34 and README Rewrite
+- FastText Run 34 on all 66 books: Kikuyu→English 35.1 BLEU, English→Kikuyu 38.3 BLEU, within normal run-to-run variation. Published models are not yet refreshed.
+- Rewrote the README to be shorter and better ordered, with only the latest three metric rows, and replaced the web UI screenshot with one showing the new Neural method. The "latest 3 rows" rule is now in CLAUDE.md.
