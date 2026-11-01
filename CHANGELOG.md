@@ -259,3 +259,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - 1 John Added
 - Added the book of 1 John (105 verse pairs, none missing or empty), bringing the corpus to 50 books. The Kikuyu text of 1 John 5:7 carries an extra clause that the English text does not have, so it is trimmed to keep that pair matched. The split grew append-only to 27,236 train, 3,445 validation and 3,357 test pairs.
+
+## 2026-11-01 - 2 Timothy Added
+- Added the book of 2 Timothy (83 verse pairs, none missing or empty), bringing the corpus to 51 books. The split grew append-only to 27,306 train, 3,452 validation and 3,363 test pairs.
