@@ -262,3 +262,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - 2 Timothy Added
 - Added the book of 2 Timothy (83 verse pairs, none missing or empty), bringing the corpus to 51 books. The split grew append-only to 27,306 train, 3,452 validation and 3,363 test pairs.
+
+## 2026-11-01 - FastText Run 32
+- Retrained FastText with 1 John (Run 32): Kikuyu→English 34.9 BLEU, English→Kikuyu 36.2 BLEU, unchanged within normal run-to-run variation. Published models are unchanged.
