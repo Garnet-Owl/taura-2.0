@@ -19,11 +19,11 @@ Latest three evaluated runs on the validation split (`data/splits/val.tsv`). Old
 
 | Run | Model | Validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
 |---|---|---|---|---|---|
-| 33 | FastText + Procrustes, 52 books (single Kaggle run, models not republished) | 3,461 val | 36.47 / 52.26 | 35.00 / 55.95 | 4.9 GB total (2 x 2.4 GB) |
 | 34 | same, trained on all 66 books (adds the last 14 books); single Kaggle run, models not republished. Ki→En down 1.3 BLEU, En→Ki up 3.3 BLEU: within the ~3 BLEU retrain noise | 3,510 val | 35.13 / 50.97 | 38.35 / 57.92 | 4.9 GB total (2 x 2.4 GB) |
 | N5 | Marian opus-mt fine-tuned (77M), En→Ki 12 epochs (published neural model; Ki→En N3 scored 39.56 / 56.30) | 3,390 val | - | 26.79 / 54.93 | 78 MB each; 1.51 s En→Ki, 0.59 s Ki→En |
+| N6 | Marian opus-mt fine-tuned (77M), both directions on all 66 books (held-out run, train split only; Ki→En 4 epochs, En→Ki 12). Ki→En is +0.7 BLEU on the larger validation set; En→Ki is flat (26.33 vs 26.79, within noise) | 3,510 val | 40.25 / 57.18 | 26.33 / 54.57 | 78 MB each; 1.12 s Ki→En, 2.52 s En→Ki (slower container than N5) |
 
-FastText retrieval returns an existing training sentence, so its BLEU is not directly comparable with the neural rows. Single FastText runs vary by about 3 BLEU between retrains, so differences smaller than that are noise. Neural rows use beam 4 on CPU (CTranslate2 int8, 4 vCPU, one sentence at a time).
+FastText retrieval returns an existing training sentence, so its BLEU is not directly comparable with the neural rows. Single FastText runs vary by about 3 BLEU between retrains, so differences smaller than that are noise. Published models were refreshed on 2026-11-01: the neural models are the train+val+test pass of run N6 and cover all 66 Bible books plus agriculture data; the N6 row is their quality reference. Neural rows use beam 4 on CPU (CTranslate2 int8, 4 vCPU, one sentence at a time).
 
 ## Quick Start
 

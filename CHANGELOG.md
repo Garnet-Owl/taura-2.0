@@ -290,3 +290,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-01 - FastText Run 34 and README Rewrite
 - FastText Run 34 on all 66 books: Kikuyu→English 35.1 BLEU, English→Kikuyu 38.3 BLEU, within normal run-to-run variation. Published models are not yet refreshed.
 - Rewrote the README to be shorter and better ordered, with only the latest three metric rows, and replaced the web UI screenshot with one showing the new Neural method. The "latest 3 rows" rule is now in CLAUDE.md.
+
+## 2026-11-01 - Neural Models Refreshed (N6)
+- Retrained both neural translators on all 66 Bible books and replaced them in the Hugging Face repo Garnet-Owl/taura-marian-kikuyu-english. On held-out validation (3,510 verses) Kikuyu→English scores 40.3 BLEU (was 39.6) and English→Kikuyu 26.3 (was 26.4, no real change); both stay 78 MB per direction.
