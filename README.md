@@ -36,6 +36,7 @@ Neural rows generate translations (beam 4) and are timed on CPU (CTranslate2 int
 | 25 | same, + Hosea, Esther; one run on Kaggle (models not republished) | 41 books; 3,346 val (Run 24's 3,309 + Hosea's 19 + Esther's 18) | 34.86 / 50.97 | 37.94 / 58.26 | 4.9 GB total (2 x 2.4 GB) |
 | 26 | same, + Lamentations; one run on Kaggle (models not republished) | 42 books; 3,357 val (Run 25's 3,346 + Lamentations' 11) | 35.70 / 51.21 | 37.55 / 56.88 | 4.9 GB total (2 x 2.4 GB) |
 | 27 | same, + Amos, Song of Solomon; one run on Kaggle (models not republished) | 44 books; 3,378 val (Run 26's 3,357 + Amos' 14 + Song of Solomon's 7) | 34.89 / 50.37 | 35.03 / 55.72 | 4.9 GB total (2 x 2.4 GB) |
+| 28 | same, + Micah; one run on Kaggle (models not republished) | 45 books; 3,388 val (Run 27's 3,378 + Micah's 10) | 35.05 / 51.14 | 39.32 / 58.79 | 4.9 GB total (2 x 2.4 GB) |
 | N3 | Marian opus-mt fine-tuned (77M per direction), fixed epochs (Ki→En 4, En→Ki 7) | Run 17 train; Run 18's 2,906 val | **39.56 / 56.30** | 25.19 / 53.47 | 78 MB each; 0.59 s Ki→En, 1.34 s En→Ki |
 | N4 | same, En→Ki only, 12 epochs (Ki→En stays N3) | 32 books; 3,042 val (Run 19's + Joshua's 58) | - | **26.39 / 54.36** | 78 MB; 2.05 s En→Ki (N3: 2.09 s, same 100 sentences) |
 
