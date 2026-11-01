@@ -265,3 +265,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - FastText Run 32
 - Retrained FastText with 1 John (Run 32): Kikuyu→English 34.9 BLEU, English→Kikuyu 36.2 BLEU, unchanged within normal run-to-run variation. Published models are unchanged.
+
+## 2026-11-01 - Training Policy
+- Wrote down the rule that every model is always trained on all the data (old books plus new ones), never on the new data alone, and that published models get a final pass on train, validation and test together.
