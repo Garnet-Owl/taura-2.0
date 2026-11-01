@@ -239,3 +239,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - 1 Timothy Extraction
 - Extracted and aligned 1 Timothy (113 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 46 books. The split grew to 26,950 train, 3,401 validation and 3,322 test pairs; retraining on it is next.
+
+## 2026-11-01 - Run 29 Evaluation (1 Timothy)
+- Retrained FastText + Procrustes on the Kaggle GPU with 1 Timothy (26,950 training pairs) and scored 3,401 validation verses: Kikuyu to English 36.35 BLEU, English to Kikuyu 35.91. Versus Run 28 (35.05 / 39.32) Kikuyu to English rose 1.3 and English to Kikuyu fell 3.4 BLEU; this is inside the ~3 BLEU retrain noise, so one book made no measurable difference.
