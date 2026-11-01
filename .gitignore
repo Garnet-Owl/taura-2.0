@@ -139,6 +139,7 @@ data/feedback.jsonl
 
 models/run_*
 models/marian-ct2-int8/
+models/fasttext-deployed/
 data/*.tsv
 data/*.kikuyu*
 data/*.english*
