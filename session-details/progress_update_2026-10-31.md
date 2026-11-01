@@ -6,6 +6,9 @@ Still in Milestone 3: corpus expansion and quality control.
 
 ## Current Phase
 
+Latest (2026-11-01): Nahum added (46 books; split 26,902 / 3,390 / 3,315). GPU run N5 (Kaggle `jameswanjiku/taura-marian-sw`): En->Ki Marian opus-mt-en-mul retrained 12 epochs = 26.79 BLEU / 54.93 chrF on 3,390 val (N4 26.39 on an older val; 1.51 s/sentence CPU int8 beam 4, 78 MB); opus-mt-en-sw base = 7.97 / 36.27 (rejected). Published models unchanged. Run 28 below is the latest FastText run.
+
+
 Run 23 (Daniel, Hebrews and 148 chapter-number-cleaned verses; 25,770 train pairs, 3,254 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run23): Ki->En 37.64 BLEU / 53.41 chrF, Top-1 24.2%, MRR 0.328; En->Ki 35.81 / 56.43, Top-1 22.9%, MRR 0.323. Within noise of Run 22; models not republished. Corpus is now 38 books (Ezra added after this run; the split is 25,992 / 3,279 / 3,192, so the next run is Run 24).
 
 Previous: Run 22 (Revelation added, 25,270 train pairs, 3,178 val pairs = Run 21's 3,135 plus Revelation's 43), single Kaggle run (kernel jameswanjiku/taura-fasttext-run22; FastText is CPU-only, the GPU sat idle):

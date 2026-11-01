@@ -245,3 +245,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Nahum Extraction
 - Extracted and aligned Nahum (47 verse pairs, zero missing and zero empty on both sides), bringing the Bible corpus to 47 books. The split grew append-only to 26,989 train, 3,403 validation and 3,328 test pairs.
+
+## 2026-11-01 - Marian English-to-Kikuyu Experiment (N5)
+- Retrained the neural English-to-Kikuyu model on all 46 books: 26.79 BLEU, about the same as before (26.39), at 1.5 s per sentence on CPU and 78 MB. Starting from a Swahili-only base model was far worse (7.97 BLEU), so we keep the multilingual base. The published model is unchanged.
