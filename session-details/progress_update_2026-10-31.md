@@ -6,7 +6,7 @@ Still in Milestone 3: corpus expansion and quality control.
 
 ## Current Phase
 
-Latest (2026-11-01): Nahum added (46 books; split 26,902 / 3,390 / 3,315). GPU run N5 (Kaggle `jameswanjiku/taura-marian-sw`): En->Ki Marian opus-mt-en-mul retrained 12 epochs = 26.79 BLEU / 54.93 chrF on 3,390 val (N4 26.39 on an older val; 1.51 s/sentence CPU int8 beam 4, 78 MB); opus-mt-en-sw base = 7.97 / 36.27 (rejected). Published models unchanged. Run 28 below is the latest FastText run.
+Latest (2026-11-01, later): James added (48 books; split 27,071 / 3,415 / 3,342); FastText Run 30 below. Earlier: Nahum added (46 books; split 26,902 / 3,390 / 3,315). GPU run N5 (Kaggle `jameswanjiku/taura-marian-sw`): En->Ki Marian opus-mt-en-mul retrained 12 epochs = 26.79 BLEU / 54.93 chrF on 3,390 val (N4 26.39 on an older val; 1.51 s/sentence CPU int8 beam 4, 78 MB); opus-mt-en-sw base = 7.97 / 36.27 (rejected). Published models unchanged. Run 28 below is the latest FastText run.
 
 
 Run 23 (Daniel, Hebrews and 148 chapter-number-cleaned verses; 25,770 train pairs, 3,254 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run23): Ki->En 37.64 BLEU / 53.41 chrF, Top-1 24.2%, MRR 0.328; En->Ki 35.81 / 56.43, Top-1 22.9%, MRR 0.323. Within noise of Run 22; models not republished. Corpus is now 38 books (Ezra added after this run; the split is 25,992 / 3,279 / 3,192, so the next run is Run 24).
@@ -101,3 +101,5 @@ Run 27 (Amos, Song of Solomon; 26,780 train pairs, 3,378 val pairs), single Kagg
 Run 28 (Micah; 26,863 train pairs, 3,388 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run28): Ki->En 35.05 BLEU / 51.14 chrF, Top-1 23.8%, MRR 0.329; En->Ki 39.32 / 58.79, Top-1 23.8%, MRR 0.331. Versus Run 27 (34.89 / 35.03): Ki->En +0.2, En->Ki +4.3 BLEU, recovering the Run 27 dip; retrain noise is ~3 BLEU per direction, so treat as noise. Models not republished. Corpus is 45 books.
 
 Run 29 (1 Timothy; 26,950 train pairs, 3,401 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run29): Ki->En 36.35 BLEU / 51.63 chrF, Top-1 24.1%, MRR 0.329; En->Ki 35.91 / 56.23, Top-1 24.0%, MRR 0.327. Versus Run 28 (35.05 / 39.32): Ki->En +1.3, En->Ki -3.4 BLEU, within retrain noise. Models not republished. Corpus is 46 books. Note: the previous handoff named Nahum as next, but larger books still lack CSVs (James 108, 1 Peter 105, 1 John 105, Ruth 85, 2 Timothy 83, Joel 73).
+
+Run 30 (James; 27,071 train pairs, 3,415 val pairs), single Kaggle run (kernel jameswanjiku/taura-fasttext-run30): Ki->En 35.52 BLEU / 50.69 chrF, Top-1 24.2%, MRR 0.327; En->Ki 36.19 / 56.15, Top-1 22.8%, MRR 0.321. Versus Run 29 (36.35 / 35.91): Ki->En -0.8, En->Ki +0.3 BLEU, inside run-to-run noise (~3 BLEU). Models not republished. Corpus is 48 books.

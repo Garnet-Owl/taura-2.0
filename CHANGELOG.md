@@ -251,3 +251,4 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - James Added
 - Added the book of James (108 verse pairs, none missing or empty), bringing the corpus to 48 books. The train/validation/test split was rebuilt with the new verses (27,071 / 3,415 / 3,342 pairs).
+- Retrained the FastText translator with James included (Run 30): Kikuyu→English 35.5 BLEU, English→Kikuyu 36.2 BLEU, unchanged within normal run-to-run variation. Published models are unchanged.
