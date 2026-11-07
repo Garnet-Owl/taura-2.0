@@ -206,3 +206,32 @@ class TestSaveMetrics(unittest.TestCase):
                 saved["english_to_kikuyu"]["chrf_word_by_word"], is_(equal_to(20.0))
             )
             assert_that(saved["english_to_kikuyu"]["accuracy_top1"], is_(equal_to(0.6)))
+
+
+class TestEvaluationEdgeCases(unittest.TestCase):
+    def test_missing_csv_directory_raises(self):
+        with given([]) as _:
+            empty_dir = tempfile.mkdtemp(prefix="taura-empty-")
+        with when("loading from a directory with no CSV files"):
+            with self.assertRaises(FileNotFoundError) as caught:
+                load_all_parallel_csvs(empty_dir)
+        with then("the error names the directory"):
+            assert_that(empty_dir in str(caught.exception), is_(True))
+
+    def test_zero_vector_query_gets_chance_level_mrr(self):
+        with given([]) as _:
+            mock_src = MagicMock()
+            mock_src.get_word_vector.return_value = np.zeros(2, dtype=np.float32)
+            tgt_embs = np.eye(2, dtype=np.float32)
+            translator = CrossLingualTranslator(
+                src_model=mock_src,
+                tgt_model=MagicMock(),
+                projection_matrix=np.eye(2),
+                tgt_sentences=["a", "b"],
+                precomputed_tgt_embeddings=tgt_embs,
+            )
+        with when("every source sentence embeds to zero"):
+            metrics = evaluate_retrieval_accuracy(translator, ["x", "y"], ["a", "b"])
+        with then("nothing is correct and MRR is 1/n per query"):
+            assert_that(metrics["accuracy_top1"], is_(equal_to(0.0)))
+            assert_that(metrics["mrr"], is_(close_to(0.5, delta=1e-6)))
