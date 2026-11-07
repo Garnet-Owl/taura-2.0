@@ -7,7 +7,7 @@ from pathlib import Path
 from givenpy import given, then, when
 from hamcrest import assert_that, close_to, empty, equal_to, greater_than, is_
 
-from scripts.prepare_dataset import build_splits, load_parallel_pairs
+from scripts.prepare_dataset import build_splits, clean_text, load_parallel_pairs
 from scripts.train_embeddings import load_sentences, load_train_and_val
 
 
@@ -33,6 +33,30 @@ class TestLoadParallelPairs(unittest.TestCase):
             assert_that(
                 pairs, is_(equal_to([("ki1", "en1"), ("ki2", "en2"), ("ki3", "en3")]))
             )
+
+
+class TestCleanText(unittest.TestCase):
+    def test_macrons_become_tildes_in_kikuyu(self):
+        """Agriculture CSVs use ī/ū where the Bible uses ĩ/ũ; both must match."""
+        with given([]) as _:
+            text = "Nī mīthemba īrīkū"
+
+        with when("cleaning it"):
+            cleaned = clean_text(text)
+
+        with then("macrons are replaced by tildes"):
+            assert_that(cleaned, is_(equal_to("Nĩ mĩthemba ĩrĩkũ")))
+
+    def test_footnote_marks_are_removed(self):
+        """Footnote markers (* † ‡ §) are not part of the sentence."""
+        with given([]) as _:
+            text = "God† made it,* and said ‘yes’.*  Done§"
+
+        with when("cleaning it"):
+            cleaned = clean_text(text)
+
+        with then("the marks and extra spaces are gone"):
+            assert_that(cleaned, is_(equal_to("God made it, and said ‘yes’. Done")))
 
 
 class TestBuildSplits(unittest.TestCase):
