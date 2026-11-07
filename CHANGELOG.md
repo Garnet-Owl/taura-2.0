@@ -338,3 +338,4 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Test Coverage For Helper Scripts
 - Added tests for the synthetic-source picker (used-id tracking, Tatoeba loading) and the manual model-sync script, which previously had none. No behaviour changed.
+- Added tests for two evaluation edge cases (an empty data folder, and sentences that embed to a zero vector). No behaviour changed.
