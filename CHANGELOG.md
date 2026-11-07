@@ -323,3 +323,7 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-07 - 1,000 Synthetic Pairs (Batch 001)
 - `data/synthetic/batch_001.csv` now holds exactly 1,000 English-Kikuyu pairs (128 short everyday sentences plus 872 from the public Tatoeba corpus, CC BY 2.0 FR). Each pair has a confidence score (1, 0.5 or 0.25) and a source id. They sit outside `data/parallel`, so they are not yet in training or the validation/test splits. The Kikuyu is machine-assisted and unverified by a native speaker, so train only on confidence 0.5 and above, and expect noise.
 - New `scripts/select_synthetic_sources.py` picks the next unused English sentences in a fixed seeded order, skipping sentences already in the corpus and near-duplicates, so each session continues where the last one stopped. The standing rule is now written in `CLAUDE.md`: exactly 1,000 pairs per session.
+
+## 2026-11-07 - Second Synthetic Batch (2,000 Pairs Total)
+- Added `data/synthetic/batch_002.csv` with exactly 1,000 more English-Kikuyu pairs from the public Tatoeba corpus (CC BY 2.0 FR), continuing where batch 001 stopped. With batch 001 there are now 2,000 synthetic pairs, outside `data/parallel` and the validation/test splits.
+- The Kikuyu is machine-assisted and unverified: 511 pairs are rated 0.5 and 489 are rated 0.25 (none rated 1), so only the 0.5 pairs are suitable for training, and expect noise.
