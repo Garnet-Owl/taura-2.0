@@ -313,3 +313,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Two Stray Verse Numbers Removed
 - Removed a leftover verse number from the start of Psalms 1:1 (English) and a stray "20" from the start of 1 Samuel 4:1 (Kikuyu), so models no longer see numbers that are not part of the verse text. No other verse in the 66 books starts with a number.
+
+## 2026-11-07 - Marian Retrained on Cleaned Text (N7)
+- Retrained both Marian neural models from scratch on the cleaned training text and scored them on the rebuilt validation split: Kikuyu→English 41.20 BLEU (N6: 41.33), English→Kikuyu 26.72 (N6: 26.74). Cleaning did not change quality measurably, so the public models were left as they are.
