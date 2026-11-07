@@ -327,3 +327,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-07 - Second Synthetic Batch (2,000 Pairs Total)
 - Added `data/synthetic/batch_002.csv` with exactly 1,000 more English-Kikuyu pairs from the public Tatoeba corpus (CC BY 2.0 FR), continuing where batch 001 stopped. With batch 001 there are now 2,000 synthetic pairs, outside `data/parallel` and the validation/test splits.
 - The Kikuyu is machine-assisted and unverified: 511 pairs are rated 0.5 and 489 are rated 0.25 (none rated 1), so only the 0.5 pairs are suitable for training, and expect noise.
+
+## 2026-11-07 - Marian Retrained With Synthetic Pairs (N8)
+- Retrained both Marian models from scratch on the training split plus 1,231 synthetic pairs rated 0.5 or higher (validation and test untouched). Kikuyu→English rose to 41.80 BLEU (N7: 41.20) and English→Kikuyu to 26.84 (N7: 26.72). The gain is small, so the public models were not replaced yet.
