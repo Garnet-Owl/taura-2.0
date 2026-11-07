@@ -15,3 +15,6 @@ None.
 
 ## Update: N8
 - N8 (Kaggle `jameswanjiku/taura-marian-synth`, dataset `jameswanjiku/taura-splits-20261107-synth`, held-out, 3,489 val): Ki->En 41.55 BLEU / 57.97 chrF, En->Ki 26.99 / 54.88. Train = cleaned split + 1,231 synthetic pairs (conf >= 0.5). +0.35 / +0.27 BLEU vs N7: noise; published models not refreshed.
+
+## Update: F36
+- F36 (Kaggle `jameswanjiku/taura-fasttext-run36`, held-out, 3,489 val): FastText retrieval Ki->En 36.26 BLEU / 52.21 chrF, En->Ki 36.64 / 57.73. Word-by-word ~1 BLEU. Published FastText not refreshed.
