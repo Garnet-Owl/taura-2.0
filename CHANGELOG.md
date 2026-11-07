@@ -342,3 +342,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - FastText Run 35 (cleaned text)
 - FastText retrained from scratch on the cleaned training text (Run 35): Kikuyu→English 36.2 BLEU, English→Kikuyu 36.4 BLEU on the new validation set. Unchanged within normal run-to-run variation, so the published FastText models are not replaced.
+
+## 2026-11-07 - Marian En→Ki with more epochs (N9)
+- Trained English→Kikuyu for 20 epochs instead of 12: 27.2 BLEU vs 27.0, a difference within normal noise. More epochs do not help, so the published models are unchanged.

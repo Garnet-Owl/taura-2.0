@@ -15,3 +15,6 @@ None.
 
 ## Update: N8
 - N8 (Kaggle `jameswanjiku/taura-marian-synth`, dataset `jameswanjiku/taura-splits-20261107-synth`, held-out, 3,489 val): Ki->En 41.55 BLEU / 57.97 chrF, En->Ki 26.99 / 54.88. Train = cleaned split + 1,231 synthetic pairs (conf >= 0.5). +0.35 / +0.27 BLEU vs N7: noise; published models not refreshed.
+
+## Update: N9
+- N9 (Kaggle `jameswanjiku/taura-marian-enki20`, En->Ki only, 20 epochs, 3,489 val): 27.15 BLEU / 54.90 chrF vs N8 26.99 / 54.88. Noise; more epochs do not help. Published models not refreshed.
