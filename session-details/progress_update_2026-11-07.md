@@ -18,3 +18,6 @@ None.
 
 ## Update: F36
 - F36 (Kaggle `jameswanjiku/taura-fasttext-run36`, held-out, 3,489 val): FastText retrieval Ki->En 36.26 BLEU / 52.21 chrF, En->Ki 36.64 / 57.73. Word-by-word ~1 BLEU. Published FastText not refreshed.
+
+## Update: N9
+- N9 (Kaggle `jameswanjiku/taura-marian-enki20`, En->Ki only, 20 epochs, 3,489 val): 27.15 BLEU / 54.90 chrF vs N8 26.99 / 54.88. Noise; published models not refreshed.

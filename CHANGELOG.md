@@ -342,3 +342,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - FastText Retrained on Cleaned Split (Run 36)
 - Retrained the FastText + Procrustes retrieval models from scratch on the cleaned training split (Kaggle GPU run) and scored them on the validation set: Ki→En 36.26 BLEU / 52.21 chrF, En→Ki 36.64 / 57.73. The validation set changed since Run 34 (35.13 / 38.35 BLEU), so the numbers are not directly comparable. Neural Marian models remain far stronger for Ki→En (41.6 BLEU); published models were not changed.
+
+## 2026-11-07 - Marian En→Ki with more epochs (N9)
+- Trained English→Kikuyu for 20 epochs instead of 12: 27.2 BLEU vs 27.0, a difference within normal noise. More epochs do not help, so the published models are unchanged.
