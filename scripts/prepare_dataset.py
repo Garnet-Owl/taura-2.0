@@ -4,7 +4,8 @@ Preprocessing steps:
 1. Read every *.csv under the parallel data directory (Bible books and agriculture).
 2. Clean both sides: turn macrons (ī/ū) into the tildes (ĩ/ũ) the Bible text uses,
    remove footnote marks (* † ‡ §) and collapse repeated whitespace.
-3. Drop rows where either side is empty, and drop exact duplicate (Kikuyu, English)
+3. Drop rows where either side is empty or the Kikuyu has words run together by
+   PDF extraction (under 1% of pairs), and drop exact duplicate (Kikuyu, English)
    pairs so the same pair cannot land in both train and validation/test.
 4. Assign each pair to train (80%), validation (10%) or test (10%) from a SHA-256
    hash of the seed (42) and the pair's text. The assignment is stable: adding a
@@ -29,6 +30,14 @@ SPLIT_SEED = 42
 
 _MACRON_TO_TILDE = str.maketrans("īūĪŪ", "ĩũĨŨ")
 _FOOTNOTE_MARKS = re.compile(r"[*†‡§]")
+_GLUE_CAPITAL = re.compile(r"[a-zĩũ][A-ZĨŨ][a-zĩũ]")
+_MAX_WORD_LENGTH = 24
+
+
+def has_glued_words(text: str) -> bool:
+    """True when PDF extraction ran words together (very long words or inner capitals)."""
+    longest = max((len(w) for w in re.split(r"[\s-]+", text)), default=0)
+    return longest > _MAX_WORD_LENGTH or bool(_GLUE_CAPITAL.search(text))
 
 
 def clean_text(text: str) -> str:
@@ -43,7 +52,9 @@ def load_parallel_pairs(parallel_dir: str) -> list[tuple[str, str]]:
     cleaned = (
         (clean_text(ki), clean_text(en)) for ki, en in zip(ki_list, en_list, strict=True)
     )
-    pairs = list(dict.fromkeys(p for p in cleaned if p[0] and p[1]))
+    pairs = list(
+        dict.fromkeys(p for p in cleaned if p[0] and p[1] and not has_glued_words(p[0]))
+    )
     logger.info("Kept %d unique pairs of %d loaded", len(pairs), len(ki_list))
     return pairs
 

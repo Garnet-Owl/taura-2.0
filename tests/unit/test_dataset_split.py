@@ -7,7 +7,12 @@ from pathlib import Path
 from givenpy import given, then, when
 from hamcrest import assert_that, close_to, empty, equal_to, greater_than, is_
 
-from scripts.prepare_dataset import build_splits, clean_text, load_parallel_pairs
+from scripts.prepare_dataset import (
+    build_splits,
+    clean_text,
+    has_glued_words,
+    load_parallel_pairs,
+)
 from scripts.train_embeddings import load_sentences, load_train_and_val
 
 
@@ -57,6 +62,21 @@ class TestCleanText(unittest.TestCase):
 
         with then("the marks and extra spaces are gone"):
             assert_that(cleaned, is_(equal_to("God made it, and said ‘yes’. Done")))
+
+
+class TestHasGluedWords(unittest.TestCase):
+    def test_flags_words_run_together_by_pdf_extraction(self):
+        """Sentences with spaces lost between words are unusable for training."""
+        with given([]) as _:
+            glued = "Mũraikaũcioagĩcookaakĩmwĩraatĩrĩ, “Wĩhumbenguociakunawĩkĩreiraatũ.”"
+            capital_glue = "Nĩ wega. NakePeteroagĩĩka o ũguo."
+            normal = "Nĩ mĩthemba ĩrĩkũ ya CaSO4 ĩhandagũo ũguo-inĩ?"
+
+        with when("checking each sentence"):
+            results = [has_glued_words(t) for t in (glued, capital_glue, normal)]
+
+        with then("only the run-together sentences are flagged"):
+            assert_that(results, is_(equal_to([True, True, False])))
 
 
 class TestBuildSplits(unittest.TestCase):

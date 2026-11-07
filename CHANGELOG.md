@@ -307,3 +307,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Cleaner Training Text
 - The dataset builder now writes Kikuyu with the same letters everywhere (the agriculture files used ī/ū where the Bible uses ĩ/ũ) and removes footnote marks (`*`, `†`, `‡`, `§`) from both languages, so models no longer see one word spelled two ways or learn stray symbols. Splits were rebuilt: 27,846 train, 3,534 validation and 3,394 test pairs; some pairs moved between splits because their text changed, so scores on this validation set are not directly comparable with older rows.
+
+## 2026-11-07 - Dropping Garbled Sentences
+- Training and evaluation now skip the roughly 290 Kikuyu verses (under 1%) where the PDF lost the spaces between words ("Mũraikaũcioagĩcookaa…"), which taught models fake giant words. The Bible CSVs themselves are unchanged. Validation scores on the rebuilt split are not directly comparable with older rows.
