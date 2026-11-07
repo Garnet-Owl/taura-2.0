@@ -19,9 +19,9 @@ Latest three evaluated runs on the validation split (`data/splits/val.tsv`). Old
 
 | Run | Model | Validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
 |---|---|---|---|---|---|
-| 34 | FastText + Procrustes, trained on all 66 books; single Kaggle run; the published FastText models were refreshed with a final train+val+test pass of this recipe. Ki→En down 1.3 BLEU, En→Ki up 3.3 BLEU: within the ~3 BLEU retrain noise | 3,510 val | 35.13 / 50.97 | 38.35 / 57.92 | 4.9 GB total (2 x 2.4 GB) |
 | N6 | Marian opus-mt fine-tuned (77M), both directions retrained on all 66 books; **published neural models refreshed** (release pass on train+val+test; scores are from the matching held-out run on train only) | 3,510 val | 41.33 / 57.93 | 26.74 / 54.80 | 78 MB each; 1.02 s Ki→En, 2.39 s En→Ki |
 | N7 | Marian opus-mt fine-tuned (77M), both directions retrained from scratch on the cleaned training text (one spelling of ĩ/ũ, no footnote marks, ~290 garbled verses dropped); held-out run on train only. Unchanged from N6 within noise (Ki→En -0.13, En→Ki -0.02 BLEU), so the published models were **not** replaced. New validation set, not directly comparable with N6 | 3,489 val | 41.20 / 57.87 | 26.72 / 54.73 | 78 MB each; CPU latency as N6 (same architecture) |
+| N8 | Marian opus-mt fine-tuned (77M), both directions retrained from scratch on the cleaned training text plus 1,231 synthetic pairs (confidence ≥ 0.5, train only; unverified Kikuyu); held-out run. Slightly above N7 (Ki→En +0.35, En→Ki +0.27 BLEU), within noise, so the published models were **not** replaced. Same validation set as N7 | 3,489 val | 41.55 / 57.97 | 26.99 / 54.88 | same architecture as N7 (about 78 MB each); latency not re-measured |
 
 FastText retrieval returns an existing training sentence, so its BLEU is not directly comparable with the neural rows. Single FastText runs vary by about 3 BLEU between retrains, so differences smaller than that are noise. Neural rows use beam 4 on CPU (CTranslate2 int8, 4 vCPU, one sentence at a time).
 
