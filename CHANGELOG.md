@@ -331,3 +331,7 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-07 - Marian Retrained With Synthetic Pairs (N8)
 - Retrained both Marian models from scratch on the cleaned corpus plus 1,231 synthetic pairs (confidence 0.5 and above, training only). Scores on the unchanged validation set: Ki→En 41.55 BLEU / 57.97 chrF, En→Ki 26.99 / 54.88, a gain of under 0.4 BLEU, which is within noise.
 - The published Hugging Face models were not replaced because the gain is too small to justify it.
+
+## 2026-11-07 - Third Synthetic Batch (3,000 Pairs Total)
+- Added `data/synthetic/batch_003.csv` with exactly 1,000 more English-Kikuyu pairs from the public Tatoeba corpus (CC BY 2.0 FR), continuing where batch 002 stopped. With the earlier batches there are 3,000 synthetic pairs, outside `data/parallel` and the validation/test splits.
+- All 1,000 are rated 0.25 (low confidence) because the Kikuyu is unverified, so none should be used for training until a native speaker checks them.
