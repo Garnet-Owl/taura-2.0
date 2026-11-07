@@ -1,11 +1,20 @@
 """Unit tests for picking the next English sentences to translate."""
 
+import bz2
+import tempfile
 import unittest
+from pathlib import Path
 
 from givenpy import given, then, when
 from hamcrest import assert_that, contains_exactly, equal_to, is_
 
-from scripts.select_synthetic_sources import is_usable, jaccard, select
+from scripts.select_synthetic_sources import (
+    is_usable,
+    jaccard,
+    load_tatoeba,
+    select,
+    used_ids,
+)
 
 
 class TestSelect(unittest.TestCase):
@@ -45,3 +54,26 @@ class TestSelect(unittest.TestCase):
             words = {"a", "b"}
         with then("similarity is 1"):
             assert_that(jaccard(words, words), equal_to(1.0))
+
+
+class TestSourceFiles(unittest.TestCase):
+    def test_used_ids_reads_every_batch_file(self) -> None:
+        with given([]) as _:
+            tmp = Path(tempfile.mkdtemp(prefix="taura-synth-"))
+            header = "English,Kikuyu,Confidence,Source\n"
+            (tmp / "batch_001.csv").write_text(header + "A b,C d,1,tatoeba:1\n")
+            (tmp / "batch_002.csv").write_text(header + "E f,G h,0.5,tatoeba:2\n")
+        with when("collecting the used ids"):
+            ids = used_ids(tmp)
+        with then("both batches are included"):
+            assert_that(ids, equal_to({"tatoeba:1", "tatoeba:2"}))
+
+    def test_load_tatoeba_returns_id_and_sentence(self) -> None:
+        with given([]) as _:
+            tmp = Path(tempfile.mkdtemp(prefix="taura-synth-")) / "eng.tsv.bz2"
+            with bz2.open(tmp, "wt", encoding="utf-8") as handle:
+                handle.write("7\teng\tHello there my friend.\nbad\n")
+        with when("loading the export"):
+            rows = load_tatoeba(tmp)
+        with then("short malformed lines are skipped"):
+            assert_that(rows, equal_to([("7", "Hello there my friend.")]))
