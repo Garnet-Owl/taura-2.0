@@ -340,8 +340,8 @@ belong in handoffs, tests, and code comments.
 - Added tests for the synthetic-source picker (used-id tracking, Tatoeba loading) and the manual model-sync script, which previously had none. No behaviour changed.
 - Added tests for two evaluation edge cases (an empty data folder, and sentences that embed to a zero vector). No behaviour changed.
 
-## 2026-11-07 - FastText Run 35 (cleaned text)
-- FastText retrained from scratch on the cleaned training text (Run 35): Kikuyu→English 36.2 BLEU, English→Kikuyu 36.4 BLEU on the new validation set. Unchanged within normal run-to-run variation, so the published FastText models are not replaced.
+## 2026-11-07 - FastText Retrained on Cleaned Split (Run 36)
+- Retrained the FastText + Procrustes retrieval models from scratch on the cleaned training split (Kaggle GPU run) and scored them on the validation set: Ki→En 36.26 BLEU / 52.21 chrF, En→Ki 36.64 / 57.73. The validation set changed since Run 34 (35.13 / 38.35 BLEU), so the numbers are not directly comparable. Neural Marian models remain far stronger for Ki→En (41.6 BLEU); published models were not changed.
 
 ## 2026-11-07 - Marian En→Ki with more epochs (N9)
 - Trained English→Kikuyu for 20 epochs instead of 12: 27.2 BLEU vs 27.0, a difference within normal noise. More epochs do not help, so the published models are unchanged.
