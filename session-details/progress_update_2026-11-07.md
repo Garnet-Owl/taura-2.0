@@ -5,10 +5,10 @@ Milestone 3 corpus complete (66 books); still in quality control. Training text 
 
 ## Latest Metrics
 - N7 (Kaggle `jameswanjiku/taura-marian-clean`, held-out, 3,489 val): Ki->En 41.20 BLEU / 57.87 chrF, En->Ki 26.72 / 54.73. Same as N6 within noise; published models not refreshed.
-- FastText not yet retrained on the cleaned split (last: Run 34, 35.13 / 38.35 BLEU on the older val).
+- FastText Run 35 (Kaggle `jameswanjiku/taura-fasttext-run35`, cleaned split, 3,489 val): Ki->En 36.20 BLEU / 50.93 chrF, En->Ki 36.45 / 57.20. Within noise of Run 34; published FastText not refreshed.
 
 ## Next Work
-FastText retrain on the cleaned split; synthetic data batches; En->Ki Marian improvement.
+Synthetic data batches; En->Ki Marian improvement.
 
 ## Blockers
 None.

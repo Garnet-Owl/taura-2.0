@@ -339,3 +339,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-07 - Test Coverage For Helper Scripts
 - Added tests for the synthetic-source picker (used-id tracking, Tatoeba loading) and the manual model-sync script, which previously had none. No behaviour changed.
 - Added tests for two evaluation edge cases (an empty data folder, and sentences that embed to a zero vector). No behaviour changed.
+
+## 2026-11-07 - FastText Run 35 (cleaned text)
+- FastText retrained from scratch on the cleaned training text (Run 35): Kikuyu→English 36.2 BLEU, English→Kikuyu 36.4 BLEU on the new validation set. Unchanged within normal run-to-run variation, so the published FastText models are not replaced.
