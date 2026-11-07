@@ -19,7 +19,7 @@ Latest three evaluated runs on the validation split (`data/splits/val.tsv`). Old
 
 | Run | Model | Validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
 |---|---|---|---|---|---|
-| N6 | Marian opus-mt fine-tuned (77M), both directions retrained on all 66 books; **published neural models refreshed** (release pass on train+val+test; scores are from the matching held-out run on train only) | 3,510 val | 41.33 / 57.93 | 26.74 / 54.80 | 78 MB each; 1.02 s Ki→En, 2.39 s En→Ki |
+| F36 | FastText + Procrustes retrieval retrained from scratch on the cleaned split (Kaggle `taura-fasttext-run36`, train only). Retrieval returns an existing training sentence; word-by-word is 0.9 / 1.0 BLEU. New validation set, not directly comparable with Run 34 (35.13 / 38.35 BLEU) | 3,489 val | 36.26 / 52.21 | 36.64 / 57.73 | not re-measured |
 | N7 | Marian opus-mt fine-tuned (77M), both directions retrained from scratch on the cleaned training text (one spelling of ĩ/ũ, no footnote marks, ~290 garbled verses dropped); held-out run on train only. Unchanged from N6 within noise (Ki→En -0.13, En→Ki -0.02 BLEU), so the published models were **not** replaced. New validation set, not directly comparable with N6 | 3,489 val | 41.20 / 57.87 | 26.72 / 54.73 | 78 MB each; CPU latency as N6 (same architecture) |
 | N8 | Marian opus-mt fine-tuned (77M), both directions retrained from scratch on the cleaned training text plus 1,231 synthetic pairs (confidence ≥ 0.5, train only; unverified Kikuyu); held-out run. Slightly above N7 (Ki→En +0.35, En→Ki +0.27 BLEU), within noise, so the published models were **not** replaced. Same validation set as N7 | 3,489 val | 41.55 / 57.97 | 26.99 / 54.88 | same architecture as N7 (about 78 MB each); latency not re-measured |
 
