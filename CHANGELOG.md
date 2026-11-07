@@ -330,3 +330,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Marian Retrained With Synthetic Pairs (N8)
 - Retrained both Marian models from scratch on the training split plus 1,231 synthetic pairs rated 0.5 or higher (validation and test untouched). Kikuyu→English rose to 41.80 BLEU (N7: 41.20) and English→Kikuyu to 26.84 (N7: 26.72). The gain is small, so the public models were not replaced yet.
+
+## 2026-11-07 - Third Synthetic Batch (3,000 Pairs Total)
+- Added `data/synthetic/batch_003.csv` with exactly 1,000 more English-Kikuyu pairs from the public Tatoeba corpus (CC BY 2.0 FR). There are now 3,000 synthetic pairs, outside `data/parallel` and the validation/test splits.
+- The Kikuyu is machine-written and unverified: 667 pairs are rated 0.5 and 333 are rated 0.25, and quality is uneven, so expect noise; only the 0.5 pairs are suitable for training.
