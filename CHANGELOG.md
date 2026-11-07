@@ -304,3 +304,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Auto-Cleanup of Interrupted Downloads
 - Found during a real first-run download: if a sync is killed mid-download (closed terminal, Ctrl-C ignored), its temporary snapshot folder was left behind in `%TEMP%` forever, since nothing deletes it on its own. Every startup now clears out any leftover `taura-*-snapshot-*` folders before starting a new sync.
+
+## 2026-11-07 - Cleaner Training Text
+- The dataset builder now writes Kikuyu with the same letters everywhere (the agriculture files used ī/ū where the Bible uses ĩ/ũ) and removes footnote marks (`*`, `†`, `‡`, `§`) from both languages, so models no longer see one word spelled two ways or learn stray symbols. Splits were rebuilt: 27,846 train, 3,534 validation and 3,394 test pairs; some pairs moved between splits because their text changed, so scores on this validation set are not directly comparable with older rows.

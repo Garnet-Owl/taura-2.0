@@ -2,18 +2,21 @@
 
 Preprocessing steps:
 1. Read every *.csv under the parallel data directory (Bible books and agriculture).
-2. Drop rows where either side is empty, and drop exact duplicate (Kikuyu, English)
+2. Clean both sides: turn macrons (ī/ū) into the tildes (ĩ/ũ) the Bible text uses,
+   remove footnote marks (* † ‡ §) and collapse repeated whitespace.
+3. Drop rows where either side is empty, and drop exact duplicate (Kikuyu, English)
    pairs so the same pair cannot land in both train and validation/test.
-3. Assign each pair to train (80%), validation (10%) or test (10%) from a SHA-256
+4. Assign each pair to train (80%), validation (10%) or test (10%) from a SHA-256
    hash of the seed (42) and the pair's text. The assignment is stable: adding a
    book never moves an existing pair to another split. Proportions are approximate.
-4. Write each split as a TSV with a "kikuyu\\tenglish" header to data/splits/.
+5. Write each split as a TSV with a "kikuyu\\tenglish" header to data/splits/.
 
 Train only on train.tsv, tune and compare on val.tsv, and keep test.tsv for final
 comparisons. Rebuild the split after adding a book: uv run python -m scripts.prepare_dataset
 """
 
 import os
+import re
 
 from app.api.split import split_by_hash
 from app.shared import config
@@ -24,11 +27,23 @@ logger = setup_logger(__name__)
 
 SPLIT_SEED = 42
 
+_MACRON_TO_TILDE = str.maketrans("īūĪŪ", "ĩũĨŨ")
+_FOOTNOTE_MARKS = re.compile(r"[*†‡§]")
+
+
+def clean_text(text: str) -> str:
+    """Normalises one sentence: tildes instead of macrons, no footnote marks."""
+    text = _FOOTNOTE_MARKS.sub("", text.translate(_MACRON_TO_TILDE))
+    return " ".join(text.split())
+
 
 def load_parallel_pairs(parallel_dir: str) -> list[tuple[str, str]]:
     """Loads all (kikuyu, english) pairs, dropping exact duplicates in file order."""
     ki_list, en_list = load_all_parallel_csvs(parallel_dir)
-    pairs = list(dict.fromkeys(zip(ki_list, en_list, strict=True)))
+    cleaned = (
+        (clean_text(ki), clean_text(en)) for ki, en in zip(ki_list, en_list, strict=True)
+    )
+    pairs = list(dict.fromkeys(p for p in cleaned if p[0] and p[1]))
     logger.info("Kept %d unique pairs of %d loaded", len(pairs), len(ki_list))
     return pairs
 
