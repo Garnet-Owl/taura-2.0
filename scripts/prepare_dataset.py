@@ -7,7 +7,11 @@ Preprocessing steps:
 3. Assign each pair to train (80%), validation (10%) or test (10%) from a SHA-256
    hash of the seed (42) and the pair's text. The assignment is stable: adding a
    book never moves an existing pair to another split. Proportions are approximate.
-4. Write each split as a TSV with a "kikuyu\\tenglish" header to data/splits/.
+4. Clean each split after the assignment (footnote marks, stray verse numbers,
+   Psalms headings; see app/preprocessing/clean.py). Cleaning happens after hashing
+   so it never moves a pair. Pairs that become duplicates are kept once, and a
+   validation/test pair equal to a train pair after cleaning is dropped.
+5. Write each split as a TSV with a "kikuyu\\tenglish" header to data/splits/.
 
 Train only on train.tsv, tune and compare on val.tsv, and keep test.tsv for final
 comparisons. Rebuild the split after adding a book: uv run python -m scripts.prepare_dataset
@@ -16,6 +20,7 @@ comparisons. Rebuild the split after adding a book: uv run python -m scripts.pre
 import os
 
 from app.api.split import split_by_hash
+from app.preprocessing.clean import clean_sentence
 from app.shared import config
 from app.shared.logger import setup_logger
 from scripts.evaluate import load_all_parallel_csvs
@@ -45,13 +50,27 @@ def write_split_tsv(pairs: list[tuple[str, str]], file_path: str) -> None:
     logger.info("Saved %d pairs to %s", len(pairs), file_path)
 
 
+def clean_pairs(
+    pairs: list[tuple[str, str]], exclude: set[tuple[str, str]] | None = None
+) -> list[tuple[str, str]]:
+    """Cleans both sides, drops empty and repeated pairs, and skips `exclude`."""
+    cleaned = ((clean_sentence(ki), clean_sentence(en)) for ki, en in pairs)
+    kept = dict.fromkeys(p for p in cleaned if all(p))
+    return [p for p in kept if not exclude or p not in exclude]
+
+
 def build_splits(parallel_dir: str, splits_dir: str, seed: int = SPLIT_SEED) -> None:
     """Splits all parallel pairs about 80/10/10 by seeded hash and writes the TSVs."""
     pairs = load_parallel_pairs(parallel_dir)
     train, val, test = split_by_hash(
         pairs, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=seed
     )
+    train = clean_pairs(train)
+    seen = set(train)
     for name, split_pairs in [("train", train), ("val", val), ("test", test)]:
+        if name != "train":
+            split_pairs = clean_pairs(split_pairs, exclude=seen)
+            seen.update(split_pairs)
         write_split_tsv(split_pairs, os.path.join(splits_dir, f"{name}.tsv"))
 
 

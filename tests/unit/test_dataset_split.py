@@ -111,3 +111,38 @@ class TestLoadSentencesQuotes(unittest.TestCase):
         with then("both rows load with the quote mark intact"):
             assert_that(ki, is_(equal_to(['"Ũkĩrĩ, mũtumia', "ki2"])))
             assert_that(en, is_(equal_to(['"Woman, rise', "en2"])))
+
+
+class TestSplitCleaning(unittest.TestCase):
+    def test_cleans_marks_and_keeps_split_membership(self):
+        """Footnote marks are removed after splitting, so cleaning moves no pair."""
+        with given([]) as _:
+            tmp = Path(tempfile.mkdtemp())
+            rows = [(f"ki{i}*", f"en{i}†") for i in range(500)]
+            _write_csv(tmp / "book.csv", rows)
+            build_splits(str(tmp), str(tmp / "marked"), seed=42)
+
+        with when("the split is read back"):
+            ki, en = load_sentences(str(tmp / "marked" / "train.tsv"))
+
+        with then("no sentence keeps a footnote mark"):
+            assert_that(any("*" in s for s in ki), is_(False))
+            assert_that(any("†" in s for s in en), is_(False))
+
+    def test_pairs_equal_after_cleaning_never_cross_splits(self):
+        """A val/test pair identical to a train pair once cleaned is dropped."""
+        with given([]) as _:
+            tmp = Path(tempfile.mkdtemp())
+            rows = [("same", "text")] + [("same*", "text")]
+            rows += [(f"ki{i}", f"en{i}") for i in range(600)]
+            _write_csv(tmp / "book.csv", rows)
+
+        with when("building the splits"):
+            build_splits(str(tmp), str(tmp / "out"), seed=42)
+
+        with then("the cleaned pair appears in only one split, once"):
+            seen = []
+            for name in ["train", "val", "test"]:
+                ki, _ = load_sentences(str(tmp / "out" / f"{name}.tsv"))
+                seen += [s for s in ki if s == "same"]
+            assert_that(seen, is_(equal_to(["same"])))

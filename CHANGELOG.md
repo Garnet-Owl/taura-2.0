@@ -304,3 +304,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-01 - Auto-Cleanup of Interrupted Downloads
 - Found during a real first-run download: if a sync is killed mid-download (closed terminal, Ctrl-C ignored), its temporary snapshot folder was left behind in `%TEMP%` forever, since nothing deletes it on its own. Every startup now clears out any leftover `taura-*-snapshot-*` folders before starting a new sync.
+
+## 2026-11-07 - Cleaner Training Data
+- Training, validation and test files no longer contain footnote marks (`*`, `†`, `‡`), stray verse numbers, or the next Psalm's heading glued to the end of a verse (about 1,700 verses in all). Which verses go to which split is unchanged; the new validation set is 2 pairs smaller because identical pairs were merged, so scores from the next run are close to, but not exactly comparable with, earlier ones.
