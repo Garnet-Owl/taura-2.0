@@ -1,5 +1,7 @@
 """Unit tests for building the seeded train/validation/test split and loading it."""
 
+import csv
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,6 +16,8 @@ from scripts.prepare_dataset import (
     load_parallel_pairs,
 )
 from scripts.train_embeddings import load_sentences, load_train_and_val
+
+LEADING_NUMBER = re.compile(r"^\d+\s")
 
 
 def _write_csv(path: Path, rows: list[tuple[str, str]]) -> None:
@@ -155,3 +159,28 @@ class TestLoadSentencesQuotes(unittest.TestCase):
         with then("both rows load with the quote mark intact"):
             assert_that(ki, is_(equal_to(['"Ũkĩrĩ, mũtumia', "ki2"])))
             assert_that(en, is_(equal_to(['"Woman, rise', "en2"])))
+
+
+class TestCorpusHasNoLeadingVerseNumbers(unittest.TestCase):
+    def test_no_aligned_pair_starts_with_a_verse_number(self):
+        """A leading '20 ' means the extractor left a verse number in the text."""
+        with given([]) as _:
+            csv_paths = sorted(Path("data/parallel").glob("*_aligned.csv"))
+
+        with when("scanning every aligned CSV"):
+            offenders = _pairs_with_leading_number(csv_paths)
+
+        with then("no pair starts with a verse number"):
+            assert_that(offenders, is_(empty()))
+
+
+def _pairs_with_leading_number(csv_paths: list[Path]) -> list[str]:
+    offenders = []
+    for path in csv_paths:
+        with open(path, encoding="utf-8", newline="") as handle:
+            for row in csv.DictReader(handle):
+                if LEADING_NUMBER.match(row["Kikuyu"]) or LEADING_NUMBER.match(
+                    row["English"]
+                ):
+                    offenders.append(f"{path.name} {row['Reference']}")
+    return offenders
