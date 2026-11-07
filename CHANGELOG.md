@@ -335,3 +335,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-07 - Third Synthetic Batch (3,000 Pairs Total)
 - Added `data/synthetic/batch_003.csv` with exactly 1,000 more English-Kikuyu pairs from the public Tatoeba corpus (CC BY 2.0 FR), continuing where batch 002 stopped. With the earlier batches there are 3,000 synthetic pairs, outside `data/parallel` and the validation/test splits.
 - All 1,000 are rated 0.25 (low confidence) because the Kikuyu is unverified, so none should be used for training until a native speaker checks them.
+
+## 2026-11-07 - Test Coverage For Helper Scripts
+- Added tests for the synthetic-source picker (used-id tracking, Tatoeba loading) and the manual model-sync script, which previously had none. No behaviour changed.
