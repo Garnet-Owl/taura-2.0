@@ -339,3 +339,6 @@ belong in handoffs, tests, and code comments.
 ## 2026-11-07 - Test Coverage For Helper Scripts
 - Added tests for the synthetic-source picker (used-id tracking, Tatoeba loading) and the manual model-sync script, which previously had none. No behaviour changed.
 - Added tests for two evaluation edge cases (an empty data folder, and sentences that embed to a zero vector). No behaviour changed.
+
+## 2026-11-07 - FastText Retrained on Cleaned Split (Run 36)
+- Retrained the FastText + Procrustes retrieval models from scratch on the cleaned training split (Kaggle GPU run) and scored them on the validation set: Ki→En 36.26 BLEU / 52.21 chrF, En→Ki 36.64 / 57.73. The validation set changed since Run 34 (35.13 / 38.35 BLEU), so the numbers are not directly comparable. Neural Marian models remain far stronger for Ki→En (41.6 BLEU); published models were not changed.
