@@ -310,3 +310,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Dropping Garbled Sentences
 - Training and evaluation now skip the roughly 290 Kikuyu verses (under 1%) where the PDF lost the spaces between words ("Mũraikaũcioagĩcookaa…"), which taught models fake giant words. The Bible CSVs themselves are unchanged. Validation scores on the rebuilt split are not directly comparable with older rows.
+
+## 2026-11-07 - Two Stray Verse Numbers Removed
+- Removed a leftover verse number from the start of Psalms 1:1 (English) and a stray "20" from the start of 1 Samuel 4:1 (Kikuyu), so models no longer see numbers that are not part of the verse text. No other verse in the 66 books starts with a number.
