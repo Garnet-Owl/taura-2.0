@@ -316,3 +316,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Marian Retrained on Cleaned Text (N7)
 - Retrained both Marian neural models from scratch on the cleaned training text and scored them on the rebuilt validation split: Kikuyu→English 41.20 BLEU (N6: 41.33), English→Kikuyu 26.72 (N6: 26.74). Cleaning did not change quality measurably, so the public models were left as they are.
+
+## 2026-11-07 - First Synthetic Sentence Batch (Unreviewed)
+- Added 128 short everyday English-Kikuyu pairs in `data/synthetic/batch_001.csv`, each marked `unreviewed`. They are kept out of `data/parallel`, so they do not enter training or the validation/test splits until a Kikuyu speaker checks them. Tests now guard that every pair has both sides and a status.
