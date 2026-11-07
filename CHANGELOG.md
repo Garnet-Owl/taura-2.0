@@ -319,3 +319,7 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - First Synthetic Sentence Batch (Unreviewed)
 - Added 128 short everyday English-Kikuyu pairs in `data/synthetic/batch_001.csv`, each marked `unreviewed`. They are kept out of `data/parallel`, so they do not enter training or the validation/test splits until a Kikuyu speaker checks them. Tests now guard that every pair has both sides and a status.
+
+## 2026-11-07 - 1,000 Synthetic Pairs (Batch 001)
+- `data/synthetic/batch_001.csv` now holds exactly 1,000 English-Kikuyu pairs (128 short everyday sentences plus 872 from the public Tatoeba corpus, CC BY 2.0 FR). Each pair has a confidence score (1, 0.5 or 0.25) and a source id. They sit outside `data/parallel`, so they are not yet in training or the validation/test splits. The Kikuyu is machine-assisted and unverified by a native speaker, so train only on confidence 0.5 and above, and expect noise.
+- New `scripts/select_synthetic_sources.py` picks the next unused English sentences in a fixed seeded order, skipping sentences already in the corpus and near-duplicates, so each session continues where the last one stopped. The standing rule is now written in `CLAUDE.md`: exactly 1,000 pairs per session.
