@@ -24,3 +24,6 @@ None.
 
 ## Update: N10
 - N10 (Kaggle `jameswanjiku/taura-marian-bt`, 3,489 val): 20,000 back-translated pairs hurt Ki->En (35.27 / 54.31 vs N8 41.55 / 57.97). En->Ki control 26.82 / 54.94. Back-translation with the current En->Ki model is rejected; published models not refreshed.
+
+## Update: N11
+- N11 (Kaggle `jameswanjiku/taura-nllb-enki`, En->Ki only, NLLB-200-distilled-600M, 3 epochs, 3,489 val): 29.08 BLEU / 56.97 chrF vs N8 26.99 / 54.88. CT2 int8 631 MB, ~2.1 s/sentence on 4 CPU threads (beam 4): too slow/large to ship. Not published.
