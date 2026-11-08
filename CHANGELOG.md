@@ -345,3 +345,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-07 - Marian En→Ki with more epochs (N9)
 - Trained English→Kikuyu for 20 epochs instead of 12: 27.2 BLEU vs 27.0, a difference within normal noise. More epochs do not help, so the published models are unchanged.
+
+## 2026-11-08 - Back-translation test (N10)
+- Tried adding 20,000 machine-translated Kikuyu sentences (made from English Tatoeba text) to the Kikuyu→English training data. It made the model worse (35.3 BLEU vs 41.6), so we will not use it. Published models are unchanged.
