@@ -357,3 +357,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-08 - Distilling the Big Model (N13)
 - Had the big English→Kikuyu model write 26,751 extra training sentences for the small, fast model. It did not help (26.7 BLEU vs 27.2), so the small model is unchanged and still the one we serve.
+
+## 2026-11-08 - Regularisation Test (N14)
+- Tried label smoothing and higher dropout when training the small Kikuyu→English model: 35.5 BLEU vs 41.6, clearly worse, so we keep the current training recipe. The English→Kikuyu half of the test ran out of GPU memory and was not repeated.
