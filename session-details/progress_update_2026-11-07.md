@@ -30,3 +30,6 @@ None.
 
 ## Update: N12
 - N12 (CPU only, N11 CT2 int8 model, 40 random val sentences, 4 threads): greedy 1.44 s/sentence (24.25 BLEU on the sample), beam 2 2.14 s, beam 4 2.21 s. Lower beam does not make NLLB-600M shippable; distillation into Marian is still the open path. No model published.
+
+## Update: N13
+- N13 (Kaggle `jameswanjiku/taura-nllb-distill`, En->Ki only, 3,489 val): Marian trained on real pairs + 48,393 NLLB-N11 teacher translations (train English + 20k Tatoeba), 8 epochs: 26.26 BLEU / 54.83 chrF vs N8 26.99 / 54.88. Sequence-level distillation does not transfer the gain; not published. Kaggle note: CT2 on GPU needs `pip install nvidia-cublas-cu12` and a ctypes preload.
