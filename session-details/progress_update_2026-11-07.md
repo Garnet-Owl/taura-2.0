@@ -27,3 +27,6 @@ None.
 
 ## Update: N11
 - N11 (Kaggle `jameswanjiku/taura-nllb-enki`, En->Ki only, NLLB-200-distilled-600M, 3 epochs, 3,489 val): 29.08 BLEU / 56.97 chrF vs N8 26.99 / 54.88. CT2 int8 631 MB, ~2.1 s/sentence on 4 CPU threads (beam 4): too slow/large to ship. Not published.
+
+## Update: N12
+- N12 (CPU only, N11 CT2 int8 model, 40 random val sentences, 4 threads): greedy 1.44 s/sentence (24.25 BLEU on the sample), beam 2 2.14 s, beam 4 2.21 s. Lower beam does not make NLLB-600M shippable; distillation into Marian is still the open path. No model published.
