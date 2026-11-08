@@ -21,3 +21,6 @@ None.
 
 ## Update: N9
 - N9 (Kaggle `jameswanjiku/taura-marian-enki20`, En->Ki only, 20 epochs, 3,489 val): 27.15 BLEU / 54.90 chrF vs N8 26.99 / 54.88. Noise; published models not refreshed.
+
+## Update: N10
+- N10 (Kaggle `jameswanjiku/taura-marian-bt`, 3,489 val): 20,000 back-translated pairs hurt Ki->En (35.27 / 54.31 vs N8 41.55 / 57.97). En->Ki control 26.82 / 54.94. Back-translation with the current En->Ki model is rejected; published models not refreshed.
