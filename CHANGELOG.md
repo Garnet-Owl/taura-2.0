@@ -348,3 +348,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-08 - Back-translation test (N10)
 - Tried adding 20,000 machine-translated Kikuyu sentences (made from English Tatoeba text) to the Kikuyu→English training data. It made the model worse (35.3 BLEU vs 41.6), so we will not use it. Published models are unchanged.
+
+## 2026-11-08 - Larger model test started
+- Started a GPU test of a larger translation model (NLLB 600M) in both directions. Results are not in yet; nothing published changed.
