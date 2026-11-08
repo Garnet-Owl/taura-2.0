@@ -351,3 +351,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-08 - Bigger Model Test for English→Kikuyu (N11)
 - Fine-tuned NLLB-600M for English→Kikuyu: 29.08 BLEU vs 26.99 for the current small model, a real gain of about 2 BLEU. But it is 631 MB and takes about 2 seconds per sentence on a CPU, so it is too heavy to serve; published models are unchanged.
+
+## 2026-11-08 - NLLB Speed Check (N12)
+- Tried to make the bigger English→Kikuyu model fast enough to serve by decoding greedily and with fewer beams on CPU: still 1.4 s per sentence (2.1 s with beam 4) on 4 threads, against a fraction of a second for Marian. Not shippable as is; the next step is to distil it into a small Marian model.
