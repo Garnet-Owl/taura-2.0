@@ -348,3 +348,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-08 - Back-translation test (N10)
 - Tried adding 20,000 machine-translated Kikuyu sentences (made from English Tatoeba text) to the Kikuyu→English training data. It made the model worse (35.3 BLEU vs 41.6), so we will not use it. Published models are unchanged.
+
+## 2026-11-08 - Bigger Model Test for English→Kikuyu (N11)
+- Fine-tuned NLLB-600M for English→Kikuyu: 29.08 BLEU vs 26.99 for the current small model, a real gain of about 2 BLEU. But it is 631 MB and takes about 2 seconds per sentence on a CPU, so it is too heavy to serve; published models are unchanged.
