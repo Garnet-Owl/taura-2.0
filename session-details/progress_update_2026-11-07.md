@@ -33,3 +33,6 @@ None.
 
 ## Update: N13
 - N13 (Kaggle `jameswanjiku/taura-marian-distil`, En->Ki only, 3,489 val): Marian trained on train + 26,751 NLLB-distilled pairs: 26.71 BLEU / 54.77 chrF vs N9 27.15 / 54.90, N8 26.99 / 54.88. No gain; distillation of N11 into Marian is rejected as run (no round-trip filter). Not published.
+
+## Update: N14
+- N14 (Kaggle `jameswanjiku/taura-marian-ls`, 3,489 val): label smoothing 0.1 + dropout 0.2/0.1/0.1, 12 epochs. Ki->En 35.45 BLEU / 54.52 chrF vs N8 41.55 / 57.97: worse, rejected. En->Ki OOM (fp32 logits in custom loss), not rerun. Not published.
