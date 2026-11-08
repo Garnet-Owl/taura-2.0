@@ -21,3 +21,6 @@ None.
 
 ## Update: N9
 - N9 (Kaggle `jameswanjiku/taura-marian-enki20`, En->Ki only, 20 epochs, 3,489 val): 27.15 BLEU / 54.90 chrF vs N8 26.99 / 54.88. Noise; published models not refreshed.
+
+## Update: N10
+- N10 (Kaggle `jameswanjiku/taura-marian-bt`, 3,489 val): Ki->En with 20,000 synthetic back-translated pairs 35.27 BLEU / 54.31 chrF (N8: 41.55 / 57.97), a regression; En->Ki 12-epoch generator 26.82 / 54.94. Not adopted. Next lever should avoid noisy machine-made Kikuyu (real Kikuyu monolingual text for true back-translation, or larger base model).
