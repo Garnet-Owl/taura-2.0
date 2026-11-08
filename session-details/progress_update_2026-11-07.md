@@ -30,3 +30,6 @@ None.
 
 ## Update: N12
 - N12 (CPU only, N11 CT2 int8 model, 40 random val sentences, 4 threads): greedy 1.44 s/sentence (24.25 BLEU on the sample), beam 2 2.14 s, beam 4 2.21 s. Lower beam does not make NLLB-600M shippable; distillation into Marian is still the open path. No model published.
+
+## Update: N13
+- N13 (Kaggle `jameswanjiku/taura-marian-distil`, En->Ki only, 3,489 val): Marian trained on train + 26,751 NLLB-distilled pairs: 26.71 BLEU / 54.77 chrF vs N9 27.15 / 54.90, N8 26.99 / 54.88. No gain; distillation of N11 into Marian is rejected as run (no round-trip filter). Not published.
