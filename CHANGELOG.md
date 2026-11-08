@@ -354,3 +354,6 @@ belong in handoffs, tests, and code comments.
 
 ## 2026-11-08 - NLLB Speed Check (N12)
 - Tried to make the bigger English→Kikuyu model fast enough to serve by decoding greedily and with fewer beams on CPU: still 1.4 s per sentence (2.1 s with beam 4) on 4 threads, against a fraction of a second for Marian. Not shippable as is; the next step is to distil it into a small Marian model.
+
+## 2026-11-08 - Distilling the Big Model (N13)
+- Had the big English→Kikuyu model write 26,751 extra training sentences for the small, fast model. It did not help (26.7 BLEU vs 27.2), so the small model is unchanged and still the one we serve.
