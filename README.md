@@ -6,7 +6,7 @@ Taura is a free, open-source machine translation engine for **Kikuyu (Gĩkũyũ)
 
 Kikuyu is spoken by 9 to 10 million people in Kenya, about 17 to 20% of the country, and mainstream translation tools mostly ignore it. I started Taura to change that.
 
-![Taura 2.0 web UI](data/assets/taura-iu-screenshot.png)
+![Taura 2.0 translating "The Lord is my shepherd." from English to Kikuyu](data/assets/taura-ui-screenshot.png)
 
 ## How good is it?
 

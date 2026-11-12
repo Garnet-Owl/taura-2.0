@@ -2,11 +2,11 @@
 
 :root {
     --bg-primary: #0a0b10;
-    --card-bg: rgba(16, 20, 32, 0.55);
-    --card-border: rgba(255, 255, 255, 0.06);
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
+    --card-bg: rgba(18, 23, 38, 0.92);
+    --card-border: rgba(255, 255, 255, 0.14);
+    --text-primary: #ffffff;
+    --text-secondary: #d1d5db;
+    --text-muted: #a8b0bf;
     --accent-primary: #6366f1;
     --accent-secondary: #06b6d4;
     --accent-hover: #4f46e5;
@@ -280,7 +280,7 @@ body {
     resize: none;
     color: var(--text-primary);
     font-family: var(--font-sans);
-    font-size: 1.15rem;
+    font-size: 1.3rem;
     line-height: 1.6;
     padding-bottom: 20px;
 }
@@ -294,7 +294,7 @@ body {
     justify-content: space-between;
     align-items: center;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     margin-top: auto;
 }
 
@@ -343,7 +343,7 @@ body {
 .output-wrapper {
     flex: 1;
     position: relative;
-    font-size: 1.15rem;
+    font-size: 1.3rem;
     line-height: 1.6;
     overflow-y: auto;
 }
@@ -402,7 +402,7 @@ body {
 }
 
 .card-header h3 {
-    font-size: 1.15rem;
+    font-size: 1.3rem;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -441,7 +441,7 @@ body {
 
 .alignment-chip .arrow {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.85rem;
 }
 
 .alignment-chip .tgt-word {
@@ -556,7 +556,7 @@ body {
 .app-footer {
     text-align: center;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     letter-spacing: 0.3px;
     margin-top: 10px;
 }
@@ -567,7 +567,7 @@ body {
         flex-direction: column;
         min-height: auto;
     }
-    
+
     .editor-divider {
         padding: 16px 0;
         border-left: none;
@@ -575,22 +575,22 @@ body {
         border-top: 1px solid var(--card-border);
         border-bottom: 1px solid var(--card-border);
     }
-    
+
     .settings-bar {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .method-selector {
         margin-left: 0;
         justify-content: space-between;
     }
-    
+
     #swap-langs {
         transform: rotate(90deg);
         align-self: center;
     }
-    
+
     #swap-langs:hover {
         transform: rotate(270deg) scale(1.05);
     }
