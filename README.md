@@ -1,92 +1,95 @@
-# Taura 2.0
+# Taura 2.0: Kikuyu to English translation
 
-> *"Taũra"* is Kikuyu for *"Translate."*
+> *Taũra* is Kikuyu for "translate."
 
-**Taura** is an open-source machine translation engine for **Kikuyu ↔ English**, one of the first of its kind for this low-resource Bantu language. The Kikuyu are Kenya's largest ethnic group, with 9 to 10 million speakers (roughly 17 to 20% of the population), yet mainstream translation tools largely ignore the language.
+Taura is a free, open-source machine translation engine for **Kikuyu (Gĩkũyũ) and English**, in both directions. It runs on a normal CPU, no GPU needed.
 
-![Taura 2.0 Web UI](data/assets/taura-iu-screenshot.png)
+Kikuyu is spoken by 9 to 10 million people in Kenya, about 17 to 20% of the country, and mainstream translation tools mostly ignore it. I started Taura to change that.
 
-## What's Inside
+![Taura 2.0 web UI](data/assets/taura-iu-screenshot.png)
 
-- **Corpus:** Kikuyu-English parallel pairs from all 66 books of the Bible (one CSV each in `data/parallel/`) plus agriculture data (coffee, dairy, poultry, potato, banana, mango, cabbage, avocado). About 35,000 pairs, split 80/10/10 (seed 42) into `data/splits/`.
-- **FastText + Procrustes:** monolingual embeddings aligned with iterative Orthogonal Procrustes; serves retrieval and word-by-word translation.
-- **Neural (recommended):** fine-tuned Marian models, int8, CPU only, about 78 MB per direction.
-- **API and web UI:** FastAPI service (`/translate`, `/translate/candidates`, `/model/info`) with a simple UI at `/`.
+## How good is it?
 
-## Performance
+On my held-out validation set (3,510 sentences), the neural model scores:
 
-Latest three evaluated runs on the validation split (`data/splits/val.tsv`). Older runs are in `CHANGELOG.md` and git history.
+- **Kikuyu to English:** 41.3 BLEU, 57.9 chrF
+- **English to Kikuyu:** 26.7 BLEU, 54.8 chrF
 
-| Run | Model | Validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
-|---|---|---|---|---|---|
-| N11 | NLLB-200-distilled-600M fine-tuned for En→Ki only (Kaggle `jameswanjiku/taura-nllb-enki`; Adafactor, gradient checkpointing, 3 epochs, beam 4), trained on the same split plus 1,231 synthetic pairs; held-out run. **+2.1 BLEU / +2.1 chrF over N8**, but the CTranslate2 int8 model is 631 MB (8× larger than Marian) and takes about 2.1 s per sentence on 4 CPU threads, so it is **not** adopted or published. Ki→En not run. Same validation set as N8 | 3,489 val | (N8: 41.55 / 57.97) | 29.08 / 56.97 | 631 MB int8, ~2.1 s/sentence CPU (4 threads, beam 4) |
-| N13 | Marian opus-mt fine-tuned (77M), En→Ki only, sequence-level distillation (Kaggle `jameswanjiku/taura-marian-distil`): the N11 NLLB-600M model translated 30,000 English Tatoeba sentences (26,751 kept after length/repetition filtering), added to the training split; held-out run, 3,489 validation sentences. En→Ki 26.71 BLEU / 54.77 chrF, vs N9 27.15 / 54.90 and N8 26.99 / 54.88: no gain, so the published models were **not** replaced. Same architecture as N8, so size and CPU speed are unchanged (not re-measured). |
-| N14 | Marian opus-mt fine-tuned (77M), regularisation test (Kaggle `jameswanjiku/taura-marian-ls`): label smoothing 0.1 plus dropout 0.2, 12 epochs, Ki→En only (the En→Ki half ran out of GPU memory). **Worse** than N8: −6.1 BLEU / −3.5 chrF, so not used; published models **not** replaced | 3,489 val | 35.45 / 54.52 | not run | same architecture as N8; size and speed unchanged |
+Each model is about 78 MB (int8) and translates a sentence in roughly 0.6 to 2.4 seconds on 4 CPU cores.
 
-FastText retrieval returns an existing training sentence, so its BLEU is not directly comparable with the neural rows. Single FastText runs vary by about 3 BLEU between retrains, so differences smaller than that are noise. Neural rows use beam 4 on CPU (CTranslate2 int8, 4 vCPU, one sentence at a time).
+Most of the training text is the Bible plus some agriculture material, so it does best on that kind of language. Everyday speech is harder and I'm still working on it.
 
-## Quick Start
+## What's inside
 
-**Requirements:** Python 3.12+, [uv](https://github.com/astral-sh/uv)
+- **Corpus:** about 35,000 Kikuyu-English sentence pairs. All 66 books of the Bible, plus agriculture texts on coffee, dairy, poultry, potato, banana, mango, cabbage and avocado. Split 80/10/10 with seed 42.
+- **Neural models (recommended):** fine-tuned Marian (opus-mt) models, one per direction, run with CTranslate2.
+- **FastText + Procrustes:** monolingual embeddings aligned with Orthogonal Procrustes, used for retrieval and word-by-word translation.
+- **API and web UI:** a FastAPI service with a simple page at `/`.
+
+## Try it
+
+You need Python 3.12 or later and [uv](https://github.com/astral-sh/uv).
 
 ```bash
 git clone https://github.com/Garnet-Owl/taura-2.0.git
 cd taura-2.0
 uv sync
-```
-
-> **Data & models** are not bundled. Download source files from [Garnet-Owl/taura-datasets](https://huggingface.co/datasets/Garnet-Owl/taura-datasets) on Hugging Face and place them in `data/`. Parallel CSV files are already included in the repo.
-
-### Train from scratch (optional)
-
-Training runs on a GPU provider (Kaggle), not a laptop.
-
-```bash
-# 1. Prepare dataset
-uv run python -m scripts.prepare_dataset
-
-# 2. Train embeddings + alignment
-uv run python -m scripts.train_embeddings
-
-# 3. Serve
-uv run uvicorn app.serve.main:app --reload
-```
-
-### Run the server (models auto-download)
-
-Both the fine-tuned Marian models (CPU int8, recommended, ~78 MB per direction) and the FastText + Procrustes models (retrieval, word-by-word; ~2.4 GB each for `ki.bin`/`en.bin`) are public on Hugging Face: **[Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)**. No manual download is needed.
-
-```bash
-uv sync
 uv run uvicorn app.serve.main:app
 ```
 
-On every startup the server checks that Hub repo's latest revision and downloads straight into `models/marian-ct2-int8/` and `models/fasttext-deployed/` — always exactly one copy of each, replacing whatever was there before. If the local copy's revision already matches the Hub's, nothing is re-downloaded (no repeated multi-GB transfers on every restart). If Hugging Face is unreachable, the server logs a warning and serves with whatever is already on disk (or returns 503 for the affected methods if nothing is there yet).
+Open http://localhost:8000 for the web UI, or http://localhost:8000/docs for the API docs.
 
-Open http://localhost:8000 for the web UI (it only offers methods whose models are actually loaded) or http://localhost:8000/docs for the API docs. Through the API, `"method"` is one of `"neural"`, `"retrieval"` or `"word-by-word"` (see the API examples below). English to Kikuyu with the neural method takes about 2 s per sentence on 4 CPU cores; Kikuyu to English about 0.6 s.
+The models are public on Hugging Face ([Garnet-Owl/taura-marian-kikuyu-english](https://huggingface.co/Garnet-Owl/taura-marian-kikuyu-english)). The server downloads them on first start and only re-downloads when the Hub has a newer version. If Hugging Face is down, it serves whatever is already on disk.
 
-To pre-fetch models without starting the server (e.g. warming a deploy image), or to force a re-download: `uv run python -m scripts.sync_models [--force]`.
+To fetch the models without starting the server, or to force a fresh download:
+
+```bash
+uv run python -m scripts.sync_models [--force]
+```
 
 ## API
 
 ```bash
-# Translate
+# Kikuyu to English
 curl -X POST http://localhost:8000/translate \
   -H "Content-Type: application/json" \
   -d '{"text": "Mũndũ ũmwe nĩ arakorirũo na thĩna", "source_lang": "ki", "target_lang": "en"}'
 
-# Top-K candidates
-curl -X POST http://localhost:8000/translate/candidates \
-  -H "Content-Type: application/json" \
-  -d '{"text": "the man is reading a book", "source_lang": "en", "target_lang": "ki", "k": 5}'
-
-# Neural translation (needs the Marian models; see 'Run the neural translator' above)
+# English to Kikuyu with the neural model
 curl -X POST http://localhost:8000/translate \
   -H "Content-Type: application/json" \
   -d '{"text": "The Lord is my shepherd.", "source_lang": "en", "target_lang": "ki", "method": "neural"}'
 
+# Top 5 candidates
+curl -X POST http://localhost:8000/translate/candidates \
+  -H "Content-Type: application/json" \
+  -d '{"text": "the man is reading a book", "source_lang": "en", "target_lang": "ki", "k": 5}'
+
 # Model info
 curl http://localhost:8000/model/info
+```
+
+`method` is `neural`, `retrieval` or `word-by-word`.
+
+## Detailed results
+
+These are the latest three evaluated runs on the validation split. Older runs are in `CHANGELOG.md` and the git history.
+
+| Run | Model | Validation | Ki→En BLEU / chrF | En→Ki BLEU / chrF | Size, CPU latency |
+|---|---|---|---|---|---|
+| 34 | FastText + Procrustes, trained on all 66 books. Single Kaggle run; published models refreshed with a final train+val+test pass | 3,510 | 35.13 / 50.97 | 38.35 / 57.92 | 4.9 GB total |
+| N5 | Marian opus-mt fine-tuned (77M), En→Ki 12 epochs. Ki→En N3 scored 39.56 / 56.30 | 3,390 | - | 26.79 / 54.93 | 78 MB each; 1.51 s En→Ki, 0.59 s Ki→En |
+| N6 | Marian opus-mt fine-tuned (77M), both directions retrained on all 66 books. Scores are from the matching held-out run on train only | 3,510 | 41.33 / 57.93 | 26.74 / 54.80 | 78 MB each; 1.02 s Ki→En, 2.39 s En→Ki |
+
+FastText retrieval returns an existing training sentence, so its BLEU can't be compared directly with the neural rows. FastText runs swing by about 3 BLEU between retrains, so smaller differences are noise. Neural rows use beam 4 on CPU (CTranslate2 int8, 4 vCPU, one sentence at a time).
+
+## Train it yourself
+
+Training needs a GPU, so I run it on Kaggle, not on a laptop. The source data is on Hugging Face at [Garnet-Owl/taura-datasets](https://huggingface.co/datasets/Garnet-Owl/taura-datasets); put it in `data/`. The parallel CSV files are already in this repo.
+
+```bash
+uv run python -m scripts.prepare_dataset
+uv run python -m scripts.train_embeddings
 ```
 
 ## Tests
@@ -97,7 +100,7 @@ uv run pytest
 
 ## Contributing
 
-Contributions are welcome, especially if you speak Kikuyu, work in low-resource NLP, or want to help expand the corpus. See [AGENTS.md](AGENTS.md) for project standards and [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+Help is welcome, especially if you speak Kikuyu, work on low-resource NLP, or can add to the corpus. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Project standards are in [AGENTS.md](AGENTS.md).
 
 ## License
 
